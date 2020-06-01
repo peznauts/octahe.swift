@@ -7,9 +7,6 @@ Configure servers using OCI compatible files.
 The Open Server Inititive follows the [Dockerfile](https://docs.docker.com/engine/reference/builder)
 reference, with one verb replacement.
 
-Because we're pushing config to the edge, instead of a local image, the verb **FROM** is mapped
-to **TO**.
-
 #### TO
 
 ``` dockerfile
@@ -38,6 +35,10 @@ ARG  USER=access-user
 TO   --escalate=/usr/bin/sudo 127.0.0.1:22@${USER}
 RUN  dnf install -y curl
 ```
+
+#### FROM
+
+The **FROM** instruction will pull a container image, inspect the layers, and derive all compatible verbs which are then inserted into the execution process.
 
 ### Executing a deployment
 
