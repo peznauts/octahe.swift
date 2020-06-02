@@ -146,6 +146,25 @@ Step 4/4 : RUN  dnf install -y curl
 Successfully deployed.
 ```
 
+A deployment can be executed with more than one file allowing multiple files to be concatenated together.
+Each file provided will have the contents of the file inserted into the deployment.
+
+``` shell
+osi ~/Containerfile ~/Serverfile
+
+Step 0/4 : FROM image-name:tag-id
+ ---> done
+Step 1/4 : TO [10.0.0.2:22@root]
+ ---> done
+Step 2/4 : ARG USER=access-user
+ ---> done
+Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
+ ---> done
+Step 4/4 : RUN  dnf install -y curl
+ ---> done
+Successfully deployed.
+```
+
 ### Special Case Verbs
 
 The following verbs have special characteristics that will ensure a consistent experience.
