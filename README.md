@@ -78,6 +78,65 @@ RUN  dnf install -y curl
 
 The **FROM** instruction will pull a container image, inspect the layers, and derive all compatible verbs which are then inserted into the execution process.
 
+#### ENTRYPOINT
+
+The `ENTRYPOINT` verb will create a **oneshot** systemd service on the target. This will
+result in the entrypoint commanded running on system start. All systemd `oneshot` services
+will be placed in `/etc/systemd/system/osi/`. Where they will be enabled but not started
+upon creation.
+
+> To ensure that the generated `ENTRYPOINT` service file is unique, a SHA1 of the
+  `ENTRYPOINT` value will be generated as the service file name.
+
+#### CMD
+
+This verb is treated in the same way as `ENTRYPOINT`, but will start the service file upon
+creation.
+
+#### HEALTHCHECK
+
+The `HEALTHCHECK` verb will create a watchdog service for a given `ENTRYPOINT` service file.
+This will convert the **oneshot** service to a **notify** service.
+
+The following arguments are supported when a `HEALTHCHECK` is instantiated.
+
+* --interval=30s
+* --timeout=30s
+* --retries=3
+
+``` dockerfile
+...
+HEALTHCHECK --interval=5m --timeout=3s --retries=3 CMD curl -f http://localhost/ || exit 1
+```
+
+#### STOPSIGNAL
+
+The `STOPSIGNAL` verb will create a `KillSignal` entry for a given `ENTRYPOINT` systemd
+service.
+
+``` dockerfile
+...
+STOPSIGNAL 99
+```
+
+#### EXPOSE
+
+The `EXPOSE` verb will create an IPTables rule for a given port and/or service mapping.
+IP tables rules will be added into the **osi** chain.
+
+``` dockerfile
+...
+EXPOSE 80/tcp
+EXPOSE 8080:80/udp
+```
+
+### Ignored Verbs
+
+Because the following options have no effect on a stateful targets, they're ignored.
+
+* ONBUILD
+* VOLUME
+
 ### Executing a deployment
 
 The following section covers CLI and output examples.
@@ -180,7 +239,7 @@ A deployment can be executed with more than one file allowing multiple files to 
 Each file provided will have the contents of the file inserted into the deployment.
 
 ``` shell
-osi ~/Containerfile ~/Targetfile
+osi deploy ~/Containerfile ~/Targetfile
 ```
 
 ``` console
@@ -197,44 +256,49 @@ Step 4/4 : RUN  dnf install -y curl
 Successfully deployed.
 ```
 
-### Special Case Verbs
+### Executing an undeployment
 
-The following verbs have special characteristics that will ensure a consistent experience.
+The following section covers CLI and output examples for a deployment and undeployment.
 
-#### ENTRYPOINT
+##### Deployment Configuration File
 
-The `ENTRYPOINT` verb will create a **oneshot** systemd service on the target. This will
-result in the entrypoint commanded running on system start. All systemd `oneshot` services
-will be placed in `/etc/systemd/system/osi/`. Where they will be enabled and started upon
-creation.
+``` dockerfile
+ARG  USER=access-user
+FROM image-name:tag-id
+TO   --escalate=/usr/bin/sudo 127.0.0.1:22@${USER}
+ENTRYPOINT ["top", "-b"]
+```
 
-> To ensure that the generated `ENTRYPOINT` service file is unique, a SHA1 of the
-  `ENTRYPOINT` value will be generated as the service file name.
+##### Deployment Execution
 
-#### HEALTHCHECK
+``` shell
+osi deploy ~/Targetfile
+```
 
-The `HEALTHCHECK` verb will create a watchdog service for a given `ENTRYPOINT` service file.
-This will convert the **oneshot** service to a **notify** service.
+``` console
+Step 0/4 : FROM image-name:tag-id
+ ---> done
+Step 1/4 : ARG USER=access-user
+ ---> done
+Step 2/4 : TO [("10.0.0.1:22@root")]
+ ---> done
+Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
+ ---> done
+Step 4/4 : ENTRYPOINT 0a25e5f88885e1564daab76f1bbcc8ffc38b9d29 created
+ ---> done
+Successfully deployed.
+```
 
-The following arguments are supported when a `HEALTHCHECK` is instantiated.
+##### Undeployment Execution
 
-* --interval=30s
-* --timeout=30s
-* --retries=3
+``` shell
+osi undeploy ~/Targetfile
+```
 
-#### STOPSIGNAL
-
-The `STOPSIGNAL` verb will create a `KillSignal` entry for a given `ENTRYPOINT` systemd
-service.
-
-#### EXPOSE
-
-The `EXPOSE` verb will create an IPTables rule for a given port and/or service mapping.
-IP tables rules will be added into the **osi** chain.
-
-### Ignored Verbs
-
-Because the following options have no effect on a stateful targets, they're ignored.
-
-* ONBUILD
-* VOLUME
+``` console
+Step 0/1 : TO [("10.0.0.1:22@root")]
+ ---> done
+Step 1/1 : ENTRYPOINT 0a25e5f88885e1564daab76f1bbcc8ffc38b9d29 removed
+ ---> done
+Successfully undeployed.
+```
