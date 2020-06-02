@@ -1,7 +1,7 @@
 import XCTest
 
-import swift_osiTests
+import octaheTests
 
 var tests = [XCTestCaseEntry]()
-tests += swift_osiTests.allTests()
+tests += octaheTests.allTests()
 XCTMain(tests)

@@ -1,4 +1,11 @@
-# Open Server Initiative
+<p align="center">
+<img src="assets/octahe_logo.png" alt="Octahe" title="Octahe" />
+</p>
+
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/peznauts/swift-octahe/blob/master/LICENSE)
+[![Twitter](https://img.shields.io/twitter/follow/Peznaut.svg?style=social)](https://twitter.com/intent/follow?screen_name=peznaut)
+
+# Octahe
 
 Configure targets using OCI compatible files.
 
@@ -8,13 +15,13 @@ This application is being created to better enable teams to deploy application i
 targets, without the constraints of a container. Given the proliferation of containers it is safe
 to assume most of the core logic that enables the worlds applications resides within
 **Containerfile**(s). While containers are generally fantastic tools, they can be limiting, they
-can create application complexities, and they do create bottlenecks. OSI aims to enable teams to
+can create application complexities, and they do create bottlenecks. octahe aims to enable teams to
 deploy applications into stateful targets, with **Containerfile**(s), without any of the
 containerization machinery.
 
 ### Configuration
 
-The Open Server Initiative follows the [Dockerfile](https://docs.docker.com/engine/reference/builder)
+The Octahe initiative follows the [Dockerfile](https://docs.docker.com/engine/reference/builder)
 reference with one new verb, `TO`.
 
 #### TO
@@ -82,7 +89,7 @@ The **FROM** instruction will pull a container image, inspect the layers, and de
 
 The `ENTRYPOINT` verb will create a **oneshot** systemd service on the target. This will
 result in the entrypoint commanded running on system start. All systemd `oneshot` services
-will be placed in `/etc/systemd/system/osi/`. Where they will be enabled but not started
+will be placed in `/etc/systemd/system/octahe/`. Where they will be enabled but not started
 upon creation.
 
 > To ensure that the generated `ENTRYPOINT` service file is unique, a SHA1 of the
@@ -122,7 +129,7 @@ STOPSIGNAL 99
 #### EXPOSE
 
 The `EXPOSE` verb will create an IPTables rule for a given port and/or service mapping.
-IP tables rules will be added into the **osi** chain.
+IP tables rules will be added into the **octahe** chain.
 
 ``` dockerfile
 ...
@@ -144,7 +151,7 @@ The following section covers CLI and output examples.
 ##### Standard Example
 
 ``` shell
-osi deploy ~/Targetfile
+octahe deploy ~/Targetfile
 ```
 
 ``` console
@@ -168,7 +175,7 @@ This can be changed by modifying the connection quota. If the quota is less than
 number of targets, connections will be grouped by the given quota.
 
 ``` shell
-osi deploy --connection-quota=3 ~/Targetfile
+octahe deploy --connection-quota=3 ~/Targetfile
 ```
 
 ``` console
@@ -190,7 +197,7 @@ Successfully deployed.
 In the event of an execution failure, the failed targets will be taken out of the execution steps.
 
 ``` shell
-osi deploy ~/Targetfile
+octahe deploy ~/Targetfile
 ```
 
 ``` console
@@ -216,7 +223,7 @@ To rerun a failed execution on only the failed targets specify the targets on th
 `--target` flag.
 
 ``` shell
-osi deploy --connection-quota=3 --target="10.0.0.4:22@root,10.0.0.6:22@root" ~/Targetfile
+octahe deploy --connection-quota=3 --target="10.0.0.4:22@root,10.0.0.6:22@root" ~/Targetfile
 ```
 
 ``` console
@@ -239,7 +246,7 @@ A deployment can be executed with more than one file allowing multiple files to 
 Each file provided will have the contents of the file inserted into the deployment.
 
 ``` shell
-osi deploy ~/Containerfile ~/Targetfile
+octahe deploy ~/Containerfile ~/Targetfile
 ```
 
 ``` console
@@ -272,7 +279,7 @@ ENTRYPOINT ["top", "-b"]
 ##### Deployment Execution
 
 ``` shell
-osi deploy ~/Targetfile
+octahe deploy ~/Targetfile
 ```
 
 ``` console
@@ -292,7 +299,7 @@ Successfully deployed.
 ##### Undeployment Execution
 
 ``` shell
-osi undeploy ~/Targetfile
+octahe undeploy ~/Targetfile
 ```
 
 ``` console
