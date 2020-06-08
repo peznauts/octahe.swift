@@ -66,7 +66,7 @@ struct Octahe: ParsableCommand {
             help: "Configuration file(s) used to build an application deployment plan."
         )
         var configurationFiles: [String]
-    
+        
         mutating func validate() throws {
             guard !configurationFiles.isEmpty else {
                 throw ValidationError(
@@ -86,8 +86,9 @@ extension Octahe {
         @OptionGroup()
         var options: Octahe.Options
         
-        mutating func run() {
-            print(options)
+        func run() throws {
+            print("Beginning deployment execution")
+            try CoreRouter(parsedOptions: options, function: "deploy")
         }
     }
     
@@ -99,8 +100,9 @@ extension Octahe {
         @OptionGroup()
         var options: Octahe.Options
         
-        mutating func run() {
-            print(options)
+        func run() throws {
+            print("Beginning undeployment execution")
+            try CoreRouter(parsedOptions: options, function: "undeploy")
         }
     }
 }
