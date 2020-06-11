@@ -12,7 +12,25 @@ enum FileParserError: Error {
     case FileReadFailure(filePath: String)
 }
 
+struct LineIterator {
+    var lines: IndexingIterator<Array<Substring>> = [].makeIterator()
+}
+
 class FileParser {
+    private static var LineData = LineIterator()
+
+    class func trimLine(line:Substring) -> String {
+        let trimmed = line.replacingOccurrences(of: "#.*", with: "", options: [.regularExpression])
+        var trimmedLine = trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedLine.hasSuffix(" \\") {
+            trimmedLine = trimmedLine.replacingOccurrences(of: "\\", with: "")
+            if let nextLine = LineData.lines.next() {
+                trimmedLine += trimLine(line: nextLine)
+            }
+        }
+        return trimmedLine
+    }
+
     class func buildRawConfigs(files:Array<String>) throws -> [(key: String, value: String)] {
         var rawConfigs: [String] = []
         var configOptions: [(key: String, value: String)] = []
@@ -26,10 +44,9 @@ class FileParser {
         }
         for rawconfig in rawConfigs {
             let lines = rawconfig.split(whereSeparator: \.isNewline)
-            // TODO(cloudnull): the line parser should handle a multi-line VERB.
-            for line in lines {
-                let trimmed = line.replacingOccurrences(of: "#.*", with: "", options: [.regularExpression])
-                let cleanedLine = trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
+            LineData.lines = lines.makeIterator()
+            while let line = LineData.lines.next() {
+                let cleanedLine = trimLine(line: line)
                 if !cleanedLine.isEmpty {
                     let verbArray = cleanedLine.split(separator: " ", maxSplits: 1).map(String.init)
                     do {

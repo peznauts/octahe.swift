@@ -43,6 +43,7 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
             $0[cleanedKey] = cleanedValue
         }
     }
+    print(octaheLabels)
 
     let octaheArgs = configFiles.filter{$0.key == "ARG" || $0.key == "ENV"}.map{$0.value}.reduce(into: [String: String]()) {
         // This needs work, the ARG/ENV/LABEL format has three types: k=v, k v, k.
@@ -54,6 +55,7 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
             $0[cleanedKey] = cleanedValue
         }
     }
+    print(octaheArgs)
 
     // Filter FROM options to send for introspection to return additional config from a container registry.
     let octaheFrom = configFiles.filter{$0.key == "FROM"}.map{$0.value}
@@ -72,5 +74,6 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
 
     // Return only a valid config.
     let octaheConfig = octaheVerbs.filter{$0.key != "TO"}
+    print(octaheConfig)
     print("Successfully deployed.")
 }
