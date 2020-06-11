@@ -13,7 +13,22 @@ enum RouterError: Error {
     case NotImplemented(message: String)
 }
 
+func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Dictionary<String, String> {
+    // TODO(cloudnull): ARG/ENV/LABEL format has three types: k=v, k v, k.
+    //                  Additionally multiple arguments can be set on a single line.
+    let data = filteredContent.map{$0.value}.reduce(into: [String: String]()) {
+        let argArray = $1.split(separator: "=", maxSplits: 1)
+        if let key = argArray.first, let value = argArray.last {
+            let cleanedKey = String(key).trimmingCharacters(in: .whitespacesAndNewlines)
+            let cleanedValue = String(value).trimmingCharacters(in: .whitespacesAndNewlines)
+            $0[cleanedKey] = cleanedValue
+        }
+    }
+    return data
+}
+
 func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
+
     let configFiles = try FileParser.buildRawConfigs(
         files: parsedOptions.configurationFiles
     )
@@ -26,35 +41,18 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
     //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
     //    TARGETOS - OS component of TARGETPLATFORM
     //    TARGETARCH - architecture component of TARGETPLATFORM
-    //    TARGETVARIANT - variant component of TARGETPLATFORM\
+    //    TARGETVARIANT - variant component of TARGETPLATFORM
+
     // Sourced from local machine
     //    BUILDPLATFORM - platform of the node performing the build.
     //    BUILDOS - OS component of BUILDPLATFORM
     //    BUILDARCH - architecture component of BUILDPLATFORM
     //    BUILDVARIANT - variant component of BUILDPLATFORM
 
-    // TODO(cloudnull): ARG/ENV/LABEL format has three types: k=v, k v, k.
-    //                  Additionally multiple arguments can be set on a single line.
-    let octaheLabels = configFiles.filter{$0.key == "LABEL"}.map{$0.value}.reduce(into: [String: String]()) {
-        let argArray = $1.split(separator: "=", maxSplits: 1)
-        if let key = argArray.first, let value = argArray.last {
-            let cleanedKey = String(key).trimmingCharacters(in: .whitespacesAndNewlines)
-            let cleanedValue = String(value).trimmingCharacters(in: .whitespacesAndNewlines)
-            $0[cleanedKey] = cleanedValue
-        }
-    }
+    let octaheLabels = BuildDictionary(filteredContent: configFiles.filter{$0.key == "LABEL"})
     print(octaheLabels)
 
-    let octaheArgs = configFiles.filter{$0.key == "ARG" || $0.key == "ENV"}.map{$0.value}.reduce(into: [String: String]()) {
-        // This needs work, the ARG/ENV/LABEL format has three types: k=v, k v, k.
-        // Additionally multiple arguments can be set on a single line.
-        let argArray = $1.split(separator: "=", maxSplits: 1)
-        if let key = argArray.first, let value = argArray.last {
-            let cleanedKey = String(key).trimmingCharacters(in: .whitespacesAndNewlines)
-            let cleanedValue = String(value).trimmingCharacters(in: .whitespacesAndNewlines)
-            $0[cleanedKey] = cleanedValue
-        }
-    }
+    let octaheArgs = BuildDictionary(filteredContent: configFiles.filter{$0.key == "ARG" || $0.key == "ENV"})
     print(octaheArgs)
 
     // Filter FROM options to send for introspection to return additional config from a container registry.
