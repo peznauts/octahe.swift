@@ -11,67 +11,72 @@ import Foundation
 enum RouterError: Error {
     case NoTargets(message: String)
     case NotImplemented(message: String)
+    case MatchRegexError(message: String)
 }
 
-func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Dictionary<String, String> {
-    // TODO(cloudnull): ARG/ENV/LABEL format has three types: k=v, k v, k.
-    //                  Additionally multiple arguments can be set on a single line.
-    let data = filteredContent.map{$0.value}.reduce(into: [String: String]()) {
-        let argArray = $1.split(separator: "=", maxSplits: 1)
-        if let key = argArray.first, let value = argArray.last {
-            let cleanedKey = String(key).trimmingCharacters(in: .whitespacesAndNewlines)
-            let cleanedValue = String(value).trimmingCharacters(in: .whitespacesAndNewlines)
-            $0[cleanedKey] = cleanedValue
+
+struct ConfigParse {
+    let configFiles: [(key: String, value: String)]
+    var runtimeArgs: Dictionary<String, String>
+    var octaheArgs: Dictionary<String, String>
+    let octaheLabels: Dictionary<String, String>
+    let octaheFrom: Array<String>
+    let octaheTargets: [(key: String, value: String)]
+    let octaheDeploy: [(key: String, value: String)]
+    let octaheExposes: [(key: String, value: String)]
+    let octaheCommand: (key: String, value: String)?
+    let octaheEntrypoints: (key: String, value: String)?
+    let octaheEntrypointOptions: [(key: String, value: String)]
+
+    init(parsedOptions: Octahe.Options) throws {
+        self.configFiles = try FileParser.buildRawConfigs(files: parsedOptions.configurationFiles)
+
+        // Create a constant containing all lables.
+        self.octaheLabels = BuildDictionary(filteredContent: self.configFiles.filter{$0.key == "LABEL"})
+
+        // Args are merged into a single Dictionary. This will allow us to apply args to wherever they're needed.
+        self.octaheArgs = PlatformArgs()
+        self.runtimeArgs = BuildDictionary(
+            filteredContent: self.configFiles.filter{key, value in
+                return ["ARG", "ENV"].contains(key)
+            }
+        )
+        self.octaheArgs.merge(self.runtimeArgs) {
+            (current, _) in current
+        }
+        // Filter FROM options to send for introspection to return additional config from a container registry.
+        self.octaheFrom = self.configFiles.filter{$0.key == "FROM"}.map{$0.value}
+        // TODO(zfeldstein): API call to inspect all known FROM instances
+        if self.octaheFrom.count > 0 {
+            print(RouterError.NotImplemented(message: "This is where introspection will be queued..."))
+        }
+
+        // filter all TARGETS.
+        self.octaheTargets = self.configFiles.filter{$0.key == "TO"}
+        if  self.octaheTargets.count < 1 {
+            throw(RouterError.NoTargets(message: "No Targets provided."))
+        } else {
+            print(RouterError.NotImplemented(message: "This is where we connect to targets and validate the deployment solution."))
+        }
+
+        // Return only a valid config.
+        self.octaheDeploy = self.configFiles.filter{key, value in
+            return ["RUN", "COPY", "ADD"].contains(key)
+        }
+        self.octaheExposes = self.configFiles.filter{$0.key == "EXPOSE"}
+        self.octaheCommand = self.configFiles.filter{$0.key == "CMD"}.last
+        self.octaheEntrypoints = self.configFiles.filter{$0.key == "ENTRYPOINT"}.last
+        self.octaheEntrypointOptions = self.configFiles.filter{key, value in
+            return ["HEALTHCHECK", "STOPSIGNAL", "SHELL"].contains(key)
         }
     }
-    return data
 }
 
+
 func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
-
-    let configFiles = try FileParser.buildRawConfigs(
-        files: parsedOptions.configurationFiles
-    )
-
     print("Running function:", function)
-    // Collect the ARG options, they could be used in TO or FROM
-
-    // TODO(cloudnull): The follow args need to be rendered and added to a CONSTANT
-    // Sourced from remote target at runtime
-    //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
-    //    TARGETOS - OS component of TARGETPLATFORM
-    //    TARGETARCH - architecture component of TARGETPLATFORM
-    //    TARGETVARIANT - variant component of TARGETPLATFORM
-
-    // Sourced from local machine
-    //    BUILDPLATFORM - platform of the node performing the build.
-    //    BUILDOS - OS component of BUILDPLATFORM
-    //    BUILDARCH - architecture component of BUILDPLATFORM
-    //    BUILDVARIANT - variant component of BUILDPLATFORM
-
-    let octaheLabels = BuildDictionary(filteredContent: configFiles.filter{$0.key == "LABEL"})
-    print(octaheLabels)
-
-    let octaheArgs = BuildDictionary(filteredContent: configFiles.filter{$0.key == "ARG" || $0.key == "ENV"})
-    print(octaheArgs)
-
-    // Filter FROM options to send for introspection to return additional config from a container registry.
-    let octaheFrom = configFiles.filter{$0.key == "FROM"}.map{$0.value}
-    if octaheFrom.count > 0 {
-        throw(RouterError.NotImplemented(message: "This is where introspection will be queued..."))
-    }
-
-    // Filter all FROM options, they're not used any longer.
-    let octaheVerbs = configFiles.filter{$0.key != "FROM"}
-
-    // filter all TARGETS.
-    let targets = octaheVerbs.filter{$0.key == "TO"}
-    if targets.count < 1 {
-        throw(RouterError.NoTargets(message: "No Targets provided."))
-    }
-
-    // Return only a valid config.
-    let octaheConfig = octaheVerbs.filter{$0.key != "TO"}
-    print(octaheConfig)
+    let octaheArgs = try ConfigParse(parsedOptions: parsedOptions)
+    // Retried struct vars just to make sure its working.
+    print(octaheArgs.octaheArgs as Any)
     print("Successfully deployed.")
 }
