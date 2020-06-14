@@ -21,16 +21,22 @@ struct ConfigParse {
     var runtimeArgs: Dictionary<String, String>
     var octaheArgs: Dictionary<String, String>
     let octaheLabels: Dictionary<String, String>
-    var octaheFrom: Array<AnyObject> = []
-    var octaheTargets: [(to: String, via: String?, escalate: String?, name: String?)] = []
-    var octaheDeploy: Array<AnyObject> = []
-    var octaheExposes: Array<AnyObject> = []
+    typealias typeFrom = (platform: String?, image: String, name: String?)
+    var octaheFrom: [String] = []
+    var octaheFromHash: [String: typeFrom] = [:]
+    typealias typeTarget = (to: String, via: String?, escalate: String?, name: String?)
+    var octaheTargets: [[String]] = []
+    var octaheTargetHash: [String: typeTarget] = [:]
+    typealias typeDeploy = (execute: String?, chown: String?, location: String?, destination: String?, from: String?)
+    var octaheDeploy: [(key: String, value: typeDeploy)] = []
+    typealias typeExposes = (port: String, nat: Substring?, proto: String?)
+    var octaheExposes: [(key: String, value: typeExposes)] = []
     let octaheCommand: (key: String, value: String)?
     let octaheEntrypoints: (key: String, value: String)?
     let octaheEntrypointOptions: [(key: String, value: String)]
 
     init(parsedOptions: Octahe.Options) throws {
-        func parseTarget(stringTarget: String) throws -> (to: String, via: String?, escalate: String?, name: String?) {
+        func parseTarget(stringTarget: String) throws -> typeTarget {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
             do {
@@ -50,12 +56,13 @@ struct ConfigParse {
 
         }
 
-        func parseAddCopy(stringAddCopy: String) throws -> (chown: String?, location: String, destination: String, from: String?) {
+        func parseAddCopy(stringAddCopy: String) throws -> typeDeploy {
             // Target parse string argyments and return a tuple.
             let arrayCopyAdd = stringAddCopy.components(separatedBy: " ")
             do {
                 let parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
                 return (
+                    execute: nil,
                     chown: parsedCopyAdd.chown,
                     location: parsedCopyAdd.location,
                     destination: parsedCopyAdd.destination,
@@ -69,16 +76,18 @@ struct ConfigParse {
             }
         }
 
-        func parseFrom(stringFrom: String) throws -> (platform: String?, image: String, name: String?) {
+        func parseFrom(stringFrom: String) throws -> typeFrom {
             // Target parse string argyments and return a tuple.
             let arrayFrom = stringFrom.components(separatedBy: " ")
             do {
                 let parsedFrom = try OptionsFrom.parse(arrayFrom)
-                return (
+                let name = parsedFrom.name ?? parsedFrom.image
+                let fromData = (
                     platform: parsedFrom.platform,
                     image: parsedFrom.image,
-                    name: parsedFrom.name
+                    name: name
                 )
+                return fromData
             } catch {
                 throw RouterError.FailedParsing(
                     message: "Parsing FROM information has failed",
@@ -87,7 +96,7 @@ struct ConfigParse {
             }
         }
 
-        func parseExpose(stringExpose: String) throws -> (port: String, nat: Substring?, proto: String?) {
+        func parseExpose(stringExpose: String) throws -> typeExposes {
             // Target parse string argyments and return a tuple.
             let arrayExpose = stringExpose.components(separatedBy: " ")
             do {
@@ -124,24 +133,29 @@ struct ConfigParse {
         }
         // Filter FROM options to send for introspection to return additional config from a container registry.
         let deployFroms = self.configFiles.filter{$0.key == "FROM"}.map{$0.value}
-        for deployFrom in deployFroms {
+        for deployFrom in deployFroms.reversed() {
             let from = try parseFrom(stringFrom: deployFrom)
-            self.octaheFrom.append((key: "FROM", value: from) as AnyObject)
+            self.octaheFromHash[from.name!] = from
+            self.octaheFrom.append(from.name!)
         }
 
         // filter all TARGETS.
+        var targets: Array<String> = []
         if parsedOptions.targets.count >= 1 {
             for target in parsedOptions.targets {
                 let target = try parseTarget(stringTarget: target)
-                self.octaheTargets.append(target)
+                self.octaheTargetHash[target.name!] = target
+                targets.append(target.name!)
             }
         } else {
             let filteredTargets = self.configFiles.filter{$0.key == "TO"}
             for target in filteredTargets {
                 let target = try parseTarget(stringTarget: target.value)
-                self.octaheTargets.append(target)
+                self.octaheTargetHash[target.name!] = target
+                targets.append(target.name!)
             }
         }
+        self.octaheTargets = targets.chunked(into: parsedOptions.connectionQuota)
 
         // Return only a valid config.
         let deployOptions = self.configFiles.filter{key, value in
@@ -150,16 +164,26 @@ struct ConfigParse {
         for deployOption in deployOptions {
             if ["COPY", "ADD"].contains(deployOption.key) {
                 let addCopy = try parseAddCopy(stringAddCopy: deployOption.value)
-                self.octaheDeploy.append((key: deployOption.key, value: addCopy) as AnyObject)
+                self.octaheDeploy.append((key: deployOption.key, value: addCopy))
             } else {
-                self.octaheDeploy.append(deployOption as AnyObject)
+                self.octaheDeploy.append(
+                    (
+                        key: deployOption.key,
+                        value: (
+                            execute: deployOption.value,
+                            chown: nil,
+                            location: nil,
+                            destination: nil,
+                            from: nil
+                        )
+                    )
+                )
             }
-
         }
         let exposes = self.configFiles.filter{$0.key == "EXPOSE"}
         for expose in exposes {
             let exposeParsed = try parseExpose(stringExpose: expose.value)
-            self.octaheExposes.append((key: expose.key, value: exposeParsed) as AnyObject)
+            self.octaheExposes.append((key: expose.key, value: exposeParsed))
         }
 
         self.octaheCommand = self.configFiles.filter{$0.key == "CMD"}.last
@@ -177,17 +201,31 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
 
     if Args.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
+        for from in Args.octaheFrom {
+            // For every entry in FROM, we should insert the layers into our deployment plan.
+            // This logic may need to be in the ConfigParse struct?
+            print(Args.octaheFromHash[from]!.name!)
+            print(
+                RouterError.NotImplemented(
+                    message: "This is where introspection will be queued..."
+                )
+            )
+        }
+    }
+    for targetGroup in Args.octaheTargets {
         print(
             RouterError.NotImplemented(
-                message: "This is where introspection will be queued..."
+                message: "This will initialize a thread pool for the selected target group."
+            ), targetGroup
+        )
+        for target in targetGroup {
+            print("Target Data: ", Args.octaheTargetHash[target]!)
+        }
+        print(
+            RouterError.NotImplemented(
+                message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
             )
         )
     }
-    print(
-        RouterError.NotImplemented(
-            message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
-        )
-    )
-    print(Args.octaheExposes)
     print("Successfully deployed.")
 }

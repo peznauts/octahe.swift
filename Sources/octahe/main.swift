@@ -121,9 +121,10 @@ struct Octahe: ParsableCommand {
 
         @Option(
             name: .shortAndLong,
+            default: 1,
             help: "Limit the total number of concurrent connections per group."
         )
-        var connectionQuota: Int?
+        var connectionQuota: Int
         
         @Flag(
             help: """
