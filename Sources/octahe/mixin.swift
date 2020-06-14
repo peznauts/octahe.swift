@@ -7,40 +7,6 @@
 
 import Foundation
 
-protocol Queue {
-    associatedtype Element
-
-    //enqueue：add an object to the end of the Queue
-    mutating func enqueue(_ element: Element)
-
-    //dequeue：delete the object at the beginning of the Queue
-    mutating func dequeue() -> Element?
-
-    //isEmpty：check if the Queue is nil
-    var isEmpty: Bool { get }
-
-    //peek：return the object at the beginning of the Queue without removing it
-    var peek: Element? { get }
-}
-
-
-struct QueueArray<T>: Queue {
-    private var array = [T]()
-    var isEmpty: Bool {
-        return array.isEmpty
-    }
-    var peek: T? {
-        return array.first
-    }
-    mutating func enqueue(_ element: T) {
-        array.append(element)
-    }
-    @discardableResult
-    mutating func dequeue() -> T? {
-        return array.isEmpty ? nil : array.removeFirst()
-    }
-}
-
 
 func PlatformArgs() -> Dictionary<String, String> {
     // Sourced from local machine
@@ -107,4 +73,11 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
         }
     }
     return data
+}
+
+
+extension String {
+    var isInt: Bool {
+        return Int(self) != nil
+    }
 }

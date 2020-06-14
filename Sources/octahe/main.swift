@@ -12,6 +12,99 @@ import Foundation
 
 import ArgumentParser
 
+
+struct OptionsTarget: ParsableArguments {
+    // Add option parsing for target configs found within config.
+    @Option(
+        name: .long,
+        help: "Proxy target."
+    )
+    var via: String?
+
+    @Option(
+        name: .long,
+        help: "Escalation binary."
+    )
+    var escalate: String?
+
+    @Option(
+        name: .long,
+        help: "Friendly node name."
+    )
+    var name: String?
+
+    @Argument(
+        help: "Target host."
+    )
+    var target: String
+}
+
+
+struct OptionsAddCopy: ParsableArguments {
+    // Add option parsing for target configs found within config.
+    @Option(
+        name: .long,
+        help: "Set the owner of a file or directory."
+    )
+    var chown: String?
+
+    @Option(
+        name: .long,
+        help: "This argument is unused and kept only for OCI file compatibility."
+    )
+    var from: String?
+
+    @Argument(
+        help: "Local file location."
+    )
+    var location: String
+
+    @Argument(
+        help: "Remote file destination."
+    )
+    var destination: String
+}
+
+
+struct OptionsFrom: ParsableArguments {
+    // Add option parsing for target configs found within config.
+    @Option(
+        name: .long,
+        help: "Used to specify the platform of a base image."
+    )
+    var platform: String?
+
+    @Argument(
+        help: "Image information."
+    )
+    var image: String
+
+    @Argument(
+        help: "Image information."
+    )
+    var AS: String?
+
+    @Argument(
+        help: "Image information."
+    )
+    var name: String?
+}
+
+
+struct OptionsExpose: ParsableArguments {
+    // Add option parsing for target configs found within config.
+    @Argument(
+        help: "Used to expose a given port"
+    )
+    var port: String
+
+    @Argument(
+        help: "Nat port."
+    )
+    var nat: String?
+}
+
+
 struct Octahe: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Octahe, a utility for deploying OCI compatible applications.",
@@ -40,7 +133,7 @@ struct Octahe: ParsableCommand {
                   """
         )
         var dryRun: Bool
-        
+
         @Option(
             name: .shortAndLong,
             help: "Escalation binary."
@@ -77,10 +170,11 @@ struct Octahe: ParsableCommand {
     }
 }
 
+
 extension Octahe {
     struct Deploy: ParsableCommand {
         static var configuration = CommandConfiguration(
-                abstract: "Run a deployment for a given OCI compatible application."
+            abstract: "Run a deployment for a given OCI compatible application."
         )
 
         @OptionGroup()
@@ -94,7 +188,7 @@ extension Octahe {
     
     struct UnDeploy: ParsableCommand {
         static var configuration = CommandConfiguration(
-                abstract: "Disable a deployment for a given OCI compatible application."
+            abstract: "Disable a deployment for a given OCI compatible application."
         )
 
         @OptionGroup()
@@ -106,5 +200,6 @@ extension Octahe {
         }
     }
 }
+
 
 Octahe.main()

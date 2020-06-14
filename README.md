@@ -220,10 +220,10 @@ Degrated hosts:
 ##### Manual target Example
 
 To rerun a failed execution on only the failed targets specify the targets on the CLI using the
-`--target` flag.
+`--targets` flag.
 
 ``` shell
-octahe deploy --connection-quota=3 --target="10.0.0.4:22@root,10.0.0.6:22@root" ~/Targetfile
+octahe deploy --connection-quota=3 --targets="--name node1 10.0.0.4:22@root" --targets="--via node1 10.0.0.6:22@root" --targets="10.0.0.8:22@root" ~/Targetfile
 ```
 
 ``` console
@@ -231,7 +231,7 @@ Step 0/4 : FROM image-name:tag-id
  ---> done
 Step 1/4 : ARG USER=access-user
  ---> done
-Step 2/4 : TO [("10.0.0.4:22@root", "10.0.0.6:22@root")]
+Step 2/4 : TO [("10.0.0.4:22@root", "10.0.0.6:22@root", "10.0.0.8:22@root")]
  ---> done
 Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
  ---> done
