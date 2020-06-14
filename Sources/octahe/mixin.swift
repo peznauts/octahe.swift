@@ -35,6 +35,7 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
         let cleanedItem = item.replacingOccurrences(of: "\\ ", with: " ")
         return cleanedItem.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: trimitems)
     }
+    
     func matches(regex: String, text: String) -> Array<String> {
         do {
             let regex = try NSRegularExpression(pattern: regex)
@@ -77,6 +78,7 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
 
 
 extension String {
+    // String extension allowing us to evaluate if any string is actually an Int.
     var isInt: Bool {
         return Int(self) != nil
     }

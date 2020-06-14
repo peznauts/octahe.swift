@@ -12,6 +12,7 @@ enum RouterError: Error {
     case NoTargets(message: String)
     case NotImplemented(message: String)
     case MatchRegexError(message: String)
+    case FailedParsing(message: String, component: String)
 }
 
 
@@ -29,52 +30,81 @@ struct ConfigParse {
     let octaheEntrypointOptions: [(key: String, value: String)]
 
     init(parsedOptions: Octahe.Options) throws {
-        func parseTarget(stringTarget: String) -> (to: String, via: String?, escalate: String?, name: String?) {
+        func parseTarget(stringTarget: String) throws -> (to: String, via: String?, escalate: String?, name: String?) {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
-            let parsedTarget = try! OptionsTarget.parse(arrayTarget)
-            return (
-                to: parsedTarget.target,
-                via: parsedTarget.via ?? "localhost",
-                escalate: parsedTarget.escalate,
-                name: parsedTarget.name ?? parsedTarget.target
-            )
+            do {
+                let parsedTarget = try OptionsTarget.parse(arrayTarget)
+                return (
+                    to: parsedTarget.target,
+                    via: parsedTarget.via ?? "localhost",
+                    escalate: parsedTarget.escalate,
+                    name: parsedTarget.name ?? parsedTarget.target
+                )
+            } catch {
+                throw RouterError.FailedParsing(
+                    message: "Parsing TO information has failed",
+                    component: stringTarget
+                )
+            }
+
         }
 
-        func parseAddCopy(stringAddCopy: String) -> (chown: String?, location: String, destination: String, from: String?) {
+        func parseAddCopy(stringAddCopy: String) throws -> (chown: String?, location: String, destination: String, from: String?) {
             // Target parse string argyments and return a tuple.
             let arrayCopyAdd = stringAddCopy.components(separatedBy: " ")
-            let parsedCopyAdd = try! OptionsAddCopy.parse(arrayCopyAdd)
-            return (
-                chown: parsedCopyAdd.chown,
-                location: parsedCopyAdd.location,
-                destination: parsedCopyAdd.destination,
-                from: parsedCopyAdd.from
-            )
+            do {
+                let parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
+                return (
+                    chown: parsedCopyAdd.chown,
+                    location: parsedCopyAdd.location,
+                    destination: parsedCopyAdd.destination,
+                    from: parsedCopyAdd.from
+                )
+            } catch {
+                throw RouterError.FailedParsing(
+                    message: "Parsing ADD/COPY information has failed",
+                    component: stringAddCopy
+                )
+            }
         }
 
-        func parseFrom(stringFrom: String) -> (platform: String?, image: String, name: String?) {
+        func parseFrom(stringFrom: String) throws -> (platform: String?, image: String, name: String?) {
             // Target parse string argyments and return a tuple.
             let arrayFrom = stringFrom.components(separatedBy: " ")
-            let parsedFrom = try! OptionsFrom.parse(arrayFrom)
-            return (
-                platform: parsedFrom.platform,
-                image: parsedFrom.image,
-                name: parsedFrom.name
-            )
+            do {
+                let parsedFrom = try OptionsFrom.parse(arrayFrom)
+                return (
+                    platform: parsedFrom.platform,
+                    image: parsedFrom.image,
+                    name: parsedFrom.name
+                )
+            } catch {
+                throw RouterError.FailedParsing(
+                    message: "Parsing FROM information has failed",
+                    component: stringFrom
+                )
+            }
         }
 
-        func parseExpose(stringExpose: String) -> (port: String, nat: Substring?, proto: String?) {
+        func parseExpose(stringExpose: String) throws -> (port: String, nat: Substring?, proto: String?) {
             // Target parse string argyments and return a tuple.
             let arrayExpose = stringExpose.components(separatedBy: " ")
-            let parsedExpose = try! OptionsExpose.parse(arrayExpose)
-            let natPort = parsedExpose.nat?.split(separator: "/", maxSplits: 1)
-            let proto = natPort?[1] ?? "tcp"
-            return (
-                port: parsedExpose.port,
-                nat: natPort?.first,
-                proto: proto.lowercased()
-            )
+            do {
+                let parsedExpose = try OptionsExpose.parse(arrayExpose)
+                let natPort = parsedExpose.nat?.split(separator: "/", maxSplits: 1)
+                let proto = natPort?[1] ?? "tcp"
+                return (
+                    port: parsedExpose.port,
+                    nat: natPort?.first,
+                    proto: proto.lowercased()
+                )
+            } catch {
+                throw RouterError.FailedParsing(
+                    message: "Parsing EXPOSE information has failed",
+                    component: stringExpose
+                )
+            }
         }
 
         self.configFiles = try FileParser.buildRawConfigs(files: parsedOptions.configurationFiles)
@@ -95,20 +125,20 @@ struct ConfigParse {
         // Filter FROM options to send for introspection to return additional config from a container registry.
         let deployFroms = self.configFiles.filter{$0.key == "FROM"}.map{$0.value}
         for deployFrom in deployFroms {
-            let from = parseFrom(stringFrom: deployFrom)
+            let from = try parseFrom(stringFrom: deployFrom)
             self.octaheFrom.append((key: "FROM", value: from) as AnyObject)
         }
 
         // filter all TARGETS.
         if parsedOptions.targets.count >= 1 {
             for target in parsedOptions.targets {
-                let target = parseTarget(stringTarget: target)
+                let target = try parseTarget(stringTarget: target)
                 self.octaheTargets.append(target)
             }
         } else {
             let filteredTargets = self.configFiles.filter{$0.key == "TO"}
             for target in filteredTargets {
-                let target = parseTarget(stringTarget: target.value)
+                let target = try parseTarget(stringTarget: target.value)
                 self.octaheTargets.append(target)
             }
         }
@@ -119,7 +149,7 @@ struct ConfigParse {
         }
         for deployOption in deployOptions {
             if ["COPY", "ADD"].contains(deployOption.key) {
-                let addCopy = parseAddCopy(stringAddCopy: deployOption.value)
+                let addCopy = try parseAddCopy(stringAddCopy: deployOption.value)
                 self.octaheDeploy.append((key: deployOption.key, value: addCopy) as AnyObject)
             } else {
                 self.octaheDeploy.append(deployOption as AnyObject)
@@ -128,7 +158,7 @@ struct ConfigParse {
         }
         let exposes = self.configFiles.filter{$0.key == "EXPOSE"}
         for expose in exposes {
-            let exposeParsed = parseExpose(stringExpose: expose.value)
+            let exposeParsed = try parseExpose(stringExpose: expose.value)
             self.octaheExposes.append((key: expose.key, value: exposeParsed) as AnyObject)
         }
 
