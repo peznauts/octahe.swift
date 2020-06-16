@@ -8,44 +8,36 @@
 import Foundation
 
 
-enum RouterError: Error {
-    case NoTargets(message: String)
-    case NotImplemented(message: String)
-    case MatchRegexError(message: String)
-    case FailedParsing(message: String, component: String)
-}
-
-
 struct ConfigParse {
     let configFiles: [(key: String, value: String)]
     var runtimeArgs: Dictionary<String, String>
     var octaheArgs: Dictionary<String, String>
     let octaheLabels: Dictionary<String, String>
-    typealias typeFrom = (platform: String?, image: String, name: String?)
     var octaheFrom: [String] = []
     var octaheFromHash: [String: typeFrom] = [:]
-    typealias typeTarget = (to: String, via: String?, escalate: String?, name: String?)
     var octaheTargets: [[String]] = []
     var octaheTargetHash: [String: typeTarget] = [:]
-    typealias typeDeploy = (execute: String?, chown: String?, location: String?, destination: String?, from: String?)
     var octaheDeploy: [(key: String, value: typeDeploy)] = []
-    typealias typeExposes = (port: String, nat: Substring?, proto: String?)
     var octaheExposes: [(key: String, value: typeExposes)] = []
     let octaheCommand: (key: String, value: String)?
     let octaheEntrypoints: (key: String, value: String)?
     let octaheEntrypointOptions: [(key: String, value: String)]
 
     init(parsedOptions: Octahe.Options) throws {
-        func parseTarget(stringTarget: String) throws -> typeTarget {
+        func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
             do {
                 let parsedTarget = try OptionsTarget.parse(arrayTarget)
+                let viaHost = parsedTarget.via.last ?? "localhost"
                 return (
-                    to: parsedTarget.target,
-                    via: parsedTarget.via ?? "localhost",
-                    escalate: parsedTarget.escalate,
-                    name: parsedTarget.name ?? parsedTarget.target
+                    (
+                        to: parsedTarget.target,
+                        via: viaHost,
+                        escalate: parsedTarget.escalate,
+                        name: parsedTarget.name ?? parsedTarget.target
+                    ),
+                    parsedTarget.via
                 )
             } catch {
                 throw RouterError.FailedParsing(
@@ -116,6 +108,24 @@ struct ConfigParse {
             }
         }
 
+        func viaLoad(viaHosts: [String]) {
+            var nextVia: String
+            let viaCount = viaHosts.count
+            let viaHostsReversed = Array(viaHosts.reversed())
+            if viaCount > 0 {
+                for (index, element) in viaHostsReversed.enumerated() {
+                    nextVia = viaHostsReversed.getNextElement(index: index) ?? "localhost"
+                    print(index, nextVia, element)
+                    self.octaheTargetHash[element] = (
+                        to: element,
+                        via: nextVia,
+                        escalate: nil,
+                        name: element
+                    )
+                }
+            }
+        }
+
         self.configFiles = try FileParser.buildRawConfigs(files: parsedOptions.configurationFiles)
 
         // Create a constant containing all lables.
@@ -139,23 +149,6 @@ struct ConfigParse {
             self.octaheFrom.append(from.name!)
         }
 
-        // filter all TARGETS.
-        var targets: Array<String> = []
-        if parsedOptions.targets.count >= 1 {
-            for target in parsedOptions.targets {
-                let target = try parseTarget(stringTarget: target)
-                self.octaheTargetHash[target.name!] = target
-                targets.append(target.name!)
-            }
-        } else {
-            let filteredTargets = self.configFiles.filter{$0.key == "TO"}
-            for target in filteredTargets {
-                let target = try parseTarget(stringTarget: target.value)
-                self.octaheTargetHash[target.name!] = target
-                targets.append(target.name!)
-            }
-        }
-        self.octaheTargets = targets.chunked(into: parsedOptions.connectionQuota)
 
         // Return only a valid config.
         let deployOptions = self.configFiles.filter{key, value in
@@ -191,6 +184,26 @@ struct ConfigParse {
         self.octaheEntrypointOptions = self.configFiles.filter{key, value in
             return ["HEALTHCHECK", "STOPSIGNAL", "SHELL"].contains(key)
         }
+
+        // filter all TARGETS.
+        var targets: Array<String> = []
+        if parsedOptions.targets.count >= 1 {
+            for target in parsedOptions.targets {
+                let (target, viaHosts) = try parseTarget(stringTarget: target)
+                viaLoad(viaHosts: viaHosts)
+                self.octaheTargetHash[target.name!] = target
+                targets.append(target.name!)
+            }
+        } else {
+            let filteredTargets = self.configFiles.filter{$0.key == "TO"}
+            for target in filteredTargets {
+                let (target, viaHosts) = try parseTarget(stringTarget: target.value)
+                viaLoad(viaHosts: viaHosts)
+                self.octaheTargetHash[target.name!] = target
+                targets.append(target.name!)
+            }
+        }
+        self.octaheTargets = targets.chunked(into: parsedOptions.connectionQuota)
     }
 }
 
@@ -198,6 +211,7 @@ struct ConfigParse {
 func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
     print("Running function:", function)
     let Args = try ConfigParse(parsedOptions: parsedOptions)
+    let conn = ExecuteSSH(cliParameters: parsedOptions, processParams: Args)
 
     if Args.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
@@ -218,8 +232,9 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
                 message: "This will initialize a thread pool for the selected target group."
             ), targetGroup
         )
+        // This is serial, but should be threaded.
         for target in targetGroup {
-            print("Target Data: ", Args.octaheTargetHash[target]!)
+            try conn.connect(target: target)
         }
         print(
             RouterError.NotImplemented(
@@ -227,5 +242,6 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
             )
         )
     }
+    print(Args.octaheTargetHash)
     print("Successfully deployed.")
 }

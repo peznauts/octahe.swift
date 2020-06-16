@@ -8,6 +8,21 @@
 import Foundation
 
 
+typealias typeFrom = (platform: String?, image: String, name: String?)
+typealias typeTarget = (to: String, via: String?, escalate: String?, name: String?)
+typealias typeDeploy = (execute: String?, chown: String?, location: String?, destination: String?, from: String?)
+typealias typeExposes = (port: String, nat: Substring?, proto: String?)
+
+
+enum RouterError: Error {
+    case NoTargets(message: String)
+    case NotImplemented(message: String)
+    case MatchRegexError(message: String)
+    case FailedParsing(message: String, component: String)
+    case FailedConnection(message: String, targetData: typeTarget)
+}
+
+
 func PlatformArgs() -> Dictionary<String, String> {
     // Sourced from local machine
     //    BUILDPLATFORM - platform of the node performing the build.
@@ -89,5 +104,11 @@ extension Array {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])
         }
+    }
+
+    func getNextElement(index: Int) -> Element? {
+        let nextIndex = index + 1
+        let isValidIndex = nextIndex >= 0 && nextIndex < count
+        return isValidIndex ? self[nextIndex] : nil
     }
 }

@@ -19,7 +19,7 @@ struct OptionsTarget: ParsableArguments {
         name: .long,
         help: "Proxy target."
     )
-    var via: String?
+    var via: [String]
 
     @Option(
         name: .long,
