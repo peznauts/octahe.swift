@@ -7,7 +7,10 @@
 
 # Octahe
 
-Configure targets using OCI compatible files.
+Take your application to a new low by devolving the stack. Octahe allows you to simplfy operations,
+create concies applications, and focus on what you do best.
+
+###### Test in containers, Deploy `TO` production.
 
 ## Why
 
@@ -64,7 +67,7 @@ TO   --escalate=/usr/bin/sudo --name=bastion0 127.0.0.1:22@${USER}
 RUN  dnf install -y curl
 ```
 
-The optional `--via` flag can be used to specify the "bastion" used to transport the connection.
+The optional `--via` flag can be used to specify the "bastion" used to transport a connection.
 This provides the means to proxy a connection through another node into an environment. The syntax
 for the `--via` optional argument follows the same mechanics as the `TO` verb; the `--via` argument
 can accept the "name" of a given host.
@@ -81,9 +84,20 @@ TO   --escalate=/usr/bin/sudo --via=bastion1 127.0.0.3:22@${USER}  # Connection 
 RUN  dnf install -y curl
 ```
 
+The `--via` flag can be used more than once within a given TO argument. When used more than once
+the system will create an array which is FILO, allowing a node to poxy through multiple hosts.
+
+``` dockerfile
+ARG  USER=access-user
+FROM image-name:tag-id
+TO   --escalate=/usr/bin/sudo --via=user@bastion0 --via=user@bastion1 127.0.0.3:22@${USER}
+RUN  dnf install -y curl
+```
+
 #### FROM
 
-The **FROM** instruction will pull a container image, inspect the layers, and derive all compatible verbs which are then inserted into the execution process.
+The **FROM** instruction will pull a container image, inspect the layers, and derive all compatible verbs
+which are then inserted into the execution process.
 
 #### ENTRYPOINT
 
