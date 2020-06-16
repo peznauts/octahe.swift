@@ -19,9 +19,9 @@ struct ConfigParse {
     var octaheTargetHash: [String: typeTarget] = [:]
     var octaheDeploy: [(key: String, value: typeDeploy)] = []
     var octaheExposes: [(key: String, value: typeExposes)] = []
-    let octaheCommand: (key: String, value: String)?
-    let octaheEntrypoints: (key: String, value: String)?
-    let octaheEntrypointOptions: [(key: String, value: String)]
+    let octaheCommand: String?
+    let octaheEntrypoints: String?
+    let octaheEntrypointOptions: typeEntrypointOptions
 
     init(parsedOptions: Octahe.Options) throws {
         func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
@@ -52,12 +52,15 @@ struct ConfigParse {
             // Target parse string argyments and return a tuple.
             let arrayCopyAdd = stringAddCopy.components(separatedBy: " ")
             do {
-                let parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
+                var parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
+                let destination = parsedCopyAdd.transfer.last
+                parsedCopyAdd.transfer.removeLast()
+                let location = parsedCopyAdd.transfer
                 return (
                     execute: nil,
                     chown: parsedCopyAdd.chown,
-                    location: parsedCopyAdd.location,
-                    destination: parsedCopyAdd.destination,
+                    location: location,
+                    destination: destination,
                     from: parsedCopyAdd.from
                 )
             } catch {
@@ -179,8 +182,10 @@ struct ConfigParse {
             self.octaheExposes.append((key: expose.key, value: exposeParsed))
         }
 
-        self.octaheCommand = self.configFiles.filter{$0.key == "CMD"}.last
-        self.octaheEntrypoints = self.configFiles.filter{$0.key == "ENTRYPOINT"}.last
+        let command = self.configFiles.filter{$0.key == "CMD"}.last
+        self.octaheCommand = command?.value
+        let entrypoint = self.configFiles.filter{$0.key == "ENTRYPOINT"}.last
+        self.octaheEntrypoints = entrypoint?.value
         self.octaheEntrypointOptions = self.configFiles.filter{key, value in
             return ["HEALTHCHECK", "STOPSIGNAL", "SHELL"].contains(key)
         }
@@ -235,6 +240,14 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
         // This is serial, but should be threaded.
         for target in targetGroup {
             try conn.connect(target: target)
+            for deployItem in Args.octaheDeploy {
+                try conn.deploy(deployItem: deployItem.value)
+            }
+            conn.serviceTemplate(
+                command: Args.octaheCommand,
+                entrypoint: Args.octaheEntrypoints,
+                entrypointOptions: Args.octaheEntrypointOptions
+            )
         }
         print(
             RouterError.NotImplemented(
@@ -242,6 +255,5 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
             )
         )
     }
-    print(Args.octaheTargetHash)
     print("Successfully deployed.")
 }

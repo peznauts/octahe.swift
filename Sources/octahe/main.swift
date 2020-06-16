@@ -55,14 +55,9 @@ struct OptionsAddCopy: ParsableArguments {
     var from: String?
 
     @Argument(
-        help: "Local file location."
+        help: "File transfers, the last string in the argument is used as the destination."
     )
-    var location: String
-
-    @Argument(
-        help: "Remote file destination."
-    )
-    var destination: String
+    var transfer: [String]
 }
 
 

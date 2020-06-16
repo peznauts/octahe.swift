@@ -58,7 +58,7 @@ RUN  dnf install -y curl
 ```
 
 The optional `--name` flag can be used to specify a friendly "name" of a given node. If a name is
-not provided, the system will assign the given target a "name" using a SHA1.
+not provided, the system will assign the given target a "name" using a MD5 sum.
 
 ``` dockerfile
 ARG  USER=access-user
@@ -106,7 +106,7 @@ result in the entrypoint commanded running on system start. All systemd `oneshot
 will be placed in `/etc/systemd/system/octahe/`. Where they will be enabled but not started
 upon creation.
 
-> To ensure that the generated `ENTRYPOINT` service file is unique, a SHA1 of the
+> To ensure that the generated `ENTRYPOINT` service file is unique, a MD5 SUM of the
   `ENTRYPOINT` value will be generated as the service file name.
 
 #### CMD

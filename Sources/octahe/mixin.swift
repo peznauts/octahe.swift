@@ -6,13 +6,14 @@
 //
 
 import Foundation
+import CommonCrypto
 
 
 typealias typeFrom = (platform: String?, image: String, name: String?)
 typealias typeTarget = (to: String, via: String?, escalate: String?, name: String?)
-typealias typeDeploy = (execute: String?, chown: String?, location: String?, destination: String?, from: String?)
+typealias typeDeploy = (execute: String?, chown: String?, location: [String]?, destination: String?, from: String?)
 typealias typeExposes = (port: String, nat: Substring?, proto: String?)
-
+typealias typeEntrypointOptions = [(key: String, value: String)]
 
 enum RouterError: Error {
     case NoTargets(message: String)
@@ -96,6 +97,16 @@ extension String {
     // String extension allowing us to evaluate if any string is actually an Int.
     var isInt: Bool {
         return Int(self) != nil
+    }
+
+    var md5: String {
+        let data = Data(self.utf8)
+        let hash = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> [UInt8] in
+            var hash = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+            CC_MD5(bytes.baseAddress, CC_LONG(data.count), &hash)
+            return hash
+        }
+        return hash.map { String(format: "%02x", $0) }.joined()
     }
 }
 

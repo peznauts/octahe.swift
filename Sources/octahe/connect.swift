@@ -35,12 +35,33 @@ class Execution {
         preconditionFailure("This method must be overridden")
     }
 
-    func execute() {
-        preconditionFailure("This method must be overridden")
+    private func run(execute: String) {
+        print("RUN:", execute)
     }
 
-    func copy() {
-        preconditionFailure("This method must be overridden")
+    private func copy(to: String, from: [String]) {
+        for file in from {
+            print("ADD or COPY:", file, to)
+        }
+    }
+
+    func deploy(deployItem: typeDeploy) throws {
+        if deployItem.execute != nil {
+            run(execute: deployItem.execute!)
+        } else if deployItem.destination != nil && deployItem.location != nil {
+            copy(to: deployItem.destination!, from: deployItem.location!)
+        }
+    }
+
+    func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) {
+        // Generate a local template, and transfer it to the remote host
+        print("Creating serive templates")
+        let hashedFile = entrypoint ?? command
+        if hashedFile != nil {
+            let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
+            copy(to: "/etc/systemd/system/" + serviceFile, from: ["/tmp/" + serviceFile])
+        }
+
     }
 }
 
