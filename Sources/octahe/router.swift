@@ -24,8 +24,9 @@ struct ConfigParse {
     let octaheEntrypoints: String?
     let octaheEntrypointOptions: typeEntrypointOptions
     var octaheLocal: Bool = false
+    let configDirURL: URL
 
-    init(parsedOptions: Octahe.Options) throws {
+    init(parsedOptions: Octahe.Options, configDirURL: URL) throws {
         func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
@@ -131,6 +132,7 @@ struct ConfigParse {
             }
         }
 
+        self.configDirURL = configDirURL
         self.configFiles = try FileParser.buildRawConfigs(files: parsedOptions.configurationFiles)
 
         // Create a constant containing all lables.
@@ -221,8 +223,9 @@ struct ConfigParse {
 }
 
 
-func connectionRunner(statusLine: String, printStatus: Bool, deployItem: (key: String, value: typeDeploy),
+func connectionRunner(configArgs: ConfigParse, statusLine: String, printStatus: Bool, deployItem: (key: String, value: typeDeploy),
                       step: Int, conn: Execution) -> Bool {
+    var success: Bool = true
     do {
         if deployItem.value.execute != nil {
             if printStatus {
@@ -238,9 +241,17 @@ func connectionRunner(statusLine: String, printStatus: Bool, deployItem: (key: S
                 let filesStatus = deployItem.value.location?.joined(separator: " ")
                 print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
             }
-            try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
+            try conn.copy(
+                base: configArgs.configDirURL,
+                to: deployItem.value.destination!,
+                fromFiles: deployItem.value.location!
+            )
         }
     } catch {
+        if printStatus {
+            print(" ---> degraded")
+        }
+        print("Error information: \(error)\n")
         return false
     }
     if printStatus {
@@ -287,6 +298,7 @@ func sshConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) th
                 try conn.connect(target: target)
 
                 runnerStatus = connectionRunner(
+                    configArgs: Args,
                     statusLine: statusLine,
                     printStatus: printStatus,
                     deployItem: deployItem,
@@ -307,13 +319,14 @@ func sshConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) th
 
 func localConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) throws -> [(target: String, step: Int)] {
     var runnerStatus: Bool
-    var degradedTargets: [(target: String, step: Int)] = []
     let conn = ExecuteShell(cliParameters: parsedOptions, processParams: Args)
     conn.environment = Args.octaheArgs
+    conn.probe()
     for (index, deployItem) in Args.octaheDeploy.enumerated() {
         var printStatus: Bool = true
         let statusLine = String(format: "Step \(index)/\(steps) :")
         runnerStatus = connectionRunner(
+            configArgs: Args,
             statusLine: statusLine,
             printStatus: printStatus,
             deployItem: deployItem,
@@ -322,18 +335,21 @@ func localConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) 
         )
         printStatus = false
         if !runnerStatus {
-            degradedTargets.append((target: "localhost", step: index))
-            return degradedTargets
+            return [(target: "localhost", step: index)]
         }
     }
-    return degradedTargets
+    return []
 }
 
 
 func taskRouter(parsedOptions:Octahe.Options, function:String) throws {
     print("Running function:", function)
+    var degradedTargets: [(target: String, step: Int)] = []
 
-    let Args = try ConfigParse(parsedOptions: parsedOptions)
+    let configFileURL = URL(fileURLWithPath: parsedOptions.configurationFiles.first!)
+    let configDirURL = configFileURL.deletingLastPathComponent()
+
+    let Args = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
     if Args.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
         for from in Args.octaheFrom {
@@ -352,13 +368,15 @@ func taskRouter(parsedOptions:Octahe.Options, function:String) throws {
         )
     )
     let steps = Args.octaheDeploy.count - 1
-    var degradedTargets = try sshConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
 
     if Args.octaheLocal {
-        print("Running octahe commands locally.")
+        print("Running Octahe locally.")
         let degradedLocal = try localConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
         degradedTargets.append(contentsOf: degradedLocal)
     }
+
+    let degradedSSH = try sshConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
+    degradedTargets.append(contentsOf: degradedSSH)
 
     if degradedTargets.count > 0 {
         if degradedTargets.count < Args.octaheTargetsCount {
