@@ -238,65 +238,68 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
         )
     )
     let steps = Args.octaheDeploy.count - 1
-    for targetGroup in Args.octaheTargets {
-        // For every target group we should initialize a thread pool.
-        var targets = targetGroup
-        for (index, deployItem) in Args.octaheDeploy.enumerated() {
-            let statusLine = String(format: "Step \(index)/\(steps) :")
-            var printStatus: Bool = true
-            if targets.count > 0 {
-                for target in targetGroup {
-                    let targetData = Args.octaheTargetHash[target]!
-                    let targetComponents = targetData.to.components(separatedBy: "@")
-                    if targetComponents.count > 1 {
-                        conn.user = targetComponents.first!
-                    }
-                    let serverPort = targetComponents.last!.components(separatedBy: ":")
-                    if serverPort.count > 1 {
-                        conn.server = serverPort.first!
-                        conn.port = serverPort.last!
-                    } else {
-                        conn.server = serverPort.first!
-                    }
-                    if !conn.port.isInt {
-                        throw RouterError.FailedConnection(
-                            message: "Connection never attempted because the port is not an integer.",
-                            targetData: targetData
-                        )
-                    }
-                    try conn.connect(target: target)
-                    do {
-                        if deployItem.value.execute != nil {
-                            if printStatus {
-                                print(statusLine, "RUN \(deployItem.value.execute!)")
-                            }
-                            try conn.run(execute: deployItem.value.execute!)
-                        } else if deployItem.value.destination != nil && deployItem.value.location != nil {
-                            if printStatus {
-                                let filesStatus = deployItem.value.location?.joined(separator: " ")
-                                print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
-                            }
-                            try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
-                        }
-                    } catch {
-                        if let targetIndex = targets.firstIndex(of: target) {
-                            targets.remove(at: targetIndex)
-                            degradedTargets.append((target: target, step: index))
-                        }
-                    }
-                    printStatus = false
+    var failedTargets: [String] = []
+    for (index, deployItem) in Args.octaheDeploy.enumerated() {
+        var printStatus: Bool = true
+        let statusLine = String(format: "Step \(index)/\(steps) :")
+        for targetGroup in Args.octaheTargets {
+            // For every target group we should initialize a thread pool.
+            for target in targetGroup {
+                if failedTargets.contains(target) {
+                    continue
                 }
-                if !printStatus {
-                    printStatus = true
+                let targetData = Args.octaheTargetHash[target]!
+                let targetComponents = targetData.to.components(separatedBy: "@")
+                if targetComponents.count > 1 {
+                    conn.user = targetComponents.first!
+                }
+                let serverPort = targetComponents.last!.components(separatedBy: ":")
+                if serverPort.count > 1 {
+                    conn.server = serverPort.first!
+                    conn.port = serverPort.last!
+                } else {
+                    conn.server = serverPort.first!
+                }
+                if !conn.port.isInt {
+                    throw RouterError.FailedConnection(
+                        message: "Connection never attempted because the port is not an integer.",
+                        targetData: targetData
+                    )
+                }
+                try conn.connect(target: target)
+                do {
+                    if deployItem.value.execute != nil {
+                        if printStatus {
+                            print(statusLine, "\(deployItem.key) \(deployItem.value.execute!)")
+                        }
+                        if deployItem.key == "SHELL" {
+                            conn.shell = deployItem.value.execute!
+                        } else {
+                            try conn.run(execute: deployItem.value.execute!)
+                        }
+                    } else if deployItem.value.destination != nil && deployItem.value.location != nil {
+                        if printStatus {
+                            let filesStatus = deployItem.value.location?.joined(separator: " ")
+                            print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
+                        }
+                        try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
+                    }
+                } catch {
+                    degradedTargets.append((target: target, step: index))
+                    failedTargets.append(target)  // this should be revised when we have a real thread pool
+                }
+                if printStatus {
                     print(" ---> done")
+                    printStatus = false
                 }
             }
         }
-
     }
     if degradedTargets.count > 0 {
         if degradedTargets.count < Args.octaheTargetsCount {
-            print("Deployed complete, but degraded.")
+            print("Deployment completed, but was degraded.")
+        } else {
+            print("Deployment failed.")
         }
         print("Degrated hosts:")
         for degradedTarget in degradedTargets {

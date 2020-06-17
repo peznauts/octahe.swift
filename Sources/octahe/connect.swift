@@ -13,6 +13,7 @@ class Execution {
     let processParams: ConfigParse
     var steps: Int = 0
     var statusLine: String = ""
+    var shell: String?
 
     init(cliParameters: Octahe.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -38,7 +39,15 @@ class Execution {
     }
 
     func run(execute: String) throws {
-        // Run program execution
+        var runCommand: String
+        if self.shell != nil {
+            // Setup the execution shell
+            runCommand = "\(self.shell!) \"\(execute)\""
+        } else {
+            // set dummp execution string
+            runCommand = execute
+        }
+        // run execution command
     }
 
     func copy(to: String, fromFiles: [String]) throws {
@@ -67,5 +76,21 @@ class ExecuteSSH: Execution {
 
     override func connect(target: String) throws {
         // Initiate a connection via ssh.
+    }
+
+    override func run(execute: String) throws {
+        // delete me later, this is just used to test failure conditions.
+        try super.run(execute: execute)
+        if self.server == "test1" {
+            throw RouterError.NotImplemented(message: "fail")
+        }
+    }
+
+    override func copy(to: String, fromFiles: [String]) throws {
+        // delete me later, this is just used to test failure conditions.
+        try super.copy(to: to, fromFiles: fromFiles)
+        if self.server == "test2" {
+            throw RouterError.NotImplemented(message: "fail")
+        }
     }
 }
