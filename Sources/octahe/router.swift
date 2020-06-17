@@ -17,6 +17,7 @@ struct ConfigParse {
     var octaheFromHash: [String: typeFrom] = [:]
     var octaheTargets: [[String]] = []
     var octaheTargetHash: [String: typeTarget] = [:]
+    var octaheTargetsCount: Int = 0
     var octaheDeploy: [(key: String, value: typeDeploy)] = []
     var octaheExposes: [(key: String, value: typeExposes)] = []
     let octaheCommand: String?
@@ -208,6 +209,7 @@ struct ConfigParse {
                 targets.append(target.name!)
             }
         }
+        self.octaheTargetsCount = targets.count
         self.octaheTargets = targets.chunked(into: parsedOptions.connectionQuota)
     }
 }
@@ -215,45 +217,92 @@ struct ConfigParse {
 
 func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
     print("Running function:", function)
+    var degradedTargets: [(target: String, step: Int)] = []
     let Args = try ConfigParse(parsedOptions: parsedOptions)
     let conn = ExecuteSSH(cliParameters: parsedOptions, processParams: Args)
-
     if Args.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
         for from in Args.octaheFrom {
             // For every entry in FROM, we should insert the layers into our deployment plan.
             // This logic may need to be in the ConfigParse struct?
-            print(Args.octaheFromHash[from]!.name!)
             print(
                 RouterError.NotImplemented(
-                    message: "This is where introspection will be queued..."
+                    message: "This is where introspection will be queued for image: " + Args.octaheFromHash[from]!.name!
                 )
             )
         }
     }
+    print(
+        RouterError.NotImplemented(
+            message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
+        )
+    )
+    let steps = Args.octaheDeploy.count - 1
     for targetGroup in Args.octaheTargets {
-        print(
-            RouterError.NotImplemented(
-                message: "This will initialize a thread pool for the selected target group."
-            ), targetGroup
-        )
-        // This is serial, but should be threaded.
-        for target in targetGroup {
-            try conn.connect(target: target)
-            for deployItem in Args.octaheDeploy {
-                try conn.deploy(deployItem: deployItem.value)
+        // For every target group we should initialize a thread pool.
+        var targets = targetGroup
+        for (index, deployItem) in Args.octaheDeploy.enumerated() {
+            let statusLine = String(format: "Step \(index)/\(steps) :")
+            var printStatus: Bool = true
+            if targets.count > 0 {
+                for target in targetGroup {
+                    let targetData = Args.octaheTargetHash[target]!
+                    let targetComponents = targetData.to.components(separatedBy: "@")
+                    if targetComponents.count > 1 {
+                        conn.user = targetComponents.first!
+                    }
+                    let serverPort = targetComponents.last!.components(separatedBy: ":")
+                    if serverPort.count > 1 {
+                        conn.server = serverPort.first!
+                        conn.port = serverPort.last!
+                    } else {
+                        conn.server = serverPort.first!
+                    }
+                    if !conn.port.isInt {
+                        throw RouterError.FailedConnection(
+                            message: "Connection never attempted because the port is not an integer.",
+                            targetData: targetData
+                        )
+                    }
+                    try conn.connect(target: target)
+                    do {
+                        if deployItem.value.execute != nil {
+                            if printStatus {
+                                print(statusLine, "RUN \(deployItem.value.execute!)")
+                            }
+                            try conn.run(execute: deployItem.value.execute!)
+                        } else if deployItem.value.destination != nil && deployItem.value.location != nil {
+                            if printStatus {
+                                let filesStatus = deployItem.value.location?.joined(separator: " ")
+                                print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
+                            }
+                            try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
+                        }
+                    } catch {
+                        if let targetIndex = targets.firstIndex(of: target) {
+                            targets.remove(at: targetIndex)
+                            degradedTargets.append((target: target, step: index))
+                        }
+                    }
+                    printStatus = false
+                }
+                if !printStatus {
+                    printStatus = true
+                    print(" ---> done")
+                }
             }
-            conn.serviceTemplate(
-                command: Args.octaheCommand,
-                entrypoint: Args.octaheEntrypoints,
-                entrypointOptions: Args.octaheEntrypointOptions
-            )
         }
-        print(
-            RouterError.NotImplemented(
-                message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
-            )
-        )
+
     }
-    print("Successfully deployed.")
+    if degradedTargets.count > 0 {
+        if degradedTargets.count < Args.octaheTargetsCount {
+            print("Deployed complete, but degraded.")
+        }
+        print("Degrated hosts:")
+        for degradedTarget in degradedTargets {
+            print("[-] \(degradedTarget.target) - failed step \(degradedTarget.step)/\(steps)")
+        }
+    } else {
+        print("Successfully deployed.")
+    }
 }

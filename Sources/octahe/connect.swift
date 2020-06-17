@@ -11,6 +11,8 @@ import Foundation
 class Execution {
     let cliParams: Octahe.Options
     let processParams: ConfigParse
+    var steps: Int = 0
+    var statusLine: String = ""
 
     init(cliParameters: Octahe.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -35,31 +37,23 @@ class Execution {
         preconditionFailure("This method must be overridden")
     }
 
-    private func run(execute: String) {
-        print("RUN:", execute)
+    func run(execute: String) throws {
+        // Run program execution
     }
 
-    private func copy(to: String, from: [String]) {
-        for file in from {
-            print("ADD or COPY:", file, to)
+    func copy(to: String, fromFiles: [String]) throws {
+        for file in fromFiles {
+            // file location transfer "to" destination
         }
     }
 
-    func deploy(deployItem: typeDeploy) throws {
-        if deployItem.execute != nil {
-            run(execute: deployItem.execute!)
-        } else if deployItem.destination != nil && deployItem.location != nil {
-            copy(to: deployItem.destination!, from: deployItem.location!)
-        }
-    }
-
-    func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) {
+    func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) throws {
         // Generate a local template, and transfer it to the remote host
         print("Creating serive templates")
         let hashedFile = entrypoint ?? command
         if hashedFile != nil {
             let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
-            copy(to: "/etc/systemd/system/" + serviceFile, from: ["/tmp/" + serviceFile])
+            try copy(to: "/etc/systemd/system/" + serviceFile, fromFiles: ["/tmp/" + serviceFile])
         }
 
     }
@@ -72,29 +66,6 @@ class ExecuteSSH: Execution {
     var user: String = NSUserName()
 
     override func connect(target: String) throws {
-        let targetData = self.processParams.octaheTargetHash[target]!
-        if targetData.via != target {
-            
-        }
-        let targetComponents = targetData.to.components(separatedBy: "@")
-        if targetComponents.count > 1 {
-            self.user = targetComponents.first!
-        }
-
-        let serverPort = targetComponents.last!.components(separatedBy: ":")
-        if serverPort.count > 1 {
-            self.server = serverPort.first!
-            self.port = serverPort.last!
-        } else {
-            self.server = serverPort.first!
-        }
-
-        if !self.port.isInt {
-            throw RouterError.FailedConnection(
-                message: "Connection never attempted because the port is not an integer.",
-                targetData: targetData
-            )
-        }
-        print("Connecting to host. user:", user, "server:", server, "port:", port)
+        // Initiate a connection via ssh.
     }
 }
