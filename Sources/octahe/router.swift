@@ -177,6 +177,7 @@ struct ConfigParse {
                 )
             }
         }
+
         let exposes = self.configFiles.filter{$0.key == "EXPOSE"}
         for expose in exposes {
             let exposeParsed = try parseExpose(stringExpose: expose.value)
@@ -220,6 +221,7 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
     var degradedTargets: [(target: String, step: Int)] = []
     let Args = try ConfigParse(parsedOptions: parsedOptions)
     let conn = ExecuteSSH(cliParameters: parsedOptions, processParams: Args)
+    conn.environment = Args.octaheArgs
     if Args.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
         for from in Args.octaheFrom {

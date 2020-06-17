@@ -15,6 +15,7 @@ typealias typeDeploy = (execute: String?, chown: String?, location: [String]?, d
 typealias typeExposes = (port: String, nat: Substring?, proto: String?)
 typealias typeEntrypointOptions = [(key: String, value: String)]
 
+
 enum RouterError: Error {
     case NoTargets(message: String)
     case NotImplemented(message: String)

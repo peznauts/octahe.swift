@@ -14,6 +14,7 @@ class Execution {
     var steps: Int = 0
     var statusLine: String = ""
     var shell: String?
+    var environment: Dictionary<String, String> = [:]
 
     init(cliParameters: Octahe.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -39,7 +40,13 @@ class Execution {
     }
 
     func run(execute: String) throws {
+        var execEnv: String = ""
         var runCommand: String
+
+        for (key, value) in self.environment {
+            execEnv += "\(key)=\"\(value)\" "
+        }
+
         if self.shell != nil {
             // Setup the execution shell
             runCommand = "\(self.shell!) \"\(execute)\""
@@ -47,7 +54,9 @@ class Execution {
             // set dummp execution string
             runCommand = execute
         }
+
         // run execution command
+        let exec = execEnv + runCommand
     }
 
     func copy(to: String, fromFiles: [String]) throws {
