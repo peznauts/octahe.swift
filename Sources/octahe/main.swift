@@ -178,7 +178,7 @@ extension Octahe {
         
         func run() throws {
             print("Beginning deployment execution")
-            try CoreRouter(parsedOptions: options, function: "deploy")
+            try taskRouter(parsedOptions: options, function: "deploy")
         }
     }
     
@@ -192,7 +192,7 @@ extension Octahe {
         
         func run() throws {
             print("Beginning undeployment execution")
-            try CoreRouter(parsedOptions: options, function: "undeploy")
+            try taskRouter(parsedOptions: options, function: "undeploy")
         }
     }
 }

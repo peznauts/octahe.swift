@@ -22,6 +22,7 @@ enum RouterError: Error {
     case MatchRegexError(message: String)
     case FailedParsing(message: String, component: String)
     case FailedConnection(message: String, targetData: typeTarget)
+    case FailedExecution(message: String)
 }
 
 

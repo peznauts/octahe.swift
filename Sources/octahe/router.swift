@@ -23,6 +23,7 @@ struct ConfigParse {
     let octaheCommand: String?
     let octaheEntrypoints: String?
     let octaheEntrypointOptions: typeEntrypointOptions
+    var octaheLocal: Bool = false
 
     init(parsedOptions: Octahe.Options) throws {
         func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
@@ -211,36 +212,50 @@ struct ConfigParse {
             }
         }
         self.octaheTargetsCount = targets.count
+        if let index = targets.firstIndex(of: "localhost") {
+            targets.remove(at: index)
+            self.octaheLocal = true
+        }
         self.octaheTargets = targets.chunked(into: parsedOptions.connectionQuota)
     }
 }
 
 
-func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
-    print("Running function:", function)
+func connectionRunner(statusLine: String, printStatus: Bool, deployItem: (key: String, value: typeDeploy),
+                      step: Int, conn: Execution) -> Bool {
+    do {
+        if deployItem.value.execute != nil {
+            if printStatus {
+                print(statusLine, "\(deployItem.key) \(deployItem.value.execute!)")
+            }
+            if deployItem.key == "SHELL" {
+                conn.shell = deployItem.value.execute!
+            } else {
+                try conn.run(execute: deployItem.value.execute!)
+            }
+        } else if deployItem.value.destination != nil && deployItem.value.location != nil {
+            if printStatus {
+                let filesStatus = deployItem.value.location?.joined(separator: " ")
+                print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
+            }
+            try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
+        }
+    } catch {
+        return false
+    }
+    if printStatus {
+        print(" ---> done")
+    }
+    return true
+}
+
+
+func sshConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) throws -> [(target: String, step: Int)] {
+    var runnerStatus: Bool
+    var failedTargets: [String] = []
     var degradedTargets: [(target: String, step: Int)] = []
-    let Args = try ConfigParse(parsedOptions: parsedOptions)
     let conn = ExecuteSSH(cliParameters: parsedOptions, processParams: Args)
     conn.environment = Args.octaheArgs
-    if Args.octaheFrom.count > 0 {
-        // TODO(zfeldstein): API call to inspect all known FROM instances
-        for from in Args.octaheFrom {
-            // For every entry in FROM, we should insert the layers into our deployment plan.
-            // This logic may need to be in the ConfigParse struct?
-            print(
-                RouterError.NotImplemented(
-                    message: "This is where introspection will be queued for image: " + Args.octaheFromHash[from]!.name!
-                )
-            )
-        }
-    }
-    print(
-        RouterError.NotImplemented(
-            message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
-        )
-    )
-    let steps = Args.octaheDeploy.count - 1
-    var failedTargets: [String] = []
     for (index, deployItem) in Args.octaheDeploy.enumerated() {
         var printStatus: Bool = true
         let statusLine = String(format: "Step \(index)/\(steps) :")
@@ -250,6 +265,7 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
                 if failedTargets.contains(target) {
                     continue
                 }
+
                 let targetData = Args.octaheTargetHash[target]!
                 let targetComponents = targetData.to.components(separatedBy: "@")
                 if targetComponents.count > 1 {
@@ -269,34 +285,81 @@ func CoreRouter(parsedOptions:Octahe.Options, function:String) throws {
                     )
                 }
                 try conn.connect(target: target)
-                do {
-                    if deployItem.value.execute != nil {
-                        if printStatus {
-                            print(statusLine, "\(deployItem.key) \(deployItem.value.execute!)")
-                        }
-                        if deployItem.key == "SHELL" {
-                            conn.shell = deployItem.value.execute!
-                        } else {
-                            try conn.run(execute: deployItem.value.execute!)
-                        }
-                    } else if deployItem.value.destination != nil && deployItem.value.location != nil {
-                        if printStatus {
-                            let filesStatus = deployItem.value.location?.joined(separator: " ")
-                            print(statusLine, "COPY or ADD \(filesStatus!) \(deployItem.value.destination!)")
-                        }
-                        try conn.copy(to: deployItem.value.destination!, fromFiles: deployItem.value.location!)
-                    }
-                } catch {
+
+                runnerStatus = connectionRunner(
+                    statusLine: statusLine,
+                    printStatus: printStatus,
+                    deployItem: deployItem,
+                    step: index,
+                    conn: conn
+                )
+                printStatus = false
+                if !runnerStatus {
                     degradedTargets.append((target: target, step: index))
                     failedTargets.append(target)  // this should be revised when we have a real thread pool
-                }
-                if printStatus {
-                    print(" ---> done")
-                    printStatus = false
                 }
             }
         }
     }
+    return degradedTargets
+}
+
+
+func localConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) throws -> [(target: String, step: Int)] {
+    var runnerStatus: Bool
+    var degradedTargets: [(target: String, step: Int)] = []
+    let conn = ExecuteShell(cliParameters: parsedOptions, processParams: Args)
+    conn.environment = Args.octaheArgs
+    for (index, deployItem) in Args.octaheDeploy.enumerated() {
+        var printStatus: Bool = true
+        let statusLine = String(format: "Step \(index)/\(steps) :")
+        runnerStatus = connectionRunner(
+            statusLine: statusLine,
+            printStatus: printStatus,
+            deployItem: deployItem,
+            step: index,
+            conn: conn
+        )
+        printStatus = false
+        if !runnerStatus {
+            degradedTargets.append((target: "localhost", step: index))
+            return degradedTargets
+        }
+    }
+    return degradedTargets
+}
+
+
+func taskRouter(parsedOptions:Octahe.Options, function:String) throws {
+    print("Running function:", function)
+
+    let Args = try ConfigParse(parsedOptions: parsedOptions)
+    if Args.octaheFrom.count > 0 {
+        // TODO(zfeldstein): API call to inspect all known FROM instances
+        for from in Args.octaheFrom {
+            // For every entry in FROM, we should insert the layers into our deployment plan.
+            // This logic may need to be in the ConfigParse struct?
+            print(
+                RouterError.NotImplemented(
+                    message: "This is where introspection will be queued for image: " + Args.octaheFromHash[from]!.name!
+                )
+            )
+        }
+    }
+    print(
+        RouterError.NotImplemented(
+            message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
+        )
+    )
+    let steps = Args.octaheDeploy.count - 1
+    var degradedTargets = try sshConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
+
+    if Args.octaheLocal {
+        print("Running octahe commands locally.")
+        let degradedLocal = try localConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
+        degradedTargets.append(contentsOf: degradedLocal)
+    }
+
     if degradedTargets.count > 0 {
         if degradedTargets.count < Args.octaheTargetsCount {
             print("Deployment completed, but was degraded.")

@@ -13,7 +13,8 @@ class Execution {
     let processParams: ConfigParse
     var steps: Int = 0
     var statusLine: String = ""
-    var shell: String?
+    var shell: String = "/bin/sh -c"
+    var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
     var environment: Dictionary<String, String> = [:]
 
     init(cliParameters: Octahe.Options, processParams: ConfigParse) {
@@ -40,29 +41,11 @@ class Execution {
     }
 
     func run(execute: String) throws {
-        var execEnv: String = ""
-        var runCommand: String
-
-        for (key, value) in self.environment {
-            execEnv += "\(key)=\"\(value)\" "
-        }
-
-        if self.shell != nil {
-            // Setup the execution shell
-            runCommand = "\(self.shell!) \"\(execute)\""
-        } else {
-            // set dummp execution string
-            runCommand = execute
-        }
-
-        // run execution command
-        let exec = execEnv + runCommand
+        preconditionFailure("This method must be overridden")
     }
 
     func copy(to: String, fromFiles: [String]) throws {
-        for file in fromFiles {
-            // file location transfer "to" destination
-        }
+        preconditionFailure("This method must be overridden")
     }
 
     func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) throws {
@@ -73,7 +56,6 @@ class Execution {
             let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
             try copy(to: "/etc/systemd/system/" + serviceFile, fromFiles: ["/tmp/" + serviceFile])
         }
-
     }
 }
 
@@ -88,18 +70,50 @@ class ExecuteSSH: Execution {
     }
 
     override func run(execute: String) throws {
-        // delete me later, this is just used to test failure conditions.
-        try super.run(execute: execute)
-        if self.server == "test1" {
-            throw RouterError.NotImplemented(message: "fail")
+        var execEnv: String = ""
+        var runCommand: String
+
+        for (key, value) in self.environment {
+            execEnv += "\(key)=\"\(value)\" "
         }
+
+        runCommand = "\(self.shell) \"\(execute)\""
+
+        // run execution command
+        let executeCommand = execEnv + runCommand
     }
 
     override func copy(to: String, fromFiles: [String]) throws {
-        // delete me later, this is just used to test failure conditions.
-        try super.copy(to: to, fromFiles: fromFiles)
-        if self.server == "test2" {
-            throw RouterError.NotImplemented(message: "fail")
+        for file in fromFiles {
+            // file location transfer "to" destination
         }
+    }
+}
+
+
+class ExecuteShell: Execution {
+    override func connect(target: String) throws {
+        // This method does nothing in a local shell execution environment.
+    }
+
+    private func localExec(command: String) throws {
+        var launchArgs = (self.shell).components(separatedBy: " ")
+        launchArgs.append(command)
+        let task = Process()
+        task.environment = self.environment
+        task.launchPath = launchArgs.removeFirst()
+        task.arguments = launchArgs
+        task.standardError = FileHandle.nullDevice
+        task.standardOutput = FileHandle.nullDevice
+        task.launch()
+        task.waitUntilExit()
+        if task.terminationStatus != 0 {
+            throw RouterError.FailedExecution(message: "FAILED: " + command)
+        }
+    }
+
+    override func run(execute: String) throws {
+        try localExec(command: execute)
+
     }
 }
