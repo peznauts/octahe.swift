@@ -51,17 +51,19 @@ class FileParser {
                 let cleanedLine = trimLine(line: line)
                 if !cleanedLine.isEmpty {
                     let verbArray = cleanedLine.split(separator: " ", maxSplits: 1).map(String.init)
-                    let stringitem = String(verbArray[1])
-                    if stringitem.isInt {
-                        configOptions.append((key: verbArray[0], value: stringitem))
-                    } else {
-                        do {
-                            let data = stringitem.data(using: .utf8)!
-                            let json = try JSONSerialization.jsonObject(with: data, options : .allowFragments) as! Array<String>
-                            let joined = json.joined(separator: " ")
-                            configOptions.append((key: verbArray[0], value: String(joined)))
-                        } catch {
+                    if verbArray.count > 1 {
+                        let stringitem = String(verbArray[1])
+                        if stringitem.isInt {
                             configOptions.append((key: verbArray[0], value: stringitem))
+                        } else {
+                            do {
+                                let data = stringitem.data(using: .utf8)!
+                                let json = try JSONSerialization.jsonObject(with: data, options : .allowFragments) as! Array<String>
+                                let joined = json.joined(separator: " ")
+                                configOptions.append((key: verbArray[0], value: String(joined)))
+                            } catch {
+                                configOptions.append((key: verbArray[0], value: stringitem))
+                            }
                         }
                     }
                 }

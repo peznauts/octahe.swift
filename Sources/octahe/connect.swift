@@ -9,7 +9,7 @@ import Foundation
 
 
 class Execution {
-    let cliParams: Octahe.Options
+    let cliParams: octaheCLI.Options
     let processParams: ConfigParse
     var steps: Int = 0
     var statusLine: String = ""
@@ -17,7 +17,7 @@ class Execution {
     var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
     var environment: Dictionary<String, String> = [:]
 
-    init(cliParameters: Octahe.Options, processParams: ConfigParse) {
+    init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
         self.processParams = processParams
     }

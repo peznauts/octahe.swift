@@ -26,7 +26,7 @@ struct ConfigParse {
     var octaheLocal: Bool = false
     let configDirURL: URL
 
-    init(parsedOptions: Octahe.Options, configDirURL: URL) throws {
+    init(parsedOptions: octaheCLI.Options, configDirURL: URL) throws {
         func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
@@ -261,7 +261,7 @@ func connectionRunner(configArgs: ConfigParse, statusLine: String, printStatus: 
 }
 
 
-func sshConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) throws -> [(target: String, step: Int)] {
+func sshConnect(Args: ConfigParse, parsedOptions: octaheCLI.Options, steps: Int) throws -> [(target: String, step: Int)] {
     var runnerStatus: Bool
     var failedTargets: [String] = []
     var degradedTargets: [(target: String, step: Int)] = []
@@ -317,7 +317,7 @@ func sshConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) th
 }
 
 
-func localConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) throws -> [(target: String, step: Int)] {
+func localConnect(Args: ConfigParse, parsedOptions: octaheCLI.Options, steps: Int) throws -> [(target: String, step: Int)] {
     var runnerStatus: Bool
     let conn = ExecuteShell(cliParameters: parsedOptions, processParams: Args)
     conn.environment = Args.octaheArgs
@@ -342,53 +342,58 @@ func localConnect(Args: ConfigParse, parsedOptions: Octahe.Options, steps: Int) 
 }
 
 
-func taskRouter(parsedOptions:Octahe.Options, function:String) throws {
-    print("Running function:", function)
+func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
+    logger.debug("Running function: \(function)")
     var degradedTargets: [(target: String, step: Int)] = []
 
     let configFileURL = URL(fileURLWithPath: parsedOptions.configurationFiles.first!)
     let configDirURL = configFileURL.deletingLastPathComponent()
-
-    let Args = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
-    if Args.octaheFrom.count > 0 {
+    let octaheArgs = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
+    // The total calculated steps start at 0, so we take the total and subtract 1.
+    let octaheSteps = octaheArgs.octaheDeploy.count - 1
+    if octaheSteps < 1 {
+        throw RouterError.FailedExecution(message: "No steps found within provided Containerfiles: \(parsedOptions.configurationFiles.joined(separator: " "))")
+    }
+    if octaheArgs.octaheFrom.count > 0 {
         // TODO(zfeldstein): API call to inspect all known FROM instances
-        for from in Args.octaheFrom {
+        for from in octaheArgs.octaheFrom {
             // For every entry in FROM, we should insert the layers into our deployment plan.
             // This logic may need to be in the ConfigParse struct?
             print(
                 RouterError.NotImplemented(
-                    message: "This is where introspection will be queued for image: " + Args.octaheFromHash[from]!.name!
+                    message: "This is where introspection will be queued for image: " + octaheArgs.octaheFromHash[from]!.name!
                 )
             )
         }
     }
-    print(
-        RouterError.NotImplemented(
-            message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
-        )
-    )
-    let steps = Args.octaheDeploy.count - 1
 
-    if Args.octaheLocal {
+    if octaheArgs.octaheLocal {
         print("Running Octahe locally.")
-        let degradedLocal = try localConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
+        let degradedLocal = try localConnect(Args: octaheArgs, parsedOptions: parsedOptions, steps: octaheSteps)
         degradedTargets.append(contentsOf: degradedLocal)
     }
 
-    let degradedSSH = try sshConnect(Args: Args, parsedOptions: parsedOptions, steps: steps)
-    degradedTargets.append(contentsOf: degradedSSH)
+    if octaheArgs.octaheTargets.count > 0 {
+        print(
+            RouterError.NotImplemented(
+                message: "This is where we connect to targets and validate the deployment solution, and build all of the required proxy config."
+            )
+        )
+        let degradedSSH = try sshConnect(Args: octaheArgs, parsedOptions: parsedOptions, steps: octaheSteps)
+        degradedTargets.append(contentsOf: degradedSSH)
+    }
 
     if degradedTargets.count > 0 {
-        if degradedTargets.count < Args.octaheTargetsCount {
+        if degradedTargets.count < octaheArgs.octaheTargetsCount {
             print("Deployment completed, but was degraded.")
         } else {
             print("Deployment failed.")
         }
         print("Degrated hosts:")
         for degradedTarget in degradedTargets {
-            print("[-] \(degradedTarget.target) - failed step \(degradedTarget.step)/\(steps)")
+            print("[-] \(degradedTarget.target) - failed step \(degradedTarget.step)/\(octaheSteps)")
         }
     } else {
-        print("Successfully deployed.")
+        print("Success.")
     }
 }
