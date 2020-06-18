@@ -7,6 +7,11 @@
 
 import Foundation
 import CommonCrypto
+import os
+import Logging
+
+
+let logger = Logger(label: "octahe")
 
 
 typealias typeFrom = (platform: String?, image: String, name: String?)
@@ -68,7 +73,7 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
                 String(text[Range($0.range, in: text)!])
             }
         } catch let error {
-            print(RouterError.MatchRegexError(message: error.localizedDescription))
+            logger.warning("\(error.localizedDescription)")
             return []
         }
     }

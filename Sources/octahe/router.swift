@@ -121,7 +121,6 @@ struct ConfigParse {
             if viaCount > 0 {
                 for (index, element) in viaHostsReversed.enumerated() {
                     nextVia = viaHostsReversed.getNextElement(index: index) ?? "localhost"
-                    print(index, nextVia, element)
                     self.octaheTargetHash[element] = (
                         to: element,
                         via: nextVia,
@@ -223,9 +222,9 @@ struct ConfigParse {
 }
 
 
-func connectionRunner(configArgs: ConfigParse, statusLine: String, printStatus: Bool, deployItem: (key: String, value: typeDeploy),
-                      step: Int, conn: Execution) -> Bool {
-    var success: Bool = true
+func connectionRunner(configArgs: ConfigParse, statusLine: String, printStatus: Bool,
+                      deployItem: (key: String, value: typeDeploy), step: Int, conn: Execution) -> Bool {
+    logger.debug("Executing: \(deployItem.key)")
     do {
         if deployItem.value.execute != nil {
             if printStatus {
@@ -247,11 +246,12 @@ func connectionRunner(configArgs: ConfigParse, statusLine: String, printStatus: 
                 fromFiles: deployItem.value.location!
             )
         }
+
     } catch {
         if printStatus {
             print(" ---> degraded")
         }
-        print("Error information: \(error)\n")
+        logger.error("\(error)")
         return false
     }
     if printStatus {
