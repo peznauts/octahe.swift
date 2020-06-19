@@ -8,34 +8,6 @@
 import Foundation
 
 
-class NodeOperations {
-    let maxConcurrentOperationCount: Int
-
-    init(connectionQuota: Int) {
-        maxConcurrentOperationCount = connectionQuota
-    }
-
-    lazy var nodesInProgress: [IndexPath: Operation] = [:]
-    lazy var nodeQueue: OperationQueue = {
-    var queue = OperationQueue()
-        queue.name = "Node queue"
-        queue.maxConcurrentOperationCount = self.maxConcurrentOperationCount
-        return queue
-    }()
-}
-
-
-class TaskOperations {
-    lazy var tasksInProgress: [IndexPath: Operation] = [:]
-    lazy var taskQueue: OperationQueue = {
-    var queue = OperationQueue()
-        queue.name = "Task queue"
-        queue.maxConcurrentOperationCount = 1
-        return queue
-    }()
-}
-
-
 class Execution {
     let cliParams: octaheCLI.Options
     let processParams: ConfigParse

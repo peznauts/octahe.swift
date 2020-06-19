@@ -38,7 +38,7 @@ func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
 
     let taskQueue = TaskOperations()
     for (index, deployItem) in octaheArgs.octaheDeploy.enumerated() {
-        let taskOperation = OperationTask(
+        let taskOperation = TaskOperation(
             deployItem: deployItem,
             steps: octaheSteps,
             stepIndex: index,

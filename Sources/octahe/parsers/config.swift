@@ -1,5 +1,5 @@
 //
-//  configParse.swift
+//  config.swift
 //  
 //
 //  Created by Kevin Carter on 6/19/20.
