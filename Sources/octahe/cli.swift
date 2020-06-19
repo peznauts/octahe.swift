@@ -193,8 +193,7 @@ extension octaheCLI {
         var options: octaheCLI.Options
 
         func run() throws {
-            print("Beginning undeployment execution")
-            try taskRouter(parsedOptions: options, function: "undeploy")
+            throw RouterError.NotImplemented(message: "The undeployment method has not been implemented yet.")
         }
     }
 }

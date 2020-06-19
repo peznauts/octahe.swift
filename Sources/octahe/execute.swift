@@ -1,11 +1,39 @@
 //
-//  connect.swift
+//  execute.swift
 //  
 //
 //  Created by Kevin Carter on 6/4/20.
 //
 
 import Foundation
+
+
+class NodeOperations {
+    let maxConcurrentOperationCount: Int
+
+    init(connectionQuota: Int) {
+        maxConcurrentOperationCount = connectionQuota
+    }
+
+    lazy var nodesInProgress: [IndexPath: Operation] = [:]
+    lazy var nodeQueue: OperationQueue = {
+    var queue = OperationQueue()
+        queue.name = "Node queue"
+        queue.maxConcurrentOperationCount = self.maxConcurrentOperationCount
+        return queue
+    }()
+}
+
+
+class TaskOperations {
+    lazy var tasksInProgress: [IndexPath: Operation] = [:]
+    lazy var taskQueue: OperationQueue = {
+    var queue = OperationQueue()
+        queue.name = "Task queue"
+        queue.maxConcurrentOperationCount = 1
+        return queue
+    }()
+}
 
 
 class Execution {
@@ -16,6 +44,9 @@ class Execution {
     var shell: String = "/bin/sh -c"
     var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
     var environment: Dictionary<String, String> = [:]
+    var server: String = "localhost"
+    var port: String = "22"
+    var user: String = NSUserName()
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -71,42 +102,7 @@ class Execution {
 }
 
 
-class ExecuteSSH: Execution {
-    var server: String = "localhost"
-    var port: String = "22"
-    var user: String = NSUserName()
-
-    override func connect(target: String) throws {
-        // Initiate a connection via ssh.
-    }
-
-    override func run(execute: String) throws {
-        var execEnv: String = ""
-        var runCommand: String
-
-        for (key, value) in self.environment {
-            execEnv += "\(key)=\"\(value)\" "
-        }
-
-        runCommand = "\(self.shell) \"\(execute)\""
-
-        // run execution command
-        let executeCommand = execEnv + runCommand
-    }
-
-    override func copy(base: URL, to: String, fromFiles: [String]) throws {
-        for file in fromFiles {
-            // file location transfer "to" destination
-        }
-    }
-}
-
-
-class ExecuteShell: Execution {
-    override func connect(target: String) throws {
-        // This method does nothing in a local shell execution environment.
-    }
-
+class ExecuteLocal: Execution {
     override func probe() {
         for (key, value) in PlatformArgs() {
             let targetKey = key.replacingOccurrences(of: "BUILD", with: "TARGET")
@@ -138,7 +134,6 @@ class ExecuteShell: Execution {
 
     override func run(execute: String) throws {
         try localExec(command: execute)
-
     }
 
     private func localExec(command: String) throws {
@@ -153,7 +148,26 @@ class ExecuteShell: Execution {
         task.launch()
         task.waitUntilExit()
         if task.terminationStatus != 0 {
-            throw RouterError.FailedExecution(message: "FAILED: " + command)
+            throw RouterError.FailedExecution(message: "FAILED: \(command)")
         }
     }
+}
+
+
+class ExecuteEcho: ExecuteLocal {
+    override func run(execute: String) throws {
+        print(execute)
+    }
+
+    override func copy(base: URL, to: String, fromFiles: [String]) throws {
+        for file in fromFiles {
+            let fromUrl = base.appendingPathComponent(file)
+            print(fromUrl.path, to)
+        }
+    }
+}
+
+
+class ExecuteSSH: ExecuteEcho {
+    // Currently this does nothing, when this is ready to do something, it should subclass Execute
 }

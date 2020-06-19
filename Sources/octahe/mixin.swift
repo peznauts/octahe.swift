@@ -15,8 +15,8 @@ let logger = Logger(label: "octahe")
 
 
 typealias typeFrom = (platform: String?, image: String, name: String?)
-typealias typeTarget = (to: String, via: String?, escalate: String?, name: String?)
-typealias typeDeploy = (execute: String?, chown: String?, location: [String]?, destination: String?, from: String?)
+typealias typeTarget = (to: String, via: String?, escalate: String?, name: String)
+typealias typeDeploy = (execute: String?, chown: String?, location: [String]?, destination: String?, from: String?, original: String)
 typealias typeExposes = (port: String, nat: Substring?, proto: String?)
 typealias typeEntrypointOptions = [(key: String, value: String)]
 
