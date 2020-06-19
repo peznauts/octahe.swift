@@ -124,6 +124,5 @@ class TargetOperation: Operation {
         if task.state != .degraded {
             task.state = .success
         }
-
     }
 }

@@ -218,4 +218,3 @@ struct ConfigParse {
         self.octaheTargets = targets
     }
 }
-

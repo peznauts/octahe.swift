@@ -30,7 +30,7 @@ func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
             // This logic may need to be in the ConfigParse struct?
             print(
                 RouterError.NotImplemented(
-                    message: "This is where introspection will be queued for image: " + octaheArgs.octaheFromHash[from]!.name!
+                    message: "This is where introspection will be queued for image: \(octaheArgs.octaheFromHash[from]!.name!)"
                 )
             )
         }

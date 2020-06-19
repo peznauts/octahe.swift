@@ -7,8 +7,10 @@
 
 import Foundation
 import CommonCrypto
-import os
+
 import Logging
+
+import os
 
 
 let logger = Logger(label: "octahe")
@@ -116,6 +118,7 @@ extension String {
         return hash.map { String(format: "%02x", $0) }.joined()
     }
 }
+
 
 extension Array {
     func chunked(into size: Int) -> [[Element]] {
