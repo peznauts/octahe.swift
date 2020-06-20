@@ -8,6 +8,16 @@
 import Foundation
 
 
+enum RouterError: Error {
+    case NoTargets(message: String)
+    case NotImplemented(message: String)
+    case MatchRegexError(message: String)
+    case FailedParsing(message: String, component: String)
+    case FailedConnection(message: String, targetData: typeTarget)
+    case FailedExecution(message: String)
+}
+
+
 func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
     logger.debug("Running function: \(function)")
 

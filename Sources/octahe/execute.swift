@@ -16,13 +16,20 @@ class Execution {
     var shell: String = "/bin/sh -c"
     var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
     var environment: Dictionary<String, String> = [:]
+    var execUser: String?
+    var execGroup: String?
     var server: String = "localhost"
     var port: String = "22"
     var user: String = NSUserName()
+    var escalate: String?
+    var escalatePassword: String?
+    var workdir: String = FileManager.default.currentDirectoryPath
+    var workdirURL: URL
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
         self.processParams = processParams
+        self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
     func connect(target: String) throws {
@@ -51,6 +58,18 @@ class Execution {
         preconditionFailure("This method must be overridden")
     }
 
+    func expose(nat: Int?, port: Int, proto: String?) throws {
+        let port = port
+        let proto = proto ?? "tcp"
+        let command: String
+        if let natPort = nat {
+            command = "iptables -t nat -A PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
+        } else {
+            command = "iptables -A INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
+        }
+        try run(execute: command)
+    }
+
     func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) throws {
         // Generate a local template, and transfer it to the remote host
         guard !FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
@@ -60,7 +79,7 @@ class Execution {
                          """
             )
         }
-        let baseUrl = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        let baseUrl = URL(fileURLWithPath: workdir)
         let hashedFile = entrypoint ?? command
         if hashedFile != nil {
             let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
@@ -71,6 +90,26 @@ class Execution {
             )
         }
     }
+
+    func execString(command: String) -> String {
+        var execTask: String
+
+        if let user = self.execUser {
+            execTask = "su \(user) -c \"\(command)\""
+        } else {
+            execTask = command
+        }
+        if let escalate = self.escalate {
+            if let password = self.escalatePassword {
+                // Password is add to the environment.
+                self.environment["ESCALATEPASSWORD"] = password
+                execTask = "echo -e \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(execTask)"
+            } else {
+                execTask = "\(escalate) \(execTask)"
+            }
+        }
+        return execTask
+    }
 }
 
 
@@ -80,6 +119,7 @@ class ExecuteLocal: Execution {
             let targetKey = key.replacingOccurrences(of: "BUILD", with: "TARGET")
             self.environment[targetKey] = value
         }
+        self.environment["PATH"] = ProcessInfo.processInfo.environment["PATH"]
     }
 
     override func copy(base: URL, to: String, fromFiles: [String]) throws {
@@ -109,8 +149,19 @@ class ExecuteLocal: Execution {
     }
 
     private func localExec(command: String) throws {
+        let execTask = execString(command: command)
+
         var launchArgs = (self.shell).components(separatedBy: " ")
-        launchArgs.append(command)
+        launchArgs.append(execTask)
+
+        if !FileManager.default.fileExists(atPath: workdirURL.path) {
+            try FileManager.default.createDirectory(
+                at: workdirURL,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+        }
+        FileManager.default.changeCurrentDirectoryPath(workdir)
         let task = Process()
         task.environment = self.environment
         task.launchPath = launchArgs.removeFirst()
@@ -128,7 +179,8 @@ class ExecuteLocal: Execution {
 
 class ExecuteEcho: ExecuteLocal {
     override func run(execute: String) throws {
-        print(execute)
+        let execTask = execString(command: execute)
+        print(execTask)
     }
 
     override func copy(base: URL, to: String, fromFiles: [String]) throws {

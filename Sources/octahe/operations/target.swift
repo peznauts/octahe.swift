@@ -48,7 +48,14 @@ class TargetRecord {
                 )
             }
         }
-        self.conn.environment = args.octaheArgs
+        if let escalate = self.target.escalate {
+            self.conn.escalate = escalate
+            if let password = options.escalatePassword {
+                self.conn.escalatePassword = password
+            }
+        }
+        // Probe the environment to set basic environment details.
+        self.conn.probe()
     }
 }
 
@@ -102,18 +109,38 @@ class TargetOperation: Operation {
         let conn = targetRecord.conn
         logger.debug("Executing: \(task.task)")
         do {
-            if task.taskItem.execute != nil {
-                if task.task == "SHELL" {
-                    conn.shell = task.taskItem.execute!
-                } else {
-                    try conn.run(execute: task.taskItem.execute!)
+            switch task.task {
+            case "SHELL":
+                conn.shell = task.taskItem.execute!
+            case "ENV", "ARG":
+                if let env = task.taskItem.env {
+                    conn.environment.merge(env) {
+                        (_, second) in second
+                    }
                 }
-            } else if task.taskItem.destination != nil && task.taskItem.location != nil {
-                try targetRecord.conn.copy(
+            case "RUN":
+                try conn.run(execute: task.taskItem.execute!)
+            case "COPY", "ADD":
+                try conn.copy(
                     base: args.configDirURL,
                     to: task.taskItem.destination!,
                     fromFiles: task.taskItem.location!
                 )
+            case "USER":
+                conn.execUser = task.taskItem.user!
+            case "EXPOSE":
+                if let port = task.taskItem.exposeData?.port {
+                    try conn.expose(
+                        nat: task.taskItem.exposeData?.nat,
+                        port: port,
+                        proto: task.taskItem.exposeData?.proto
+                    )
+                }
+            case "WORKDIR":
+                conn.workdir = task.taskItem.workdir!
+                conn.workdirURL = URL(fileURLWithPath: conn.workdir)
+            default:
+                throw RouterError.NotImplemented(message: "The task type \(task.task) is not supported.")
             }
         } catch {
             task.state = .degraded

@@ -10,7 +10,44 @@
 Take your application to a new low by devolving the stack. Octahe allows you to simplfy operations,
 create concies applications, and focus on what you do best.
 
+
+###### Working instructions
+
+* RUN
+* COPY
+* ADD
+* SHELL
+* ARG
+* ENV
+* USER
+* EXPOSE
+
+
+###### needs to be implemented
+
+* WORKDIR
+
+
+###### Parsed but not implemented
+
+* LABEL
+* FROM
+* CMD
+* ENTRYPOINT
+* STOPSIGNAL
+* HEALTHCHECK
+
+
+###### Irrelevant
+
+* MAINTAINER (deprecated)
+* VOLUME
+* ONBUILD
+
+
+
 ###### Test in containers, Deploy `TO` production.
+
 
 ## Why
 

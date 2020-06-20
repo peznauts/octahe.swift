@@ -16,23 +16,6 @@ import os
 let logger = Logger(label: "octahe")
 
 
-typealias typeFrom = (platform: String?, image: String, name: String?)
-typealias typeTarget = (to: String, via: String?, escalate: String?, name: String)
-typealias typeDeploy = (execute: String?, chown: String?, location: [String]?, destination: String?, from: String?, original: String)
-typealias typeExposes = (port: String, nat: Substring?, proto: String?)
-typealias typeEntrypointOptions = [(key: String, value: String)]
-
-
-enum RouterError: Error {
-    case NoTargets(message: String)
-    case NotImplemented(message: String)
-    case MatchRegexError(message: String)
-    case FailedParsing(message: String, component: String)
-    case FailedConnection(message: String, targetData: typeTarget)
-    case FailedExecution(message: String)
-}
-
-
 func PlatformArgs() -> Dictionary<String, String> {
     // Sourced from local machine
     //    BUILDPLATFORM - platform of the node performing the build.

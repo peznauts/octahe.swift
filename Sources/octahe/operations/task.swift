@@ -18,10 +18,10 @@ var taskRecords: [Int: TaskRecord] = [:]
 
 class TaskRecord {
     let task: String
-    let taskItem: typeDeploy
+    let taskItem: TypeDeploy
     var state = TaskStates.new
 
-    init(task: String, taskItem: typeDeploy) {
+    init(task: String, taskItem: TypeDeploy) {
         self.task = task
         self.taskItem = taskItem
     }
@@ -41,14 +41,14 @@ class TaskOperations {
 
 class TaskOperation: Operation {
     let taskRecord: TaskRecord
-    let deployItem: (key: String, value: typeDeploy)
+    let deployItem: (key: String, value: TypeDeploy)
     let steps: Int
     let stepIndex: Int
     let args: ConfigParse
     let options: octaheCLI.Options
     var printStatus: Bool = true
 
-    init(deployItem: (key: String, value: typeDeploy), steps: Int, stepIndex: Int,
+    init(deployItem: (key: String, value: TypeDeploy), steps: Int, stepIndex: Int,
          args: ConfigParse, options: octaheCLI.Options) {
         self.deployItem = deployItem
         self.steps = steps
