@@ -12,7 +12,6 @@ class Execution {
     let cliParams: octaheCLI.Options
     let processParams: ConfigParse
     var steps: Int = 0
-    var statusLine: String = ""
     var shell: String = "/bin/sh -c"
     var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
     var environment: Dictionary<String, String> = [:]
@@ -25,6 +24,7 @@ class Execution {
     var escalatePassword: String?
     var workdir: String = FileManager.default.currentDirectoryPath
     var workdirURL: URL
+    var target: String?
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -179,11 +179,13 @@ class ExecuteLocal: Execution {
 
 class ExecuteEcho: ExecuteLocal {
     override func run(execute: String) throws {
+        print("Target: \(String(describing: self.target))")
         let execTask = execString(command: execute)
         print(execTask)
     }
 
     override func copy(base: URL, to: String, fromFiles: [String]) throws {
+        print("Target: \(String(describing: self.target))")
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
             print(fromUrl.path, to)

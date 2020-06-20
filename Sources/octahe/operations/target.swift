@@ -25,29 +25,38 @@ class TargetRecord {
 
     init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options) throws {
         self.target = target
-        if target.name == "localhost" {
-            self.conn = ExecuteLocal(cliParameters: options, processParams: args)
-        } else {
-            self.conn = ExecuteSSH(cliParameters: options, processParams: args)
 
-            let targetComponents = target.to.components(separatedBy: "@")
-            if targetComponents.count > 1 {
-                conn.user = targetComponents.first!
-            }
-            let serverPort = targetComponents.last!.components(separatedBy: ":")
-            if serverPort.count > 1 {
-                conn.server = serverPort.first!
-                conn.port = serverPort.last!
-            } else {
-                conn.server = serverPort.first!
-            }
-            if !conn.port.isInt {
-                throw RouterError.FailedConnection(
-                    message: "Connection never attempted because the port is not an integer.",
-                    targetData: target
-                )
+        if options.dryRun {
+            self.conn = ExecuteEcho(cliParameters: options, processParams: args)
+        } else {
+            switch target.name {
+            case "localhost":
+                self.conn = ExecuteLocal(cliParameters: options, processParams: args)
+            default:
+                self.conn = ExecuteSSH(cliParameters: options, processParams: args)
+
+                let targetComponents = target.to.components(separatedBy: "@")
+                if targetComponents.count > 1 {
+                    conn.user = targetComponents.first!
+                }
+                let serverPort = targetComponents.last!.components(separatedBy: ":")
+                if serverPort.count > 1 {
+                    conn.server = serverPort.first!
+                    conn.port = serverPort.last!
+                } else {
+                    conn.server = serverPort.first!
+                }
+                if !conn.port.isInt {
+                    throw RouterError.FailedConnection(
+                        message: "Connection never attempted because the port is not an integer.",
+                        targetData: target
+                    )
+                }
             }
         }
+
+        self.conn.target = String(target.name)
+
         if let escalate = self.target.escalate {
             self.conn.escalate = escalate
             if let password = options.escalatePassword {
