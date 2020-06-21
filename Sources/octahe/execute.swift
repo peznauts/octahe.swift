@@ -83,10 +83,11 @@ class Execution {
         let hashedFile = entrypoint ?? command
         if hashedFile != nil {
             let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
+            let temporaryFileURL = URL(fileURLWithPath: "/tmp/\(serviceFile)")
             try copy(
                 base: baseUrl,
                 to: "/etc/systemd/system/" + serviceFile,
-                fromFiles: ["/tmp/" + serviceFile]  // This should be changed to the base path of the required template.
+                fromFiles: [temporaryFileURL.path]  // This should be changed to the base path of the required template.
             )
         }
     }

@@ -3,12 +3,13 @@
 
 import PackageDescription
 
+
 let package = Package(
     name: "octahe",
-
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
+        .package(url: "https://github.com/groue/GRMustache.swift", .upToNextMinor(from: "4.0.1")),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -18,6 +19,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "Mustache", package: "Mustache"),
             ]
         ),
         .testTarget(
