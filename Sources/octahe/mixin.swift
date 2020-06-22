@@ -44,7 +44,8 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
         return cleanedItem.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: trimitems)
     }
     
-    func matches(regex: String, text: String) -> Array<String> {
+    func matches(text: String) -> Array<String> {
+        let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|(\\w+))"
         do {
             let regex = try NSRegularExpression(pattern: regex)
             let results = regex.matches(
@@ -66,7 +67,7 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
     let data = filteredContent.map{$0.value}.reduce(into: [String: String]()) {
         var argArray: Array<Array<Substring>> = []
         if $1.contains("=") {
-            let regexArgsMap = matches(regex: "(.+\"|\\w+)=(.+\"|.+\\s|\\w+)", text: $1)
+            let regexArgsMap = matches(text: $1)
             for arg in regexArgsMap {
                 argArray.append(arg.split(separator: "=", maxSplits: 1))
             }
