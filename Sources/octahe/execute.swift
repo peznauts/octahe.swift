@@ -28,7 +28,7 @@ class Execution {
     var healthcheck: String?
     var command: String?
     var stopsignal: String?
-    var documentation: [Dictionary<String, String>] = []
+    var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/swift-octahe"]]
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -74,6 +74,21 @@ class Execution {
         try run(execute: command)
     }
 
+    private func optionFormat(options: Dictionary<String, String>) -> [Dictionary<String, String>] {
+        var items:[Dictionary<String, String>]  = []
+        for (key, value) in options {
+            switch key {
+                case "ESCALATEPASSWORD":
+                    logger.debug("filtering ESCALATEPASSWORD from service options")
+                case _ where key.contains("BUILD"):
+                    logger.debug("filtering BUILD* from service options")
+                default:
+                    items.append(["item": "\(key)=\(value)"])
+            }
+        }
+        return items
+    }
+
     func serviceTemplate(entrypoint: String) throws {
         // Generate a local template, and transfer it to the remote host
         guard !FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
@@ -90,20 +105,31 @@ class Execution {
         } else {
             serviceData["service_command"] = entrypoint
         }
-        serviceData["documentation"] = self.documentation
+        if self.documentation.count > 0 {
+            serviceData["documentation"] = self.documentation
+        }
+        if self.environment.count > 0 {
+            serviceData["environment"] = optionFormat(options: self.environment)
+        }
         if let group = self.execGroup {
             serviceData["group"] = group
         }
         if let sigKill = self.stopsignal {
-            serviceData["stop_signal"] = sigKill
+            serviceData["kill_signal"] = sigKill
+        }
+        if self.workdir != FileManager.default.currentDirectoryPath {
+            serviceData["workdir"] = self.workdir
         }
         let serviceRendered = try systemdRender(data: serviceData)
+        if self.cliParams.dryRun {
+            print("\n***** Service file *****\n\(serviceRendered)\n*************************\n")
+        }
         let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
         let tempService = tempUrl.appendingPathComponent("\(serviceFile)")
         if !FileManager.default.fileExists(atPath: tempService.path) {
-//            defer {
-//                try! FileManager.default.removeItem(at: tempService)
-//            }
+            defer {
+                try! FileManager.default.removeItem(at: tempService)
+            }
             try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
         }
         try copy(

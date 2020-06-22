@@ -13,33 +13,19 @@ import Mustache
 let systemdService: String = """
 [Unit]
 Description={{ service_name }} service
-
-{{# documentation }}
-Documentation={{ item }}
-{{/ documentation }}
-
+Documentation={{# documentation }}{{ item }} {{/ documentation }}
 After=network-online.target systemd-udev-settle.service
 
 [Service]
 Type=oneshot
-{{# user }}
-User={{ user }}
-{{/ user }}
-
-{{# group }}
-Group={{ group }}
-{{/ group }}
-
-{{# kill_signal }}
-KillSignal={{ kill_signal }}
-{{/ kill_signal }}
-
-{{# environment }}
-Environment="{{ item }}"
-{{/ environment }}
-
+{{# user }}User={{ user }}{{/ user }}
+{{# group }}Group={{ group }}{{/ group }}
+{{# kill_signal }}KillSignal={{ kill_signal }}{{/ kill_signal }}
+{{# workdir }}WorkingDirectory={{ workdir }}{{/ workdir }}
+Environment={{# environment }}"{{ item }}" {{/ environment }}
 RemainAfterExit=yes
 ExecStart={{ service_command }}
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

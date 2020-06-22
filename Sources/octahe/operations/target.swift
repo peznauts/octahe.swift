@@ -130,9 +130,7 @@ class TargetOperation: Operation {
             case "LABEL":
                 if let env = task.taskItem.env {
                     for (key, value) in env {
-                        let trimmedKey = key.trimmingCharacters(in: ["\""])
-                        let trimmedValue = value.trimmingCharacters(in: ["\""])
-                        conn.documentation.append(["item": "\(trimmedKey), \(trimmedValue)"])
+                        conn.environment[key] = value
                     }
                 }
             case "RUN":
