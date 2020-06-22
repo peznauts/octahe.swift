@@ -127,6 +127,47 @@ struct OptionsExpose: ParsableArguments {
 }
 
 
+struct OptionsHealthcheck: ParsableArguments {
+    @Option(
+        name: .long,
+        default: "30s",
+        help: """
+              Specify a healthcheck interval.
+              """
+    )
+    var interval: String
+
+    @Option(
+        name: .long,
+        default: "30s",
+        help: """
+              Specify how long a healthcheck can run before it gives up.
+              """
+    )
+    var timeout: String
+
+    @Option(
+        name: .long,
+        default: "30s",
+        help: """
+              Specify a period of time to wait before a healthcheck is
+              started.
+              """
+    )
+    var startPeriod: String
+
+    @Option(
+        name: .long,
+        default: 3,
+        help: """
+              Specify the number of retries used before a service is marked
+              unhealth.
+              """
+    )
+    var retries: Int
+}
+
+
 struct octaheCLI: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Octahe, a utility for deploying OCI compatible applications.",

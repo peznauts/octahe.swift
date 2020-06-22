@@ -11,16 +11,12 @@ import Foundation
 struct ConfigParse {
     let configFiles: [(key: String, value: String)]
     var octaheArgs: Dictionary<String, String>
-    let octaheLabels: Dictionary<String, String>
     var octaheFrom: [String] = []
     var octaheFromHash: [String: typeFrom] = [:]
     var octaheTargets: [String] = []
     var octaheTargetHash: [String: typeTarget] = [:]
     var octaheTargetsCount: Int = 0
     var octaheDeploy: [(key: String, value: TypeDeploy)] = []
-    let octaheCommand: String?
-    let octaheEntrypoints: String?
-    let octaheEntrypointOptions: typeEntrypointOptions
     let configDirURL: URL
 
     init(parsedOptions: octaheCLI.Options, configDirURL: URL) throws {
@@ -155,9 +151,6 @@ struct ConfigParse {
         self.configDirURL = configDirURL
         self.configFiles = try FileParser.buildRawConfigs(files: parsedOptions.configurationFiles)
 
-        // Create a constant containing all lables.
-        self.octaheLabels = BuildDictionary(filteredContent: self.configFiles.filter{$0.key == "LABEL"})
-
         // Args are merged into a single Dictionary. This will allow us to apply args to wherever they're needed.
         self.octaheArgs = PlatformArgs()
 
@@ -172,14 +165,14 @@ struct ConfigParse {
 
         // Return only a valid config.
         let deployOptions = self.configFiles.filter{key, value in
-            return ["RUN", "COPY", "ADD", "SHELL", "ARG", "ENV", "USER", "EXPOSE", "WORKDIR"].contains(key)
+            return ["RUN", "COPY", "ADD", "SHELL", "ARG", "ENV", "USER", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
         }
         for deployOption in deployOptions {
             switch deployOption.key {
             case "COPY", "ADD":
                 let addCopy = try parseAddCopy(stringAddCopy: deployOption.value)
                 self.octaheDeploy.append((key: deployOption.key, value: addCopy))
-            case "ARG", "ENV":
+            case "ARG", "ENV", "LABEL":
                 let argDictionary = BuildDictionary(
                     filteredContent: [(key: deployOption.key, value: deployOption.value)]
                 )
@@ -240,12 +233,40 @@ struct ConfigParse {
             }
         }
 
-        let command = self.configFiles.filter{$0.key == "CMD"}.last
-        self.octaheCommand = command?.value
-        let entrypoint = self.configFiles.filter{$0.key == "ENTRYPOINT"}.last
-        self.octaheEntrypoints = entrypoint?.value
-        self.octaheEntrypointOptions = self.configFiles.filter{key, value in
-            return ["HEALTHCHECK", "STOPSIGNAL", "SHELL"].contains(key)
+        let entrypointConfigs = ["HEALTHCHECK", "STOPSIGNAL", "CMD", "ENTRYPOINT"]
+        let entrypointOptions = self.configFiles.filter{key, value in
+            return entrypointConfigs.contains(key)
+        }
+        for entrypointOption in entrypointConfigs {
+            if let item = entrypointOptions.filter({$0.key == entrypointOption}).last {
+                if entrypointOption == "HEALTHCHECK" {
+                    let healthcheckComponents = item.value.components(separatedBy: "CMD")
+                    let healthcheckArgs = healthcheckComponents.first?.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).components(separatedBy: " ")
+                    let parsedHealthcheckArgs = try OptionsHealthcheck.parse(healthcheckArgs)
+                    print(parsedHealthcheckArgs) // delete me once i figure out what to do with the args.
+                    self.octaheDeploy.append(
+                        (
+                            key: entrypointOption,
+                            value: TypeDeploy(
+                                execute: healthcheckComponents.last,
+                                original: item.value
+                            )
+                        )
+                    )
+                } else {
+                    self.octaheDeploy.append(
+                        (
+                            key: entrypointOption,
+                            value: TypeDeploy(
+                                execute: item.value,
+                                original: item.value
+                            )
+                        )
+                    )
+                }
+            }
         }
 
         // filter all TARGETS.

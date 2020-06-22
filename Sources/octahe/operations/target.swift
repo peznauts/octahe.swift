@@ -127,6 +127,14 @@ class TargetOperation: Operation {
                         (_, second) in second
                     }
                 }
+            case "LABEL":
+                if let env = task.taskItem.env {
+                    for (key, value) in env {
+                        let trimmedKey = key.trimmingCharacters(in: ["\""])
+                        let trimmedValue = value.trimmingCharacters(in: ["\""])
+                        conn.documentation.append(["item": "\(trimmedKey), \(trimmedValue)"])
+                    }
+                }
             case "RUN":
                 try conn.run(execute: task.taskItem.execute!)
             case "COPY", "ADD":
@@ -148,6 +156,14 @@ class TargetOperation: Operation {
             case "WORKDIR":
                 conn.workdir = task.taskItem.workdir!
                 conn.workdirURL = URL(fileURLWithPath: conn.workdir)
+            case "CMD":
+                conn.command = task.taskItem.execute!
+            case "HEALTHCHECK":
+                conn.healthcheck = task.taskItem.execute!
+            case "STOPSIGNAL":
+                conn.stopsignal = task.taskItem.execute!
+            case "ENTRYPOINT":
+                try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
             default:
                 throw RouterError.NotImplemented(message: "The task type \(task.task) is not supported.")
             }

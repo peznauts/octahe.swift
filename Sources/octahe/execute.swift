@@ -25,6 +25,10 @@ class Execution {
     var workdir: String = FileManager.default.currentDirectoryPath
     var workdirURL: URL
     var target: String?
+    var healthcheck: String?
+    var command: String?
+    var stopsignal: String?
+    var documentation: [Dictionary<String, String>] = []
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -70,7 +74,7 @@ class Execution {
         try run(execute: command)
     }
 
-    func serviceTemplate(command: String?, entrypoint: String?, entrypointOptions: typeEntrypointOptions) throws {
+    func serviceTemplate(entrypoint: String) throws {
         // Generate a local template, and transfer it to the remote host
         guard !FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
             throw RouterError.NotImplemented(
@@ -79,17 +83,34 @@ class Execution {
                          """
             )
         }
-        let baseUrl = URL(fileURLWithPath: workdir)
-        let hashedFile = entrypoint ?? command
-        if hashedFile != nil {
-            let serviceFile = "octahe-" + hashedFile!.md5 + ".service"
-            let temporaryFileURL = URL(fileURLWithPath: "/tmp/\(serviceFile)")
-            try copy(
-                base: baseUrl,
-                to: "/etc/systemd/system/" + serviceFile,
-                fromFiles: [temporaryFileURL.path]  // This should be changed to the base path of the required template.
-            )
+        let serviceFile = "octahe-" + entrypoint.md5 + ".service"
+        var serviceData: [String: Any] = ["user": self.user]
+        if let cmd = self.command {
+            serviceData["service_command"] = "\(cmd) \(entrypoint)"
+        } else {
+            serviceData["service_command"] = entrypoint
         }
+        serviceData["documentation"] = self.documentation
+        if let group = self.execGroup {
+            serviceData["group"] = group
+        }
+        if let sigKill = self.stopsignal {
+            serviceData["stop_signal"] = sigKill
+        }
+        let serviceRendered = try systemdRender(data: serviceData)
+        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+        let tempService = tempUrl.appendingPathComponent("\(serviceFile)")
+        if !FileManager.default.fileExists(atPath: tempService.path) {
+//            defer {
+//                try! FileManager.default.removeItem(at: tempService)
+//            }
+            try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
+        }
+        try copy(
+            base: tempUrl,
+            to: "/etc/systemd/system/\(serviceFile)",
+            fromFiles: [serviceFile]
+        )
     }
 
     func execString(command: String) -> String {

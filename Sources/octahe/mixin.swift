@@ -66,7 +66,7 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
     let data = filteredContent.map{$0.value}.reduce(into: [String: String]()) {
         var argArray: Array<Array<Substring>> = []
         if $1.contains("=") {
-            let regexArgsMap = matches(regex: "(\\w+)=(.+\"|.+\\s|\\w+)", text: $1)
+            let regexArgsMap = matches(regex: "(.+\"|\\w+)=(.+\"|.+\\s|\\w+)", text: $1)
             for arg in regexArgsMap {
                 argArray.append(arg.split(separator: "=", maxSplits: 1))
             }
