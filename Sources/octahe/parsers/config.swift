@@ -23,68 +23,46 @@ struct ConfigParse {
         func parseTarget(stringTarget: String) throws -> (typeTarget, Array<String>) {
             // Target parse string argyments and return a tuple.
             let arrayTarget = stringTarget.components(separatedBy: " ")
-            do {
-                let parsedTarget = try OptionsTarget.parse(arrayTarget)
-                let viaHost = parsedTarget.via.last ?? "localhost"
-                return (
-                    (
-                        to: parsedTarget.target,
-                        via: viaHost,
-                        escalate: parsedTarget.escalate ?? parsedOptions.escalate,
-                        name: parsedTarget.name ?? parsedTarget.target
-                    ),
-                    parsedTarget.via
-                )
-            } catch {
-                throw RouterError.FailedParsing(
-                    message: "Parsing TO information has failed",
-                    component: stringTarget
-                )
-            }
-
+            let parsedTarget = try OptionsTarget.parse(arrayTarget)
+            let viaHost = parsedTarget.via.last ?? "localhost"
+            return (
+                (
+                    to: parsedTarget.target,
+                    via: viaHost,
+                    escalate: parsedTarget.escalate ?? parsedOptions.escalate,
+                    name: parsedTarget.name ?? parsedTarget.target
+                ),
+                parsedTarget.via
+            )
         }
 
         func parseAddCopy(stringAddCopy: String) throws -> TypeDeploy {
             // Target parse string argyments and return a tuple.
             let arrayCopyAdd = stringAddCopy.components(separatedBy: " ")
-            do {
-                var parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
-                let destination = parsedCopyAdd.transfer.last
-                parsedCopyAdd.transfer.removeLast()
-                let location = parsedCopyAdd.transfer
-                return TypeDeploy(
-                    chown: parsedCopyAdd.chown,
-                    location: location,
-                    destination: destination,
-                    from: parsedCopyAdd.from,
-                    original: stringAddCopy
-                )
-            } catch {
-                throw RouterError.FailedParsing(
-                    message: "Parsing ADD/COPY information has failed",
-                    component: stringAddCopy
-                )
-            }
+            var parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
+            let destination = parsedCopyAdd.transfer.last
+            parsedCopyAdd.transfer.removeLast()
+            let location = parsedCopyAdd.transfer
+            return TypeDeploy(
+                chown: parsedCopyAdd.chown,
+                location: location,
+                destination: destination,
+                from: parsedCopyAdd.from,
+                original: stringAddCopy
+            )
         }
 
         func parseFrom(stringFrom: String) throws -> typeFrom {
             // Target parse string argyments and return a tuple.
             let arrayFrom = stringFrom.components(separatedBy: " ")
-            do {
-                let parsedFrom = try OptionsFrom.parse(arrayFrom)
-                let name = parsedFrom.name ?? parsedFrom.image
-                let fromData = (
-                    platform: parsedFrom.platform,
-                    image: parsedFrom.image,
-                    name: name
-                )
-                return fromData
-            } catch {
-                throw RouterError.FailedParsing(
-                    message: "Parsing FROM information has failed",
-                    component: stringFrom
-                )
-            }
+            let parsedFrom = try OptionsFrom.parse(arrayFrom)
+            let name = parsedFrom.name ?? parsedFrom.image
+            let fromData = (
+                platform: parsedFrom.platform,
+                image: parsedFrom.image,
+                name: name
+            )
+            return fromData
         }
 
         func parseExpose(stringExpose: String) throws -> typeExposes {
@@ -102,33 +80,26 @@ struct ConfigParse {
 
             // Target parse string argyments and return a tuple.
             let arrayExpose = stringExpose.components(separatedBy: " ")
-            do {
-                let parsedExpose = try OptionsExpose.parse(arrayExpose)
-                var portInt: Int
-                var natInt: Int? = nil
-                var proto: String? = "tcp"
+            let parsedExpose = try OptionsExpose.parse(arrayExpose)
+            var portInt: Int
+            var natInt: Int? = nil
+            var proto: String? = "tcp"
 
-                if !parsedExpose.port.isInt {
-                    (portInt, proto) = protoSplit(protoPort: parsedExpose.port)
-                } else {
-                    portInt = (parsedExpose.port as NSString).integerValue
-                }
-
-                if let natPort = parsedExpose.nat {
-                    (natInt, proto) = protoSplit(protoPort: natPort)
-                }
-
-                return (
-                    port: portInt,
-                    nat: natInt,
-                    proto: proto
-                )
-            } catch {
-                throw RouterError.FailedParsing(
-                    message: "Parsing EXPOSE information has failed",
-                    component: stringExpose
-                )
+            if !parsedExpose.port.isInt {
+                (portInt, proto) = protoSplit(protoPort: parsedExpose.port)
+            } else {
+                portInt = (parsedExpose.port as NSString).integerValue
             }
+
+            if let natPort = parsedExpose.nat {
+                (natInt, proto) = protoSplit(protoPort: natPort)
+            }
+
+            return (
+                port: portInt,
+                nat: natInt,
+                proto: proto
+            )
         }
 
         func viaLoad(viaHosts: [String]) {
@@ -206,7 +177,7 @@ struct ConfigParse {
                         key: deployOption.key,
                         value: TypeDeploy(
                             original: deployOption.value,
-                            exposeData: try? parseExpose(stringExpose: deployOption.value)
+                            exposeData: try parseExpose(stringExpose: deployOption.value)
                         )
                     )
                 )

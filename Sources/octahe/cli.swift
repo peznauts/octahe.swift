@@ -50,7 +50,7 @@ struct OptionsTarget: OctaheArguments {
 }
 
 
-struct OptionsAddCopy: ParsableArguments {
+struct OptionsAddCopy: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Option(
         name: .long,
@@ -78,7 +78,7 @@ struct OptionsAddCopy: ParsableArguments {
 }
 
 
-struct OptionsFrom: ParsableArguments {
+struct OptionsFrom: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Option(
         name: .long,
@@ -111,7 +111,7 @@ struct OptionsFrom: ParsableArguments {
 }
 
 
-struct OptionsExpose: ParsableArguments {
+struct OptionsExpose: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Argument(
         help: """
@@ -127,7 +127,7 @@ struct OptionsExpose: ParsableArguments {
 }
 
 
-struct OptionsHealthcheck: ParsableArguments {
+struct OptionsHealthcheck: OctaheArguments {
     @Option(
         name: .long,
         default: "30s",
@@ -171,7 +171,7 @@ struct OptionsHealthcheck: ParsableArguments {
 struct octaheCLI: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Octahe, a utility for deploying OCI compatible applications.",
-        subcommands: [Deploy.self, UnDeploy.self],
+        subcommands: [Deploy.self, UnDeploy.self, Target.self, AddCopy.self, From.self, Expose.self, Healthcheck.self],
         defaultSubcommand: Deploy.self
     )
     struct Options: ParsableArguments {
@@ -263,6 +263,7 @@ extension octaheCLI {
 
     struct UnDeploy: ParsableCommand {
         static var configuration = CommandConfiguration(
+            commandName: "undeploy",
             abstract: "Disable a deployment for a given OCI compatible application."
         )
 
@@ -272,5 +273,60 @@ extension octaheCLI {
         func run() throws {
             throw RouterError.NotImplemented(message: "The undeployment method has not been implemented yet.")
         }
+    }
+
+    struct Target: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "options_target",
+            abstract: "Show options when handling the TO directive.",
+            shouldDisplay: false
+        )
+
+        @OptionGroup()
+        var options: OptionsTarget
+    }
+
+    struct AddCopy: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "options_add_copy",
+            abstract: "Show options used when handling the COPY/ADD directives.",
+            shouldDisplay: false
+        )
+
+        @OptionGroup()
+        var options: OptionsAddCopy
+    }
+
+    struct From: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "options_from",
+            abstract: "Show options used when handling the FROM directive.",
+            shouldDisplay: false
+        )
+
+        @OptionGroup()
+        var options: OptionsFrom
+    }
+
+    struct Expose: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "options_expose",
+            abstract: "Show options used when handling the EXPOSE directive.",
+            shouldDisplay: false
+        )
+
+        @OptionGroup()
+        var options: OptionsExpose
+    }
+
+    struct Healthcheck: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "options_healthcheck",
+            abstract: "Show options used when handling the HEALTHCHECK directive.",
+            shouldDisplay: false
+        )
+
+        @OptionGroup()
+        var options: OptionsHealthcheck
     }
 }

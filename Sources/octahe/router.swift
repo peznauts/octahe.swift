@@ -26,7 +26,8 @@ func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
     let octaheArgs = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
     // The total calculated steps start at 0, so we take the total and subtract 1.
     let octaheSteps = octaheArgs.octaheDeploy.count - 1
-    if octaheSteps < 1 {
+    
+    if octaheArgs.octaheDeploy.count < 1 {
         let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
         throw RouterError.FailedExecution(
             message: "No steps found within provided Containerfiles: \(configFiles)"
