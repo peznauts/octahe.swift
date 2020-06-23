@@ -25,7 +25,6 @@ class TargetRecord {
 
     init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options) throws {
         self.target = target
-
         if options.dryRun {
             self.conn = ExecuteEcho(cliParameters: options, processParams: args)
         } else {
@@ -52,10 +51,9 @@ class TargetRecord {
                         targetData: target
                     )
                 }
+                try conn.connect()
             }
         }
-
-        self.conn.target = String(target.name)
 
         if let escalate = self.target.escalate {
             self.conn.escalate = escalate

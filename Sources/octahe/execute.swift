@@ -31,6 +31,7 @@ class Execution {
     var command: String?
     var stopsignal: String?
     var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/swift-octahe"]]
+    var ssh: SSH?
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -38,7 +39,7 @@ class Execution {
         self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
-    func connect(target: String) throws {
+    func connect() throws {
         preconditionFailure("This method must be overridden")
     }
 
@@ -240,11 +241,16 @@ class ExecuteEcho: ExecuteLocal {
 }
 
 
-class ExecuteSSH: ExecuteEcho {
-    override func connect(target: String) throws {
-        let ssh = try SSH(host: target)
-        try ssh.authenticate(username: self.user, privateKey: "~/.ssh/id_rsa")
-        try ssh.execute("ls -a")
-        try ssh.execute("pwd")
+class ExecuteSSH: Execution {
+    override func connect() throws {
+        let cssh = try SSH(host: self.server)
+        if let privatekey = self.cliParams.connectionKey {
+            try cssh.authenticate(username: self.user, privateKey: privatekey)
+        } else {
+            throw RouterError.FailedExecution(message: "SSH key is undefined or missing.")
+        }
+
+        try cssh.execute("ls -a")
+        try cssh.execute("pwd")
     }
 }
