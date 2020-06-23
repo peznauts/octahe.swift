@@ -31,28 +31,31 @@ class TargetRecord {
             switch target.name {
             case "localhost":
                 self.conn = ExecuteLocal(cliParameters: options, processParams: args)
+            case let str where str.contains("/dev"):
+                self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
                 self.conn = ExecuteSSH(cliParameters: options, processParams: args)
 
                 let targetComponents = target.to.components(separatedBy: "@")
                 if targetComponents.count > 1 {
-                    conn.user = targetComponents.first!
+                    self.conn.user = targetComponents.first!
                 }
                 let serverPort = targetComponents.last!.components(separatedBy: ":")
                 if serverPort.count > 1 {
-                    conn.server = serverPort.first!
-                    conn.port = serverPort.last!
+                    self.conn.server = serverPort.first!
+                    self.conn.port = serverPort.last!
                 } else {
-                    conn.server = serverPort.first!
+                    self.conn.server = serverPort.first!
                 }
-                if !conn.port.isInt {
+                if !self.conn.port.isInt {
                     throw RouterError.FailedConnection(
                         message: "Connection never attempted because the port is not an integer.",
                         targetData: target
                     )
                 }
-                conn.ssh = try conn.connect()
+                try self.conn.connect()
             }
+            self.conn.target = target.name
         }
 
         if let escalate = self.target.escalate {

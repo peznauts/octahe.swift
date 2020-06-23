@@ -37,7 +37,7 @@ ENTRYPOINT ["top", "-b"]
 ##### TO
 
 ``` dockerfile
-TO [--escalate=<path-to-binary>, --name=<string>, --via=<string>] <address>:<port>@<user>
+TO [--escalate=<path-to-binary>, --name=<string>, --via=<string>] [<address>:<port>@<user>, localhost, SERIALPORT]
 ```
 
 The `TO` instruction initializes a new connection to a given target for subsequent instructions.
@@ -48,9 +48,9 @@ ARG is the only instruction that may precede `TO` in the file. See
 
 `TO` can appear multiple times within a single file to create multiple connections to different targets.
 
-Every `TO` entry requires three parts `<address>:<port>@<user>`. The address can be an IP
-address or FQDN. The port will always be an integer. The user should be the username required
-to access the given target.
+Every `TO` entry requires three parts when connecting through SSH `<address>:<port>@<user>`. 
+The address can be an IP address or FQDN. The port will always be an integer. The user should
+be the username required to access the given target.
 
 The optional `--escalate` flag can be used to specify the means of privledge escallation. This
 option requires the binary needed to perform a privledge escallation. Privledge escallation
@@ -100,6 +100,9 @@ FROM image-name:tag-id
 TO   --escalate=/usr/bin/sudo --via=user@bastion0 --via=user@bastion1 127.0.0.3:22@${USER}
 RUN  dnf install -y curl
 ```
+
+> When connecting to a serial port, only binary data can be written to the device using the `COPY` verb.
+  Using the `RUN` verb will write string data to the serial device. No other verbs are supported at this time.
 
 #### FROM
 

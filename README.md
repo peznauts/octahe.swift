@@ -28,7 +28,12 @@ The Octahe follows the [Dockerfile](https://docs.docker.com/engine/reference/bui
 reference with one new verb, [TO](DOCUMENTATION.md#to). This new verb can be expressed
 on the CLI or within a provided container file.
 
-## Install
+#### Target options
+
+When deploying [TO](DOCUMENTATION.md#to) a target Octahe provides options by supporting
+options that span SSH, `localhost`, and Serial.
+
+## Installation
 
 ### Building Octahe From Source.
 

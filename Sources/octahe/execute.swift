@@ -8,6 +8,7 @@
 import Foundation
 
 import Shout
+import SwiftSerial
 
 
 class Execution {
@@ -32,6 +33,7 @@ class Execution {
     var stopsignal: String?
     var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/octahe.swift"]]
     var ssh: SSH?
+    var serialPort: SerialPort?
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -39,8 +41,8 @@ class Execution {
         self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
-    func connect() throws -> SSH {
-        preconditionFailure("This method must be overridden")
+    func connect() throws {
+        preconditionFailure("This method is not supported")
     }
 
     func probe() throws {
@@ -50,19 +52,19 @@ class Execution {
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
         //    TARGETVARIANT - variant component of TARGETPLATFORM
-        preconditionFailure("This method must be overridden")
+        preconditionFailure("This method is not supported")
     }
 
     func close() {
-        preconditionFailure("This method must be overridden")
+        preconditionFailure("This method is not supported")
     }
 
     func run(execute: String) throws {
-        preconditionFailure("This method must be overridden")
+        preconditionFailure("This method is not supported")
     }
 
     func copy(base: URL, to: String, fromFiles: [String]) throws {
-        preconditionFailure("This method must be overridden")
+        preconditionFailure("This method is not supported")
     }
 
     func expose(nat: Int?, port: Int, proto: String?) throws {
@@ -265,7 +267,7 @@ class ExecuteEcho: Execution {
 
 
 class ExecuteSSH: Execution {
-    override func connect() throws -> SSH {
+    override func connect() throws {
         let cssh = try SSH(host: self.server)
         if let privatekey = self.cliParams.connectionKey {
             try cssh.authenticate(username: self.user, privateKey: privatekey)
@@ -273,7 +275,7 @@ class ExecuteSSH: Execution {
             try cssh.authenticateByAgent(username: self.user)
         }
         cssh.ptyType = .vanilla
-        return cssh
+        self.ssh = cssh
     }
 
     private func outputStrip(output: String) -> String {
@@ -339,5 +341,42 @@ class ExecuteSSH: Execution {
                          """
             )
         }
+    }
+}
+
+
+class ExecuteSerial: Execution {
+    override func connect() throws {
+        self.serialPort = SerialPort(path: self.target!)
+        self.serialPort!.setSettings(
+            receiveRate: .baud9600,
+            transmitRate: .baud9600,
+            minimumBytesToRead: 1
+        )
+        try self.serialPort!.openPort()
+    }
+
+    override func close() {
+        self.serialPort!.closePort()
+    }
+
+    override func probe() throws {
+        logger.info("Environment options are irrelevant with serial ports.")
+    }
+
+    override func copy(base: URL, to: String, fromFiles: [String]) throws {
+        guard fromFiles.count > 1 else {
+            throw RouterError.NotImplemented(message: "Only one file can be written to a serial port")
+        }
+        let fromUrl = base.appendingPathComponent(fromFiles.first!)
+        let fileData = try Data(contentsOf: fromUrl)
+        let _ = try self.serialPort?.writeData(fileData)
+    }
+
+    override func run(execute: String) throws {
+        let _ = try self.serialPort?.writeString(execute)
+    }
+    override func serviceTemplate(entrypoint: String) throws {
+        preconditionFailure("This method is not supported")
     }
 }
