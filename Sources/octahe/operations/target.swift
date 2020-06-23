@@ -155,13 +155,22 @@ class TargetOperation: Operation {
                 conn.workdir = task.taskItem.workdir!
                 conn.workdirURL = URL(fileURLWithPath: conn.workdir)
             case "CMD":
-                conn.command = task.taskItem.execute!
+                if args.octaheDeploy.filter({$0.key == "ENTRYPOINT"}).count > 0 {
+                    conn.command = task.taskItem.execute!
+                } else {
+                    try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
+                }
             case "HEALTHCHECK":
                 conn.healthcheck = task.taskItem.execute!
             case "STOPSIGNAL":
                 conn.stopsignal = task.taskItem.execute!
             case "ENTRYPOINT":
-                try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
+                if let cmd = args.octaheDeploy.filter({$0.key == "CMD"}).map({$0.value}).last {
+                    let entrypoint = "\(cmd.execute!) \(task.taskItem.execute!)"
+                    try conn.serviceTemplate(entrypoint: entrypoint)
+                } else {
+                    try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
+                }
             default:
                 throw RouterError.NotImplemented(message: "The task type \(task.task) is not supported.")
             }

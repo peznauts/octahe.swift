@@ -99,12 +99,8 @@ class Execution {
             )
         }
         let serviceFile = "octahe-" + entrypoint.md5 + ".service"
-        var serviceData: [String: Any] = ["user": self.user]
-        if let cmd = self.command {
-            serviceData["service_command"] = "\(cmd) \(entrypoint)"
-        } else {
-            serviceData["service_command"] = entrypoint
-        }
+        var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint]
+
         if self.documentation.count > 0 {
             serviceData["documentation"] = self.documentation
         }
