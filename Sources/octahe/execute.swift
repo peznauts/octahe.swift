@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Shout
+
 
 class Execution {
     let cliParams: octaheCLI.Options
@@ -239,5 +241,10 @@ class ExecuteEcho: ExecuteLocal {
 
 
 class ExecuteSSH: ExecuteEcho {
-    // Currently this does nothing, when this is ready to do something, it should subclass Execute
+    override func connect(target: String) throws {
+        let ssh = try SSH(host: target)
+        try ssh.authenticate(username: self.user, privateKey: "~/.ssh/id_rsa")
+        try ssh.execute("ls -a")
+        try ssh.execute("pwd")
+    }
 }

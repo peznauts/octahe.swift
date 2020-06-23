@@ -32,10 +32,18 @@ a provided container file.
 
 ### Building Octahe From Source.
 
-With swift 5.0+ installed, simply clone this repository, change directory to the checkout, and run
+Octahe requires libssh2 be installed on the system prior to building. `libssh2` can be installed
+using `brew` using the following commands.
+
+``` shell
+brew install libssh2
+```
+
+With swift 5.2+ installed, simply clone this repository, change directory to the checkout, and run
 the following command.
 
 ``` shell
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
 swift build
 ```
 
