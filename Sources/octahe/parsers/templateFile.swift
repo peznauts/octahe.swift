@@ -17,14 +17,14 @@ Documentation={{# documentation }}{{ item }} {{/ documentation }}
 After=network-online.target systemd-udev-settle.service
 
 [Service]
-Type=oneshot
+Type=simple
 {{# user }}User={{ user }}{{/ user }}
 {{# group }}Group={{ group }}{{/ group }}
 {{# kill_signal }}KillSignal={{ kill_signal }}{{/ kill_signal }}
 {{# workdir }}WorkingDirectory={{ workdir }}{{/ workdir }}
 Environment={{# environment }}"{{ item }}" {{/ environment }}
 RemainAfterExit=yes
-ExecStart={{ service_command }}
+ExecStart={{ shell }} "{{ service_command }}"
 Restart=always
 
 [Install]

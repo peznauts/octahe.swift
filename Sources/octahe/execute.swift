@@ -30,7 +30,7 @@ class Execution {
     var healthcheck: String?
     var command: String?
     var stopsignal: String?
-    var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/swift-octahe"]]
+    var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/octahe.swift"]]
     var ssh: SSH?
 
     init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
@@ -68,13 +68,16 @@ class Execution {
     func expose(nat: Int?, port: Int, proto: String?) throws {
         let port = port
         let proto = proto ?? "tcp"
-        let command: String
+        let commandCreate: String
+        let commandDelete: String
         if let natPort = nat {
-            command = "iptables -t nat -A PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
+            commandCreate = "iptables -t nat -D PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
+            commandDelete = "iptables -t nat -A PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
         } else {
-            command = "iptables -A INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
+            commandCreate = "iptables -A INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
+            commandDelete = "iptables -D INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
         }
-        try run(execute: command)
+        try run(execute: "\(commandDelete) &> /dev/null; \(commandCreate)")
     }
 
     private func optionFormat(options: Dictionary<String, String>) -> [Dictionary<String, String>] {
@@ -102,7 +105,7 @@ class Execution {
             )
         }
         let serviceFile = "octahe-" + entrypoint.md5 + ".service"
-        var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint]
+        var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint, "shell": self.shell]
 
         if self.documentation.count > 0 {
             serviceData["documentation"] = self.documentation
@@ -130,12 +133,13 @@ class Execution {
                 try! FileManager.default.removeItem(at: tempService)
             }
             try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
+            try copy(
+                base: tempUrl,
+                to: "/etc/systemd/system/\(serviceFile)",
+                fromFiles: [serviceFile]
+            )
+            try run(execute: "systemctl daemon-reload; systemctl restart \(serviceFile)")
         }
-        try copy(
-            base: tempUrl,
-            to: "/etc/systemd/system/\(serviceFile)",
-            fromFiles: [serviceFile]
-        )
     }
 
     func execString(command: String) -> String {
@@ -263,7 +267,6 @@ class ExecuteSSH: Execution {
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
         let (status, output) = try self.ssh!.capture("uname -ms")
-        print(output)
         if status == 0 {
             let lowerOutput = outputStrip(output: output).components(separatedBy: " ")
             let os = lowerOutput.first!
@@ -290,5 +293,9 @@ class ExecuteSSH: Execution {
                 try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
             }
         }
+    }
+
+    override func run(execute: String) throws {
+        try self.ssh!.execute(execString(command: execute))
     }
 }

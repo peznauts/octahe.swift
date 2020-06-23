@@ -65,7 +65,7 @@ RUN  dnf install -y curl
 ```
 
 The optional `--name` flag can be used to specify a friendly "name" of a given node. If a name is
-not provided, the system will assign the given target a "name" using a MD5 sum.
+not provided, the system will assign the given target a "name" using a SHA1 sum.
 
 ``` dockerfile
 ARG  USER=access-user
