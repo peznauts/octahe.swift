@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "octahe",
+    platforms: [
+        .macOS(.v10_14)
+    ],
     dependencies: [
         .package(name: "swift-argument-parser", url: "https://github.com/apple/swift-argument-parser", from: "0.1.0"),
         .package(name: "swift-log", url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
@@ -21,6 +24,15 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Mustache", package: "Mustache"),
                 .product(name: "Shout", package: "Shout")
+            ],
+            linkerSettings: [
+                .unsafeFlags(
+                    [
+                        "-L /usr/local/opt/openssl@1.1/lib",
+                        "-I /usr/local/opt/openssl@1.1/include"
+                    ],
+                    .when(platforms: [.macOS], configuration: .release)
+                ),
             ]
         ),
         .testTarget(

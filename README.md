@@ -43,7 +43,6 @@ With swift 5.2+ installed, simply clone this repository, change directory to the
 the following command.
 
 ``` shell
-export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
 swift build
 ```
 
