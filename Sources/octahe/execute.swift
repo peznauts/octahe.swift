@@ -97,13 +97,6 @@ class Execution {
 
     func serviceTemplate(entrypoint: String) throws {
         // Generate a local template, and transfer it to the remote host
-        guard !FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
-            throw RouterError.NotImplemented(
-                message: """
-                         Servive templating is not currently supported on non-linux operating systems without systemd.
-                         """
-            )
-        }
         let serviceFile = "octahe-" + entrypoint.md5 + ".service"
         var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint, "shell": self.shell]
 
@@ -199,6 +192,17 @@ class ExecuteLocal: Execution {
         try localExec(command: execute)
     }
 
+    override func serviceTemplate(entrypoint: String) throws {
+        guard FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
+            throw RouterError.NotImplemented(
+                message: """
+                         Service templating is currently only supported systems with systemd.
+                         """
+            )
+        }
+        try super.serviceTemplate(entrypoint: entrypoint)
+    }
+
     private func localExec(command: String) throws {
         let execTask = execString(command: command)
 
@@ -228,19 +232,34 @@ class ExecuteLocal: Execution {
 }
 
 
-class ExecuteEcho: ExecuteLocal {
+class ExecuteEcho: Execution {
+    private func notice() {
+        print("Target: \(String(describing: self.target ?? self.server))")
+    }
+
+    override func probe() throws {
+        notice()
+        print("Environment options are generated here.")
+    }
+
     override func run(execute: String) throws {
-        print("Target: \(String(describing: self.target))")
+        notice()
         let execTask = execString(command: execute)
         print(execTask)
     }
 
     override func copy(base: URL, to: String, fromFiles: [String]) throws {
-        print("Target: \(String(describing: self.target))")
+        notice()
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
             print(fromUrl.path, to)
         }
+    }
+
+    override func serviceTemplate(entrypoint: String) throws {
+        notice()
+        print(entrypoint)
+        try super.serviceTemplate(entrypoint: entrypoint)
     }
 }
 
@@ -266,19 +285,26 @@ class ExecuteSSH: Execution {
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
-        let (status, output) = try self.ssh!.capture("uname -ms")
+        let (status, output) = try self.ssh!.capture("uname -ms; systemd --version")
         if status == 0 {
-            let lowerOutput = outputStrip(output: output).components(separatedBy: " ")
-            let os = lowerOutput.first!
-            let arch = unameLookup[lowerOutput.last!] ?? "unknown"
+            let lowerOutput = outputStrip(output: output).components(separatedBy: "\n")
+            let targetVars = lowerOutput.first!.components(separatedBy: " ")
+            let os = targetVars.first!
+            let arch = unameLookup[targetVars.last!] ?? "unknown"
             self.environment["TARGETOS"] = os
             self.environment["TARGETARCH"] = arch
             self.environment["TARGETPLATFORM"] = "\(os)/\(arch)"
+            let systemd = lowerOutput.last!.components(separatedBy: " ").last
+            self.environment["SYSTEMD_VERSION"] = systemd
+        } else {
+            throw RouterError.FailedExecution(message: output)
         }
 
         let (statusPath, outputPath) = try self.ssh!.capture("echo ${PATH}")
         if statusPath == 0 {
             self.environment["PATH"] = outputStrip(output: outputPath)
+        } else {
+            throw RouterError.FailedExecution(message: outputPath)
         }
     }
 
@@ -296,6 +322,22 @@ class ExecuteSSH: Execution {
     }
 
     override func run(execute: String) throws {
-        try self.ssh!.execute(execString(command: execute))
+        let status = try self.ssh!.execute(execString(command: execute))
+        if status != 0 {
+            throw RouterError.FailedExecution(message: "FAILED execution")
+        }
+
+    }
+
+    override func serviceTemplate(entrypoint: String) throws {
+        if self.environment.keys.contains("SYSTEMD_VERSION") {
+            try super.serviceTemplate(entrypoint: entrypoint)
+        } else {
+            throw RouterError.NotImplemented(
+                message: """
+                         Service templating is not currently supported on non-linux operating systems without systemd.
+                         """
+            )
+        }
     }
 }
