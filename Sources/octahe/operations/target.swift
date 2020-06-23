@@ -153,11 +153,7 @@ class TargetOperation: Operation {
                 conn.workdir = task.taskItem.workdir!
                 conn.workdirURL = URL(fileURLWithPath: conn.workdir)
             case "CMD":
-                if args.octaheDeploy.filter({$0.key == "ENTRYPOINT"}).count > 0 {
-                    conn.command = task.taskItem.execute!
-                } else {
-                    try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
-                }
+                conn.command = task.taskItem.execute!
             case "HEALTHCHECK":
                 conn.healthcheck = task.taskItem.execute!
             case "STOPSIGNAL":
