@@ -51,7 +51,7 @@ class TargetRecord {
                         targetData: target
                     )
                 }
-                try conn.connect()
+                conn.ssh = try conn.connect()
             }
         }
 
@@ -62,7 +62,7 @@ class TargetRecord {
             }
         }
         // Probe the environment to set basic environment details.
-        self.conn.probe()
+        try self.conn.probe()
     }
 }
 

@@ -39,11 +39,11 @@ class Execution {
         self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
-    func connect() throws {
+    func connect() throws -> SSH {
         preconditionFailure("This method must be overridden")
     }
 
-    func probe() {
+    func probe() throws {
         // TODO(cloudnull): The follow args need to be rendered from the target and added to a CONSTANT
         // Sourced from remote target at runtime:
         //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
@@ -161,7 +161,7 @@ class Execution {
 
 
 class ExecuteLocal: Execution {
-    override func probe() {
+    override func probe() throws {
         for (key, value) in PlatformArgs() {
             let targetKey = key.replacingOccurrences(of: "BUILD", with: "TARGET")
             self.environment[targetKey] = value
@@ -242,15 +242,53 @@ class ExecuteEcho: ExecuteLocal {
 
 
 class ExecuteSSH: Execution {
-    override func connect() throws {
+    override func connect() throws -> SSH {
         let cssh = try SSH(host: self.server)
         if let privatekey = self.cliParams.connectionKey {
             try cssh.authenticate(username: self.user, privateKey: privatekey)
         } else {
-            throw RouterError.FailedExecution(message: "SSH key is undefined or missing.")
+            try cssh.authenticateByAgent(username: self.user)
+        }
+        cssh.ptyType = .vanilla
+        return cssh
+    }
+
+    private func outputStrip(output: String) -> String {
+        return output.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    override func probe() throws {
+        //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
+        //    TARGETOS - OS component of TARGETPLATFORM
+        //    TARGETARCH - architecture component of TARGETPLATFORM
+        let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
+        let (status, output) = try self.ssh!.capture("uname -ms")
+        print(output)
+        if status == 0 {
+            let lowerOutput = outputStrip(output: output).components(separatedBy: " ")
+            let os = lowerOutput.first!
+            let arch = unameLookup[lowerOutput.last!] ?? "unknown"
+            self.environment["TARGETOS"] = os
+            self.environment["TARGETARCH"] = arch
+            self.environment["TARGETPLATFORM"] = "\(os)/\(arch)"
         }
 
-        try cssh.execute("ls -a")
-        try cssh.execute("pwd")
+        let (statusPath, outputPath) = try self.ssh!.capture("echo ${PATH}")
+        if statusPath == 0 {
+            self.environment["PATH"] = outputStrip(output: outputPath)
+        }
+    }
+
+    override func copy(base: URL, to: String, fromFiles: [String]) throws {
+        let toUrl = URL(fileURLWithPath: to)
+        for file in fromFiles {
+            let fromUrl = base.appendingPathComponent(file)
+            let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+            do {
+                try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
+            } catch {
+                try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
+            }
+        }
     }
 }
