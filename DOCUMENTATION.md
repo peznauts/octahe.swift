@@ -49,7 +49,7 @@ ARG is the only instruction that may precede `TO` in the file. See
 
 `TO` can appear multiple times within a single file to create multiple connections to different targets.
 
-Every `TO` entry requires three parts when connecting through SSH `<address>:<port>@<user>`. 
+Every `TO` entry requires three parts when connecting through SSH `<address>:<port>@<user>`.
 The address can be an IP address or FQDN. The port will always be an integer. The user should
 be the username required to access the given target.
 
@@ -106,33 +106,40 @@ EXPOSE 7000
 ENTRYPOINT python3 -m http.server 7000
 ```
 
-> When connecting to a serial port, only binary data can be written to the device using the `COPY` verb.
-  Using the `RUN` verb will write string data to the serial device. No other verbs are supported at this time.
+###### Notes about the serial port connection driver
 
-#### FROM
+* When connecting to a serial port, only binary data can be written to the device using the `COPY` verb, while
+  the `COPY` verb requires both a file location and destination, the destination is omitted.
+
+* When connecting to a serial port, the `RUN` verb will write string data to the serial device.
+
+* Only `RUN` and `COPY` verbs are supported at this time.
+
+##### FROM
 
 The **FROM** instruction will pull a container image, inspect the layers, and derive all compatible verbs
 which are then inserted into the execution process.
 
-#### ENTRYPOINT
+##### ENTRYPOINT
 
-The `ENTRYPOINT` verb will create a **oneshot** systemd service on the target. This will
-result in the entrypoint commanded running on system start. All systemd `oneshot` services
+The `ENTRYPOINT` verb will create a **simple** systemd service on the target. This will
+result in the entrypoint commanded running on system start. All systemd `simple` services
 will be placed in `/etc/systemd/system/octahe/`. Where they will be enabled but not started
 upon creation.
 
 > To ensure that the generated `ENTRYPOINT` service file is unique, a MD5 SUM of the
   `ENTRYPOINT` value will be generated as the service file name.
 
-#### CMD
+##### CMD
 
-This verb is treated in the same way as `ENTRYPOINT`, but will start the service file upon
-creation.
+This verb is stored in memory and will be used in conjunction with an ENTRYPOINT if defined.
 
-#### HEALTHCHECK
+> If multiple CMD verbs are present in config only the last one will be used.
+
+##### HEALTHCHECK
 
 The `HEALTHCHECK` verb will create a watchdog service for a given `ENTRYPOINT` service file.
-This will convert the **oneshot** service to a **notify** service.
+This will convert the **simple** service to a **notify** service.
 
 The following arguments are supported when a `HEALTHCHECK` is instantiated.
 
@@ -141,37 +148,36 @@ The following arguments are supported when a `HEALTHCHECK` is instantiated.
 * --retries=3
 
 ``` dockerfile
-...
 HEALTHCHECK --interval=5m --timeout=3s --retries=3 CMD curl -f http://localhost/ || exit 1
 ```
 
-#### STOPSIGNAL
+##### STOPSIGNAL
 
-The `STOPSIGNAL` verb will create a `KillSignal` entry for a given `ENTRYPOINT` systemd
+The `STOPSIGNAL` verb will create a `KillSignal` entry for a given `ENTRYPOINT` systemd.
 service.
 
 ``` dockerfile
-...
 STOPSIGNAL 99
 ```
 
-#### EXPOSE
+##### EXPOSE
 
 The `EXPOSE` verb will create an IPTables rule for a given port and/or service mapping.
-IP tables rules will be added into the **octahe** chain.
+IP tables rules will be added into the **INPUT** chain.
 
 ``` dockerfile
-...
 EXPOSE 80/tcp
 EXPOSE 8080:80/udp
 ```
 
-### Ignored Verbs
+#### Ignored Verbs
 
 Because the following options have no effect on a stateful targets, they're ignored.
 
 * ONBUILD
 * VOLUME
+
+----
 
 ### Executing a deployment
 
@@ -188,7 +194,7 @@ Beginning deployment execution
 ✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
-##### Optional Example
+#### Optional Example
 
 By default all targets listed in the `TO` verb will connect and execute the steps serially.
 This can be changed by modifying the connection quota. If the quota is less than the total
@@ -205,7 +211,7 @@ Beginning deployment execution
 ✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
-##### Failure Example
+#### Failure Example
 
 In the event of an execution failure, the failed targets will be taken out of the execution steps.
 
@@ -222,7 +228,7 @@ Beginning deployment execution
 FailedExecution(message: "FAILED: iptables -A INPUT -p tcp -m tcp --dport 7000 -j ACCEPT")
 ```
 
-##### Manual target Example
+#### Manual target Example
 
 To rerun a failed execution on only the failed targets specify the targets on the CLI using the
 `--targets` flag.
@@ -238,7 +244,7 @@ Beginning deployment execution
 ✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
-##### Multi-file Example
+#### Multi-file Example
 
 A deployment can be executed with more than one file allowing multiple files to be concatenated together.
 Each file provided will have the contents of the file inserted into the deployment.
