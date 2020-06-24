@@ -183,13 +183,9 @@ octahe deploy ~/Targetfile
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Done
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Done
+✔ Step 0/2 : COPY index.html /tmp/TEST
+✔ Step 1/2 : EXPOSE 7000
+✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 ##### Optional Example
@@ -204,13 +200,9 @@ octahe deploy --connection-quota=3 ~/Targetfile
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Done
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Done
+✔ Step 0/2 : COPY index.html /tmp/TEST
+✔ Step 1/2 : EXPOSE 7000
+✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 ##### Failure Example
@@ -223,17 +215,11 @@ octahe deploy ~/Targetfile
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Degrated
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Degrated
-Deployed complete, but degraded.
-Degrated hosts:
-[-] bastion1 - failed "Step 3/4"
-[-] 127.0.0.3:22@access-user - failed "Step 4/4"
+✔ Step 0/2 : COPY index.html /tmp/TEST
+⚠ Step 1/2 : EXPOSE 7000
+⚠ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+[-] centos@10.0.0.2:22 - failed step 1 / 2
+FailedExecution(message: "FAILED: iptables -A INPUT -p tcp -m tcp --dport 7000 -j ACCEPT")
 ```
 
 ##### Manual target Example
@@ -247,13 +233,9 @@ octahe deploy --connection-quota=3 --targets="--name node1 root@10.0.0.4:22" --t
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Done
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Done
+✔ Step 0/2 : COPY index.html /tmp/TEST
+✔ Step 1/2 : EXPOSE 7000
+✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 ##### Multi-file Example
@@ -267,11 +249,7 @@ octahe deploy ~/Containerfile ~/Targetfile
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Done
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Done
+✔ Step 0/2 : COPY index.html /tmp/TEST
+✔ Step 1/2 : EXPOSE 7000
+✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```

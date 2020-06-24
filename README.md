@@ -66,13 +66,9 @@ This is what you can expect from the process output.
 
 ``` console
 Beginning deployment execution
-Probing targets
-Step 0/2 : COPY index.html /
- --> Done
-Step 1/2 : EXPOSE 7000
- --> Done
-Step 2/2 : ENTRYPOINT python3 -m http.server 7000
- --> Done
+✔ Step 0/2 : COPY index.html /tmp/TEST
+✔ Step 1/2 : EXPOSE 7000
+✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 More documentation can be found [here](DOCUMENTATION.md)
