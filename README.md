@@ -65,17 +65,14 @@ octahe deploy ~/Targetfile
 This is what you can expect from the process output.
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("10.0.0.1:22@root")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> done
-Step 4/4 : ENTRYPOINT 0a25e5f88885e1564daab76f1bbcc8ffc38b9d29 created
- ---> done
-Successfully deployed.
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Done
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Done
 ```
 
 More documentation can be found [here](DOCUMENTATION.md)

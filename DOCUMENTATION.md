@@ -3,10 +3,11 @@
 ### Deployment Configuration File
 
 ``` dockerfile
-ARG  USER=access-user
-FROM image-name:tag-id
-TO   --escalate=/usr/bin/sudo 127.0.0.1:22@${USER}
-ENTRYPOINT ["top", "-b"]
+FROM python:latest
+TO   --escalate=/usr/bin/sudo ${USER}@127.0.0.3:22
+COPY index.html /
+EXPOSE 7000
+ENTRYPOINT python3 -m http.server 7000
 ```
 
 #### OCI compatible verbs supported by Octahe.
@@ -58,20 +59,22 @@ may require a password, if this is the case, provide the password via the CLI by
 the `--escalate-pw` flag. Any password provided will only exist during runtime as an ARG.
 
 ``` dockerfile
-ARG  USER=access-user
-FROM image-name:tag-id
-TO   --escalate=/usr/bin/sudo 127.0.0.1:22@${USER}
-RUN  dnf install -y curl
+FROM python:latest
+TO   --escalate=/usr/bin/sudo ${USER}@127.0.0.1:22
+COPY index.html /
+EXPOSE 7000
+ENTRYPOINT python3 -m http.server 7000
 ```
 
 The optional `--name` flag can be used to specify a friendly "name" of a given node. If a name is
 not provided, the system will assign the given target a "name" using a SHA1 sum.
 
 ``` dockerfile
-ARG  USER=access-user
-FROM image-name:tag-id
-TO   --escalate=/usr/bin/sudo --name=bastion0 127.0.0.1:22@${USER}
-RUN  dnf install -y curl
+FROM python:latest
+TO   --escalate=/usr/bin/sudo --name=bastion0 ${USER}@127.0.0.1:22
+COPY index.html /
+EXPOSE 7000
+ENTRYPOINT python3 -m http.server 7000
 ```
 
 The optional `--via` flag can be used to specify the "bastion" used to transport a connection.
@@ -83,22 +86,24 @@ can accept the "name" of a given host.
   through a node not being deployed to.
 
 ``` dockerfile
-ARG  USER=access-user
-FROM image-name:tag-id
-TO   --escalate=/usr/bin/sudo --name=bastion0 127.0.0.1:22@${USER}  # First node named "bastion0"
-TO   --escalate=/usr/bin/sudo --via=127.0.0.1:22@${USER} --name=bastion1 127.0.0.2:22@${USER}  # Connection via the first target using the connection details.
-TO   --escalate=/usr/bin/sudo --via=bastion1 127.0.0.3:22@${USER}  # Connection via the second target using the name.
-RUN  dnf install -y curl
+FROM python:latest
+TO   --escalate=/usr/bin/sudo --name=bastion0 ${USER}@127.0.0.1:22  # First node named "bastion0"
+TO   --escalate=/usr/bin/sudo --via=${USER}@127.0.0.1:22 --name=bastion1 ${USER}@127.0.0.2:22  # Connection via the first target using the connection details.
+TO   --escalate=/usr/bin/sudo --via=bastion1 ${USER}@127.0.0.3:22  # Connection via the second target using the name.
+COPY index.html /
+EXPOSE 7000
+ENTRYPOINT python3 -m http.server 7000
 ```
 
 The `--via` flag can be used more than once within a given TO argument. When used more than once
 the system will create an array which is FILO, allowing a node to poxy through multiple hosts.
 
 ``` dockerfile
-ARG  USER=access-user
-FROM image-name:tag-id
-TO   --escalate=/usr/bin/sudo --via=user@bastion0 --via=user@bastion1 127.0.0.3:22@${USER}
-RUN  dnf install -y curl
+FROM python:latest
+TO   --escalate=/usr/bin/sudo --via=${USER}@127.0.0.1:22 --via=${USER}@127.0.0.1:22 ${USER}@127.0.0.3:22
+COPY index.html /
+EXPOSE 7000
+ENTRYPOINT python3 -m http.server 7000
 ```
 
 > When connecting to a serial port, only binary data can be written to the device using the `COPY` verb.
@@ -177,17 +182,14 @@ octahe deploy ~/Targetfile
 ```
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("10.0.0.1:22@root")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> done
-Step 4/4 : ENTRYPOINT 0a25e5f88885e1564daab76f1bbcc8ffc38b9d29 created
- ---> done
-Successfully deployed.
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Done
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Done
 ```
 
 ##### Optional Example
@@ -201,17 +203,14 @@ octahe deploy --connection-quota=3 ~/Targetfile
 ```
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("bastion0", "bastion1", "127.0.0.3:22@access-user")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> done
-Step 4/4 : RUN  dnf install -y curl
- ---> done
-Successfully deployed.
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Done
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Done
 ```
 
 ##### Failure Example
@@ -223,16 +222,14 @@ octahe deploy ~/Targetfile
 ```
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("bastion0"), ("bastion1"), ("127.0.0.3:22@access-user")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> degraded
-Step 4/4 : RUN  dnf install -y curl
- ---> degraded
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Degrated
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Degrated
 Deployed complete, but degraded.
 Degrated hosts:
 [-] bastion1 - failed "Step 3/4"
@@ -245,21 +242,18 @@ To rerun a failed execution on only the failed targets specify the targets on th
 `--targets` flag.
 
 ``` shell
-octahe deploy --connection-quota=3 --targets="--name node1 10.0.0.4:22@root" --targets="--via node1 10.0.0.6:22@root" --targets="10.0.0.8:22@root" ~/Targetfile
+octahe deploy --connection-quota=3 --targets="--name node1 root@10.0.0.4:22" --targets="--via node1 root@10.0.0.6:22" --targets="root@10.0.0.8:22" ~/Targetfile
 ```
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("10.0.0.4:22@root", "10.0.0.6:22@root", "10.0.0.8:22@root")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> done
-Step 4/4 : RUN  dnf install -y curl
- ---> done
-Successfully deployed.
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Done
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Done
 ```
 
 ##### Multi-file Example
@@ -272,15 +266,12 @@ octahe deploy ~/Containerfile ~/Targetfile
 ```
 
 ``` console
-Step 0/4 : FROM image-name:tag-id
- ---> done
-Step 1/4 : ARG USER=access-user
- ---> done
-Step 2/4 : TO [("bastion0"), ("bastion1"), ("127.0.0.3:22@access-user")]
- ---> done
-Step 3/4 : RUN dnf update && dnf add install && rm -r /var/cache/  # Inserted into deployment FROM inspected image,
- ---> done
-Step 4/4 : RUN  dnf install -y curl
- ---> done
-Successfully deployed.
+Beginning deployment execution
+Probing targets
+Step 0/2 : COPY index.html /
+ --> Done
+Step 1/2 : EXPOSE 7000
+ --> Done
+Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+ --> Done
 ```
