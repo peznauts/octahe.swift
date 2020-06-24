@@ -79,7 +79,8 @@ class Execution {
             commandCreate = "iptables -A INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
             commandDelete = "iptables -D INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
         }
-        try run(execute: "\(commandDelete) &> /dev/null; \(commandCreate)")
+        try run(execute: "\(commandDelete) &> /dev/null || true")
+        try run(execute: "\(commandCreate)")
     }
 
     private func optionFormat(options: Dictionary<String, String>) -> [Dictionary<String, String>] {
@@ -124,16 +125,14 @@ class Execution {
         let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
         let tempService = tempUrl.appendingPathComponent("\(serviceFile)")
         if !FileManager.default.fileExists(atPath: tempService.path) {
-            defer {
-                try! FileManager.default.removeItem(at: tempService)
-            }
             try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
             try copy(
                 base: tempUrl,
                 to: "/etc/systemd/system/\(serviceFile)",
                 fromFiles: [serviceFile]
             )
-            try run(execute: "systemctl daemon-reload; systemctl restart \(serviceFile)")
+            try run(execute: "systemctl daemon-reload; sleep 1")
+            try run(execute: "systemctl restart \(serviceFile)")
         }
     }
 
@@ -287,7 +286,7 @@ class ExecuteSSH: Execution {
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
-        let (status, output) = try self.ssh!.capture("uname -ms; systemd --version")
+        let (status, output) = try self.ssh!.capture("uname -ms; systemctl --version")
         if status == 0 {
             let lowerOutput = outputStrip(output: output).components(separatedBy: "\n")
             let targetVars = lowerOutput.first!.components(separatedBy: " ")
@@ -310,15 +309,26 @@ class ExecuteSSH: Execution {
         }
     }
 
+    private func runCopy(fromUrl: URL, toUrl: URL, toFile: URL) throws {
+        do {
+            try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
+        } catch {
+            try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
+        }
+    }
+
     override func copy(base: URL, to: String, fromFiles: [String]) throws {
-        let toUrl = URL(fileURLWithPath: to)
+        let toUrl: URL = URL(fileURLWithPath: to)
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
             let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
-            do {
-                try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
-            } catch {
-                try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
+            if self.escalate != nil {
+                let tempUrl = URL(fileURLWithPath: "/tmp")
+                let tempFileUrl = tempUrl.appendingPathComponent(file)
+                try runCopy(fromUrl: fromUrl, toUrl: tempFileUrl, toFile: tempFileUrl)
+                try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+            } else {
+                try runCopy(fromUrl: fromUrl, toUrl: toUrl, toFile: toFile)
             }
         }
     }
