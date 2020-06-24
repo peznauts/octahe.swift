@@ -49,6 +49,7 @@ class TaskOperation: Operation {
     let args: ConfigParse
     let options: octaheCLI.Options
     var printStatus: Bool = true
+    var mySpinner: Spinner?
 
     init(deployItem: (key: String, value: TypeDeploy), steps: Int, stepIndex: Int,
          args: ConfigParse, options: octaheCLI.Options) {
@@ -72,8 +73,8 @@ class TaskOperation: Operation {
             return
         }
         let targetQueue = TargetOperations(connectionQuota: options.connectionQuota)
-        let statusLine = String(format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original) ")
-        var mySpinner: Spinner = Spinner(.dots, "Working", speed: 1.0)
+        let statusLineFull = String(format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original)")
+        let statusLine = statusLineFull.trunc(length: 77)
         for target in args.octaheTargets {
             if let targetData = args.octaheTargetHash[target] {
                 let targetOperation = TargetOperation(
@@ -84,8 +85,10 @@ class TaskOperation: Operation {
                 )
                 if targetRecords[target]?.state == .available {
                     if printStatus {
-                        mySpinner = Spinner(.dots, statusLine)
-                        mySpinner.start()
+                        self.mySpinner = Spinner(.dots, statusLine)
+                        if let spinner = self.mySpinner {
+                            spinner.start()
+                        }
                         printStatus = false
                     }
                     targetQueue.nodeQueue.addOperation(targetOperation)
@@ -95,13 +98,21 @@ class TaskOperation: Operation {
         targetQueue.nodeQueue.waitUntilAllOperationsAreFinished()
         let degradedTargetStates = targetRecords.values.filter{$0.state == .failed}
         if degradedTargetStates.count == args.octaheTargets.count {
-            mySpinner.failure(statusLine)
+            if let spinner = self.mySpinner {
+                spinner.failure(statusLineFull)
+            }
             self.taskRecord.state = .failed
         } else if degradedTargetStates.count > 0 {
-            mySpinner.warning(statusLine)
+            if let spinner = self.mySpinner {
+                spinner.warning(statusLineFull)
+            }
         } else {
-            mySpinner.succeed(statusLine)
+            if let spinner = self.mySpinner {
+                spinner.succeed(statusLine)
+            }
         }
-        mySpinner.clear()
+        if let spinner = self.mySpinner {
+            spinner.clear()
+        }
     }
 }

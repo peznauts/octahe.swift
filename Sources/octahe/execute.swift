@@ -1,6 +1,6 @@
 //
 //  execute.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/4/20.
 //
@@ -148,9 +148,9 @@ class Execution {
             if let password = self.escalatePassword {
                 // Password is add to the environment.
                 self.environment["ESCALATEPASSWORD"] = password
-                execTask = "echo -e \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(execTask)"
+                execTask = "echo -e \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(self.shell) \"\(execTask)\""
             } else {
-                execTask = "\(escalate) \(execTask)"
+                execTask = "\(escalate) \(self.shell) \"\(execTask)\""
             }
         }
         return execTask
@@ -273,7 +273,6 @@ class ExecuteSSH: Execution {
         } else {
             try cssh.authenticateByAgent(username: self.user)
         }
-        cssh.ptyType = .vanilla
         self.ssh = cssh
     }
 
@@ -319,7 +318,8 @@ class ExecuteSSH: Execution {
             let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
-                let tempFileUrl = tempUrl.appendingPathComponent(file)
+                let fileUrl = URL(fileURLWithPath: file)
+                let tempFileUrl = tempUrl.appendingPathComponent(fileUrl.lastPathComponent)
                 try runCopy(fromUrl: fromUrl, toUrl: tempFileUrl, toFile: tempFileUrl)
                 try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
             } else {
@@ -329,9 +329,9 @@ class ExecuteSSH: Execution {
     }
 
     override func run(execute: String) throws {
-        let (status, _) = try self.ssh!.capture(execString(command: execute))
+        let (status, output) = try self.ssh!.capture(execString(command: execute))
         if status != 0 {
-            throw RouterError.FailedExecution(message: "FAILED execution")
+            throw RouterError.FailedExecution(message: "FAILED execution: \(output)")
         }
 
     }

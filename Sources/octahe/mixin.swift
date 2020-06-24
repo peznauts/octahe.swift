@@ -101,6 +101,14 @@ extension String {
         }
         return hash.map { String(format: "%02x", $0) }.joined()
     }
+
+    func trunc(length: Int, trailing: String = " ...") -> String {
+        if self.count <= length {
+            return self
+        }
+        let truncated = self.prefix(length)
+        return truncated + trailing
+    }
 }
 
 
