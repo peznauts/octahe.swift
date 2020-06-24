@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Spinner
+
 
 enum TaskStates {
     case new, running, success, degraded, failed
@@ -70,7 +72,8 @@ class TaskOperation: Operation {
             return
         }
         let targetQueue = TargetOperations(connectionQuota: options.connectionQuota)
-        let statusLine = String(format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original)")
+        let statusLine = String(format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original) ")
+        var mySpinner: Spinner = Spinner(.dots, "Working", speed: 1.0)
         for target in args.octaheTargets {
             if let targetData = args.octaheTargetHash[target] {
                 let targetOperation = TargetOperation(
@@ -81,7 +84,8 @@ class TaskOperation: Operation {
                 )
                 if targetRecords[target]?.state == .available {
                     if printStatus {
-                        print(statusLine)
+                        mySpinner = Spinner(.dots, statusLine)
+                        mySpinner.start()
                         printStatus = false
                     }
                     targetQueue.nodeQueue.addOperation(targetOperation)
@@ -91,12 +95,13 @@ class TaskOperation: Operation {
         targetQueue.nodeQueue.waitUntilAllOperationsAreFinished()
         let degradedTargetStates = targetRecords.values.filter{$0.state == .failed}
         if degradedTargetStates.count == args.octaheTargets.count {
-            print(" --> Failed")
+            mySpinner.failure(statusLine)
             self.taskRecord.state = .failed
         } else if degradedTargetStates.count > 0 {
-            print(" --> Degraded")
+            mySpinner.warning(statusLine)
         } else {
-            print(" --> Done")
+            mySpinner.succeed(statusLine)
         }
+        mySpinner.clear()
     }
 }

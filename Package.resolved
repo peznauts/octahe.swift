@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Signals",
+        "repositoryURL": "https://github.com/IBM-Swift/BlueSignals.git",
+        "state": {
+          "branch": null,
+          "revision": "b7331c8bef913f5f8b3cffa6ecfcce679f7c2531",
+          "version": "1.0.21"
+        }
+      },
+      {
         "package": "Socket",
         "repositoryURL": "https://github.com/IBM-Swift/BlueSocket",
         "state": {
@@ -20,12 +29,30 @@
         }
       },
       {
+        "package": "Rainbow",
+        "repositoryURL": "https://github.com/onevcat/Rainbow",
+        "state": {
+          "branch": null,
+          "revision": "9c52c1952e9b2305d4507cf473392ac2d7c9b155",
+          "version": "3.1.5"
+        }
+      },
+      {
         "package": "Shout",
         "repositoryURL": "https://github.com/jakeheis/Shout",
         "state": {
           "branch": null,
           "revision": "65bf1d1d42e2fb0c47e4d78c0653ebb6d5de5cb5",
           "version": "0.5.6"
+        }
+      },
+      {
+        "package": "Spinner",
+        "repositoryURL": "https://github.com/dominicegginton/Spinner",
+        "state": {
+          "branch": null,
+          "revision": "572ae50faaa828055ec806e60a9af962d33cc1d9",
+          "version": "1.1.5"
         }
       },
       {

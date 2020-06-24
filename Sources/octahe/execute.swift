@@ -131,7 +131,7 @@ class Execution {
                 to: "/etc/systemd/system/\(serviceFile)",
                 fromFiles: [serviceFile]
             )
-            try run(execute: "systemctl daemon-reload; sleep 1")
+            try run(execute: "systemctl daemon-reload")
             try run(execute: "systemctl restart \(serviceFile)")
         }
     }
@@ -286,26 +286,21 @@ class ExecuteSSH: Execution {
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
-        let (status, output) = try self.ssh!.capture("uname -ms; systemctl --version")
+        let (status, output) = try self.ssh!.capture("uname -ms; systemctl --version; echo ${PATH}")
         if status == 0 {
             let lowerOutput = outputStrip(output: output).components(separatedBy: "\n")
             let targetVars = lowerOutput.first!.components(separatedBy: " ")
-            let os = targetVars.first!
-            let arch = unameLookup[targetVars.last!] ?? "unknown"
+            let os = self.outputStrip(output: targetVars.first!)
+            let archRaw = self.outputStrip(output: targetVars.last!)
+            let arch = unameLookup[archRaw] ?? "unknown"
+            let systemd = lowerOutput[1].components(separatedBy: " ")
             self.environment["TARGETOS"] = os
             self.environment["TARGETARCH"] = arch
             self.environment["TARGETPLATFORM"] = "\(os)/\(arch)"
-            let systemd = lowerOutput.last!.components(separatedBy: " ").last
-            self.environment["SYSTEMD_VERSION"] = systemd
+            self.environment["SYSTEMD_VERSION"] = self.outputStrip(output: systemd.last!)
+            self.environment["PATH"] = outputStrip(output: lowerOutput.last!)
         } else {
             throw RouterError.FailedExecution(message: output)
-        }
-
-        let (statusPath, outputPath) = try self.ssh!.capture("echo ${PATH}")
-        if statusPath == 0 {
-            self.environment["PATH"] = outputStrip(output: outputPath)
-        } else {
-            throw RouterError.FailedExecution(message: outputPath)
         }
     }
 
@@ -334,7 +329,7 @@ class ExecuteSSH: Execution {
     }
 
     override func run(execute: String) throws {
-        let status = try self.ssh!.execute(execString(command: execute))
+        let (status, _) = try self.ssh!.capture(execString(command: execute))
         if status != 0 {
             throw RouterError.FailedExecution(message: "FAILED execution")
         }

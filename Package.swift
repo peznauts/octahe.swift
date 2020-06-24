@@ -14,6 +14,7 @@ let package = Package(
         .package(name: "Mustache", url: "https://github.com/groue/GRMustache.swift", .upToNextMinor(from: "4.0.1")),
         .package(name: "Shout", url: "https://github.com/jakeheis/Shout", from: "0.5.6"),
         .package(name: "SwiftSerial", url: "https://github.com/yeokm1/SwiftSerial.git", from: "0.1.2"),
+        .package(url: "https://github.com/dominicegginton/Spinner", from: "1.1.4")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -25,7 +26,8 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Mustache", package: "Mustache"),
                 .product(name: "Shout", package: "Shout"),
-                .product(name: "SwiftSerial", package: "SwiftSerial")
+                .product(name: "SwiftSerial", package: "SwiftSerial"),
+                .product(name: "Spinner", package: "Spinner")
             ],
             linkerSettings: [
                 .unsafeFlags(

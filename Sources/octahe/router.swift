@@ -48,7 +48,7 @@ func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
     }
 
     let taskQueue = TaskOperations()
-    print("Probing targets")
+    var lastOperation: Operation? = nil
     for (index, deployItem) in octaheArgs.octaheDeploy.enumerated() {
         let taskOperation = TaskOperation(
             deployItem: deployItem,
@@ -58,6 +58,10 @@ func taskRouter(parsedOptions: octaheCLI.Options, function:String) throws {
             options: parsedOptions
         )
         taskQueue.taskQueue.addOperation(taskOperation)
+        if let operation = lastOperation {
+            taskOperation.addDependency(operation)
+        }
+        lastOperation = taskOperation
     }
     taskQueue.taskQueue.waitUntilAllOperationsAreFinished()
 

@@ -23,7 +23,7 @@ class TargetRecord {
     var failedTask: String?
     var failedStep: Int?
 
-    init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options) throws {
+    init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options) {
         self.target = target
         if options.dryRun {
             self.conn = ExecuteEcho(cliParameters: options, processParams: args)
@@ -47,13 +47,7 @@ class TargetRecord {
                 } else {
                     self.conn.server = serverPort.first!
                 }
-                if !self.conn.port.isInt {
-                    throw RouterError.FailedConnection(
-                        message: "Connection never attempted because the port is not an integer.",
-                        targetData: target
-                    )
-                }
-                try self.conn.connect()
+                try? self.conn.connect()
             }
             self.conn.target = target.name
         }
@@ -65,7 +59,7 @@ class TargetRecord {
             }
         }
         // Probe the environment to set basic environment details.
-        try self.conn.probe()
+        try? self.conn.probe()
     }
 }
 
@@ -105,7 +99,7 @@ class TargetOperation: Operation {
         if let targetRecordsLookup = targetRecords[target.name] {
             self.targetRecord = targetRecordsLookup
         } else {
-            let targetRecordsLookup = try! TargetRecord(target: target, args: args, options: options)
+            let targetRecordsLookup = TargetRecord(target: target, args: args, options: options)
             targetRecords[target.name] = targetRecordsLookup
             self.targetRecord = targetRecords[target.name]!
         }
