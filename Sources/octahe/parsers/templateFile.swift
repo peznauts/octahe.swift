@@ -9,7 +9,6 @@ import Foundation
 
 import Mustache
 
-
 let systemdService: String = """
 [Unit]
 Description={{ service_name }} service
@@ -30,7 +29,6 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 """
-
 
 func systemdRender(data: [String: Any]) throws -> String {
     let template = try Template(string: systemdService)

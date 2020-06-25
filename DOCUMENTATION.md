@@ -225,7 +225,7 @@ Beginning deployment execution
 ⚠ Step 1/2 : EXPOSE 7000
 ⚠ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
 [-] centos@10.0.0.2:22 - failed step 1 / 2
-FailedExecution(message: "FAILED: iptables -A INPUT -p tcp -m tcp --dport 7000 -j ACCEPT")
+failedExecution(message: "FAILED: iptables -A INPUT -p tcp -m tcp --dport 7000 -j ACCEPT")
 ```
 
 #### Manual target Example

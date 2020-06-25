@@ -10,14 +10,13 @@ import Foundation
 import Shout
 import SwiftSerial
 
-
 class Execution {
-    let cliParams: octaheCLI.Options
+    let cliParams: OctaheCLI.Options
     let processParams: ConfigParse
     var steps: Int = 0
     var shell: String = "/bin/sh -c"
-    var escallation: String?  // TODO(): We need a means to escallate our privledges and supply a password when invoked.
-    var environment: Dictionary<String, String> = [:]
+    var escallation: String?
+    var environment: [String: String] = [:]
     var execUser: String?
     var execGroup: String?
     var server: String = "localhost"
@@ -31,11 +30,11 @@ class Execution {
     var healthcheck: String?
     var command: String?
     var stopsignal: String?
-    var documentation: [Dictionary<String, String>] = [["item": "https://github.com/peznauts/octahe.swift"]]
+    var documentation: [[String: String]] = [["item": "https://github.com/peznauts/octahe.swift"]]
     var ssh: SSH?
     var serialPort: SerialPort?
 
-    init(cliParameters: octaheCLI.Options, processParams: ConfigParse) {
+    init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
         self.processParams = processParams
         self.workdirURL = URL(fileURLWithPath: workdir)
@@ -46,7 +45,6 @@ class Execution {
     }
 
     func probe() throws {
-        // TODO(cloudnull): The follow args need to be rendered from the target and added to a CONSTANT
         // Sourced from remote target at runtime:
         //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
         //    TARGETOS - OS component of TARGETPLATFORM
@@ -63,7 +61,7 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-    func copy(base: URL, to: String, fromFiles: [String]) throws {
+    func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
         preconditionFailure("This method is not supported")
     }
 
@@ -83,16 +81,16 @@ class Execution {
         try run(execute: "\(commandCreate)")
     }
 
-    private func optionFormat(options: Dictionary<String, String>) -> [Dictionary<String, String>] {
-        var items:[Dictionary<String, String>]  = []
+    private func optionFormat(options: [String: String]) -> [[String: String]] {
+        var items: [[String: String]]  = []
         for (key, value) in options {
             switch key {
-                case "ESCALATEPASSWORD":
-                    logger.debug("filtering ESCALATEPASSWORD from service options")
-                case _ where key.contains("BUILD"):
-                    logger.debug("filtering BUILD* from service options")
-                default:
-                    items.append(["item": "\(key)=\(value)"])
+            case "ESCALATEPASSWORD":
+                logger.debug("filtering ESCALATEPASSWORD from service options")
+            case _ where key.contains("BUILD"):
+                logger.debug("filtering BUILD* from service options")
+            default:
+                items.append(["item": "\(key)=\(value)"])
             }
         }
         return items
@@ -126,13 +124,13 @@ class Execution {
         let tempService = tempUrl.appendingPathComponent("\(serviceFile)")
         if !FileManager.default.fileExists(atPath: tempService.path) {
             try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
-            try copy(
+            try self.copy(
                 base: tempUrl,
-                to: "/etc/systemd/system/\(serviceFile)",
+                copyTo: "/etc/systemd/system/\(serviceFile)",
                 fromFiles: [serviceFile]
             )
-            try run(execute: "systemctl daemon-reload")
-            try run(execute: "systemctl restart \(serviceFile)")
+            try self.run(execute: "systemctl daemon-reload")
+            try self.run(execute: "systemctl restart \(serviceFile)")
         }
     }
 
@@ -157,18 +155,17 @@ class Execution {
     }
 }
 
-
 class ExecuteLocal: Execution {
     override func probe() throws {
-        for (key, value) in PlatformArgs() {
+        for (key, value) in processParams.octaheArgs {
             let targetKey = key.replacingOccurrences(of: "BUILD", with: "TARGET")
             self.environment[targetKey] = value
         }
         self.environment["PATH"] = ProcessInfo.processInfo.environment["PATH"]
     }
 
-    override func copy(base: URL, to: String, fromFiles: [String]) throws {
-        let toUrl = URL(fileURLWithPath: to)
+    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+        let toUrl = URL(fileURLWithPath: copyTo)
         var isDir: ObjCBool = false
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
@@ -195,7 +192,7 @@ class ExecuteLocal: Execution {
 
     override func serviceTemplate(entrypoint: String) throws {
         guard FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
-            throw RouterError.NotImplemented(
+            throw RouterError.notImplemented(
                 message: """
                          Service templating is currently only supported systems with systemd.
                          """
@@ -227,11 +224,10 @@ class ExecuteLocal: Execution {
         task.launch()
         task.waitUntilExit()
         if task.terminationStatus != 0 {
-            throw RouterError.FailedExecution(message: "FAILED: \(command)")
+            throw RouterError.failedExecution(message: "FAILED: \(command)")
         }
     }
 }
-
 
 class ExecuteEcho: Execution {
     private func notice() {
@@ -249,11 +245,11 @@ class ExecuteEcho: Execution {
         print(execTask)
     }
 
-    override func copy(base: URL, to: String, fromFiles: [String]) throws {
+    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
         notice()
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
-            print(fromUrl.path, to)
+            print(fromUrl.path, copyTo)
         }
     }
 
@@ -263,7 +259,6 @@ class ExecuteEcho: Execution {
         try super.serviceTemplate(entrypoint: entrypoint)
     }
 }
-
 
 class ExecuteSSH: Execution {
     override func connect() throws {
@@ -289,17 +284,17 @@ class ExecuteSSH: Execution {
         if status == 0 {
             let lowerOutput = outputStrip(output: output).components(separatedBy: "\n")
             let targetVars = lowerOutput.first!.components(separatedBy: " ")
-            let os = self.outputStrip(output: targetVars.first!)
+            let kernel = self.outputStrip(output: targetVars.first!)
             let archRaw = self.outputStrip(output: targetVars.last!)
             let arch = unameLookup[archRaw] ?? "unknown"
             let systemd = lowerOutput[1].components(separatedBy: " ")
-            self.environment["TARGETOS"] = os
+            self.environment["TARGETOS"] = kernel
             self.environment["TARGETARCH"] = arch
-            self.environment["TARGETPLATFORM"] = "\(os)/\(arch)"
+            self.environment["TARGETPLATFORM"] = "\(kernel)/\(arch)"
             self.environment["SYSTEMD_VERSION"] = self.outputStrip(output: systemd.last!)
             self.environment["PATH"] = outputStrip(output: lowerOutput.last!)
         } else {
-            throw RouterError.FailedExecution(message: output)
+            throw RouterError.failedExecution(message: output)
         }
     }
 
@@ -311,8 +306,8 @@ class ExecuteSSH: Execution {
         }
     }
 
-    override func copy(base: URL, to: String, fromFiles: [String]) throws {
-        let toUrl: URL = URL(fileURLWithPath: to)
+    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+        let toUrl: URL = URL(fileURLWithPath: copyTo)
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
             let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
@@ -331,7 +326,7 @@ class ExecuteSSH: Execution {
     override func run(execute: String) throws {
         let (status, output) = try self.ssh!.capture(execString(command: execute))
         if status != 0 {
-            throw RouterError.FailedExecution(message: "FAILED execution: \(output)")
+            throw RouterError.failedExecution(message: "FAILED execution: \(output)")
         }
 
     }
@@ -340,7 +335,7 @@ class ExecuteSSH: Execution {
         if self.environment.keys.contains("SYSTEMD_VERSION") {
             try super.serviceTemplate(entrypoint: entrypoint)
         } else {
-            throw RouterError.NotImplemented(
+            throw RouterError.notImplemented(
                 message: """
                          Service templating is not currently supported on non-linux operating systems without systemd.
                          """
@@ -348,7 +343,6 @@ class ExecuteSSH: Execution {
         }
     }
 }
-
 
 class ExecuteSerial: Execution {
     override func connect() throws {
@@ -369,17 +363,17 @@ class ExecuteSerial: Execution {
         logger.info("Environment options are irrelevant with serial ports.")
     }
 
-    override func copy(base: URL, to: String, fromFiles: [String]) throws {
+    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
         guard fromFiles.count > 1 else {
-            throw RouterError.NotImplemented(message: "Only one file can be written to a serial port")
+            throw RouterError.notImplemented(message: "Only one file can be written to a serial port")
         }
         let fromUrl = base.appendingPathComponent(fromFiles.first!)
         let fileData = try Data(contentsOf: fromUrl)
-        let _ = try self.serialPort?.writeData(fileData)
+        _ = try self.serialPort?.writeData(fileData)
     }
 
     override func run(execute: String) throws {
-        let _ = try self.serialPort?.writeString(execute)
+        _ = try self.serialPort?.writeString(execute)
     }
     override func serviceTemplate(entrypoint: String) throws {
         preconditionFailure("This method is not supported")

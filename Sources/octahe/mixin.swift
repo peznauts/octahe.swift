@@ -12,11 +12,9 @@ import Logging
 
 import os
 
-
 let logger = Logger(label: "octahe")
 
-
-func PlatformArgs() -> Dictionary<String, String> {
+func platformArgs() -> [String: String] {
     // Sourced from local machine
     //    BUILDPLATFORM - platform of the node performing the build.
     //    BUILDOS - OS component of BUILDPLATFORM
@@ -37,14 +35,13 @@ func PlatformArgs() -> Dictionary<String, String> {
     return platform
 }
 
-
-func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Dictionary<String, String> {
-    func Trimmer(item: Substring, trimitems: CharacterSet = ["\""]) -> String {
+func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String: String] {
+    func trimmer(item: Substring, trimitems: CharacterSet = ["\""]) -> String {
         let cleanedItem = item.replacingOccurrences(of: "\\ ", with: " ")
         return cleanedItem.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: trimitems)
     }
-    
-    func matches(text: String) -> Array<String> {
+
+    func matches(text: String) -> [String] {
         let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|(\\w+))"
         do {
             let regex = try NSRegularExpression(pattern: regex)
@@ -64,8 +61,8 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
         }
     }
 
-    let data = filteredContent.map{$0.value}.reduce(into: [String: String]()) {
-        var argArray: Array<Array<Substring>> = []
+    let data = filteredContent.map {$0.value}.reduce(into: [String: String]()) {
+        var argArray: [[Substring]] = []
         if $1.contains("=") {
             let regexArgsMap = matches(text: $1)
             for arg in regexArgsMap {
@@ -76,15 +73,14 @@ func BuildDictionary(filteredContent: [(key: String, value: String)]) -> Diction
         }
         for itemSet in argArray {
             if let key = itemSet.first, let value = itemSet.last {
-                let trimmedKey = Trimmer(item: key)
-                let trimmedValue = Trimmer(item: value, trimitems: ["\"", "\\"])
+                let trimmedKey = trimmer(item: key)
+                let trimmedValue = trimmer(item: value, trimitems: ["\"", "\\"])
                 $0[trimmedKey] = trimmedValue
             }
         }
     }
     return data
 }
-
 
 extension String {
     // String extension allowing us to evaluate if any string is actually an Int.
@@ -110,7 +106,6 @@ extension String {
         return truncated + trailing
     }
 }
-
 
 extension Array {
     func chunked(into size: Int) -> [[Element]] {

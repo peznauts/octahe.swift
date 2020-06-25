@@ -7,15 +7,13 @@
 
 import Foundation
 
+typealias TypeFrom = (platform: String?, image: String, name: String?)
 
-typealias typeFrom = (platform: String?, image: String, name: String?)
+typealias TypeTarget = (to: String, via: String?, escalate: String?, name: String)
 
-typealias typeTarget = (to: String, via: String?, escalate: String?, name: String)
+typealias TypeExposes = (port: Int, nat: Int?, proto: String?)
 
-typealias typeExposes = (port: Int, nat: Int?, proto: String?)
-
-typealias typeEntrypointOptions = [(key: String, value: String)]
-
+typealias TypeEntrypointOptions = [(key: String, value: String)]
 
 class TypeDeploy {
     let execute: String?
@@ -24,18 +22,18 @@ class TypeDeploy {
     let destination: String?
     let from: String?
     let original: String
-    let env: Dictionary<String, String>?
+    let env: [String: String]?
     let user: String?
     let group: String?
     let escalate: String?
     let escalatePassword: String?
-    let exposeData: typeExposes?
+    let exposeData: TypeExposes?
     let workdir: String?
 
     init (execute: String? = nil, chown: String? = nil, location: [String]? = [], destination: String? = nil,
-          from: String? = nil, original: String, env: Dictionary<String, String>? = nil, user: String? = nil,
+          from: String? = nil, original: String, env: [String: String]? = nil, user: String? = nil,
           group: String? = nil, escalate: String? = nil, escalatePassword: String? = nil,
-          exposeData: typeExposes? = nil, workdir: String? = nil) {
+          exposeData: TypeExposes? = nil, workdir: String? = nil) {
         self.execute = execute ?? nil
         self.chown = chown ?? nil
         self.location = location

@@ -7,23 +7,20 @@
 
 import Foundation
 
-
 enum TargetStates {
     case available, failed
 }
 
-
 var targetRecords: [String: TargetRecord] = [:]
 
-
 class TargetRecord {
-    let target: typeTarget
+    let target: TypeTarget
     let conn: Execution
     var state = TargetStates.available
     var failedTask: String?
     var failedStep: Int?
 
-    init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options) {
+    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options) {
         self.target = target
         if options.dryRun {
             self.conn = ExecuteEcho(cliParameters: options, processParams: args)
@@ -63,7 +60,6 @@ class TargetRecord {
     }
 }
 
-
 class TargetOperations {
     let maxConcurrentOperationCount: Int
 
@@ -80,16 +76,15 @@ class TargetOperations {
     }()
 }
 
-
 class TargetOperation: Operation {
     let targetRecord: TargetRecord
-    let target: typeTarget
+    let target: TypeTarget
     let args: ConfigParse
-    let options: octaheCLI.Options
+    let options: OctaheCLI.Options
     let task: TaskRecord
     let taskIndex: Int
 
-    init(target: typeTarget, args: ConfigParse, options: octaheCLI.Options, taskIndex: Int) {
+    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options, taskIndex: Int) {
         self.target = target
         self.args = args
         self.options = options
@@ -105,66 +100,80 @@ class TargetOperation: Operation {
         }
     }
 
+    private func caseLabel() {
+        if let env = self.task.taskItem.env {
+            for (key, value) in env {
+                self.targetRecord.conn.environment[key] = value
+            }
+        }
+    }
+
+    private func caseExpose() throws {
+        if let port = self.task.taskItem.exposeData?.port {
+            try self.targetRecord.conn.expose(
+                nat: self.task.taskItem.exposeData?.nat,
+                port: port,
+                proto: self.task.taskItem.exposeData?.proto
+            )
+        }
+    }
+
+    private func caseEntryPoint() throws {
+        if let cmd = args.octaheDeploy.filter({$0.key == "CMD"}).map({$0.value}).last {
+            let entrypoint = "\(cmd.execute!) \(self.task.taskItem.execute!)"
+            try self.targetRecord.conn.serviceTemplate(entrypoint: entrypoint)
+        } else {
+            try self.targetRecord.conn.serviceTemplate(entrypoint: self.task.taskItem.execute!)
+        }
+    }
+
+    // swiftlint:disable cyclomatic_complexity
+    private func targetCases() throws {
+        switch self.task.task {
+        case "SHELL":
+            self.targetRecord.conn.shell = self.task.taskItem.execute!
+        case "ENV", "ARG":
+            if let env = self.task.taskItem.env {
+                self.targetRecord.conn.environment.merge(env) {(_, second) in second}
+            }
+        case "LABEL":
+            self.caseLabel()
+        case "RUN":
+            try self.targetRecord.conn.run(execute: self.task.taskItem.execute!)
+        case "COPY", "ADD":
+            try self.targetRecord.conn.copy(
+                base: args.configDirURL,
+                copyTo: self.task.taskItem.destination!,
+                fromFiles: self.task.taskItem.location!
+            )
+        case "USER":
+            self.targetRecord.conn.execUser = self.task.taskItem.user!
+        case "EXPOSE":
+            try self.caseExpose()
+        case "WORKDIR":
+            self.targetRecord.conn.workdir = self.task.taskItem.workdir!
+            self.targetRecord.conn.workdirURL = URL(fileURLWithPath: self.targetRecord.conn.workdir)
+        case "CMD":
+            self.targetRecord.conn.command = self.task.taskItem.execute!
+        case "HEALTHCHECK":
+            self.targetRecord.conn.healthcheck = self.task.taskItem.execute!
+        case "STOPSIGNAL":
+            self.targetRecord.conn.stopsignal = self.task.taskItem.execute!
+        case "ENTRYPOINT":
+            try self.caseEntryPoint()
+        default:
+            throw RouterError.notImplemented(message: "The task type \(self.task.task) is not supported.")
+        }
+    }
+
     override func main() {
         if isCancelled {
             return
         }
         self.task.state = .running
-        let conn = targetRecord.conn
         logger.debug("Executing: \(task.task)")
         do {
-            switch task.task {
-            case "SHELL":
-                conn.shell = task.taskItem.execute!
-            case "ENV", "ARG":
-                if let env = task.taskItem.env {
-                    conn.environment.merge(env) {
-                        (_, second) in second
-                    }
-                }
-            case "LABEL":
-                if let env = task.taskItem.env {
-                    for (key, value) in env {
-                        conn.environment[key] = value
-                    }
-                }
-            case "RUN":
-                try conn.run(execute: task.taskItem.execute!)
-            case "COPY", "ADD":
-                try conn.copy(
-                    base: args.configDirURL,
-                    to: task.taskItem.destination!,
-                    fromFiles: task.taskItem.location!
-                )
-            case "USER":
-                conn.execUser = task.taskItem.user!
-            case "EXPOSE":
-                if let port = task.taskItem.exposeData?.port {
-                    try conn.expose(
-                        nat: task.taskItem.exposeData?.nat,
-                        port: port,
-                        proto: task.taskItem.exposeData?.proto
-                    )
-                }
-            case "WORKDIR":
-                conn.workdir = task.taskItem.workdir!
-                conn.workdirURL = URL(fileURLWithPath: conn.workdir)
-            case "CMD":
-                conn.command = task.taskItem.execute!
-            case "HEALTHCHECK":
-                conn.healthcheck = task.taskItem.execute!
-            case "STOPSIGNAL":
-                conn.stopsignal = task.taskItem.execute!
-            case "ENTRYPOINT":
-                if let cmd = args.octaheDeploy.filter({$0.key == "CMD"}).map({$0.value}).last {
-                    let entrypoint = "\(cmd.execute!) \(task.taskItem.execute!)"
-                    try conn.serviceTemplate(entrypoint: entrypoint)
-                } else {
-                    try conn.serviceTemplate(entrypoint: task.taskItem.execute!)
-                }
-            default:
-                throw RouterError.NotImplemented(message: "The task type \(task.task) is not supported.")
-            }
+            try self.targetCases()
         } catch {
             task.state = .degraded
             self.targetRecord.failedStep = self.taskIndex

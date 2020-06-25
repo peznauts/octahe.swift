@@ -9,11 +9,9 @@ import Foundation
 
 import ArgumentParser
 
-
 protocol OctaheArguments: ParsableArguments {
     // Basic sub-structure
 }
-
 
 struct OptionsTarget: OctaheArguments {
     // Add option parsing for target configs found within config.
@@ -49,7 +47,6 @@ struct OptionsTarget: OctaheArguments {
     var target: String
 }
 
-
 struct OptionsAddCopy: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Option(
@@ -77,7 +74,6 @@ struct OptionsAddCopy: OctaheArguments {
     var transfer: [String]
 }
 
-
 struct OptionsFrom: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Option(
@@ -95,6 +91,7 @@ struct OptionsFrom: OctaheArguments {
     )
     var image: String
 
+    // swiftlint:disable identifier_name
     @Argument(
         help: """
               AS information.
@@ -110,7 +107,6 @@ struct OptionsFrom: OctaheArguments {
     var name: String?
 }
 
-
 struct OptionsExpose: OctaheArguments {
     // Add option parsing for target configs found within config.
     @Argument(
@@ -125,7 +121,6 @@ struct OptionsExpose: OctaheArguments {
     )
     var nat: String?
 }
-
 
 struct OptionsHealthcheck: OctaheArguments {
     @Option(
@@ -167,11 +162,18 @@ struct OptionsHealthcheck: OctaheArguments {
     var retries: Int
 }
 
-
-struct octaheCLI: ParsableCommand {
+struct OctaheCLI: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Octahe, a utility for deploying OCI compatible applications.",
-        subcommands: [Deploy.self, UnDeploy.self, Target.self, AddCopy.self, From.self, Expose.self, Healthcheck.self],
+        subcommands: [
+            Deploy.self,
+            UnDeploy.self,
+            Target.self,
+            AddCopy.self,
+            From.self,
+            Expose.self,
+            Healthcheck.self
+        ],
         defaultSubcommand: Deploy.self
     )
     struct Options: ParsableArguments {
@@ -245,15 +247,14 @@ struct octaheCLI: ParsableCommand {
     }
 }
 
-
-extension octaheCLI {
+extension OctaheCLI {
     struct Deploy: ParsableCommand {
         static var configuration = CommandConfiguration(
             abstract: "Run a deployment for a given OCI compatible application."
         )
 
         @OptionGroup()
-        var options: octaheCLI.Options
+        var options: OctaheCLI.Options
 
         func run() throws {
             print("Beginning deployment execution")
@@ -268,10 +269,10 @@ extension octaheCLI {
         )
 
         @OptionGroup()
-        var options: octaheCLI.Options
+        var options: OctaheCLI.Options
 
         func run() throws {
-            throw RouterError.NotImplemented(message: "The undeployment method has not been implemented yet.")
+            throw RouterError.notImplemented(message: "The undeployment method has not been implemented yet.")
         }
     }
 

@@ -7,21 +7,18 @@
 
 import Foundation
 
-
 enum FileParserError: Error {
-    case FileReadFailure(filePath: String)
+    case fileReadFailure(filePath: String)
 }
-
 
 struct LineIterator {
-    var lines: IndexingIterator<Array<Substring>> = [].makeIterator()
+    var lines: IndexingIterator<[Substring]> = [].makeIterator()
 }
-
 
 class FileParser {
     private static var LineData = LineIterator()
 
-    class func trimLine(line:Substring) -> String {
+    class func trimLine(line: Substring) -> String {
         let trimmed = line.replacingOccurrences(of: "#.*", with: "", options: [.regularExpression])
         var trimmedLine = trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedLine.hasSuffix(" \\") {
@@ -33,7 +30,7 @@ class FileParser {
         return trimmedLine
     }
 
-    class func buildRawConfigs(files:Array<String>) throws -> [(key: String, value: String)] {
+    class func buildRawConfigs(files: [String]) throws -> [(key: String, value: String)] {
         var rawConfigs: [String] = []
         var configOptions: [(key: String, value: String)] = []
         for file in files {
@@ -41,7 +38,7 @@ class FileParser {
                 let configData = try String(contentsOfFile: file)
                 rawConfigs.insert(configData, at: 0)
             } catch {
-                throw FileParserError.FileReadFailure(filePath: file)
+                throw FileParserError.fileReadFailure(filePath: file)
             }
         }
         for rawconfig in rawConfigs {
@@ -58,7 +55,11 @@ class FileParser {
                         } else {
                             do {
                                 let data = stringitem.data(using: .utf8)!
-                                let json = try JSONSerialization.jsonObject(with: data, options : .allowFragments) as! Array<String>
+                                // swiftlint:disable force_cast
+                                let json = try JSONSerialization.jsonObject(
+                                    with: data,
+                                    options: .allowFragments
+                                ) as! [String]
                                 let joined = json.joined(separator: " ")
                                 configOptions.append((key: verbArray[0], value: String(joined)))
                             } catch {
