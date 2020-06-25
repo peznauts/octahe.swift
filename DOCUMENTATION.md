@@ -5,8 +5,9 @@
 ``` dockerfile
 FROM python:latest
 TO   --escalate=/usr/bin/sudo ${USER}@127.0.0.3:22
-COPY index.html /
+COPY index.html /opt/index.html
 EXPOSE 7000
+WORKDIR /opt
 ENTRYPOINT python3 -m http.server 7000
 ```
 
@@ -61,8 +62,9 @@ the `--escalate-pw` flag. Any password provided will only exist during runtime a
 ``` dockerfile
 FROM python:latest
 TO   --escalate=/usr/bin/sudo ${USER}@127.0.0.1:22
-COPY index.html /
+COPY index.html /opt/index.html
 EXPOSE 7000
+WORKDIR /opt
 ENTRYPOINT python3 -m http.server 7000
 ```
 
@@ -72,8 +74,9 @@ not provided, the system will assign the given target a "name" using a SHA1 sum.
 ``` dockerfile
 FROM python:latest
 TO   --escalate=/usr/bin/sudo --name=bastion0 ${USER}@127.0.0.1:22
-COPY index.html /
+COPY index.html /opt/index.html
 EXPOSE 7000
+WORKDIR /opt
 ENTRYPOINT python3 -m http.server 7000
 ```
 
@@ -90,8 +93,9 @@ FROM python:latest
 TO   --escalate=/usr/bin/sudo --name=bastion0 ${USER}@127.0.0.1:22  # First node named "bastion0"
 TO   --escalate=/usr/bin/sudo --via=${USER}@127.0.0.1:22 --name=bastion1 ${USER}@127.0.0.2:22  # Connection via the first target using the connection details.
 TO   --escalate=/usr/bin/sudo --via=bastion1 ${USER}@127.0.0.3:22  # Connection via the second target using the name.
-COPY index.html /
+COPY index.html /opt/index.html
 EXPOSE 7000
+WORKDIR /opt
 ENTRYPOINT python3 -m http.server 7000
 ```
 
@@ -101,8 +105,9 @@ the system will create an array which is FILO, allowing a node to poxy through m
 ``` dockerfile
 FROM python:latest
 TO   --escalate=/usr/bin/sudo --via=${USER}@127.0.0.1:22 --via=${USER}@127.0.0.1:22 ${USER}@127.0.0.3:22
-COPY index.html /
+COPY index.html /opt/index.html
 EXPOSE 7000
+WORKDIR /opt
 ENTRYPOINT python3 -m http.server 7000
 ```
 
@@ -189,9 +194,10 @@ octahe deploy ~/Targetfile
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-✔ Step 1/2 : EXPOSE 7000
-✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+✔ Step 1/3 : EXPOSE 7000
+✔ Step 2/3 : WORKDIR /opt
+✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 #### Optional Example
@@ -206,9 +212,10 @@ octahe deploy --connection-quota=3 ~/Targetfile
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-✔ Step 1/2 : EXPOSE 7000
-✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+✔ Step 1/3 : EXPOSE 7000
+✔ Step 2/3 : WORKDIR /opt
+✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 #### Failure Example
@@ -221,9 +228,10 @@ octahe deploy ~/Targetfile
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-⚠ Step 1/2 : EXPOSE 7000
-⚠ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+⚠ Step 1/3 : EXPOSE 7000
+⚠ Step 2/3 : WORKDIR /opt
+⚠ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 [-] centos@10.0.0.2:22 - failed step 1 / 2
 failedExecution(message: "FAILED: iptables -A INPUT -p tcp -m tcp --dport 7000 -j ACCEPT")
 ```
@@ -239,9 +247,10 @@ octahe deploy --connection-quota=3 --targets="--name node1 root@10.0.0.4:22" --t
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-✔ Step 1/2 : EXPOSE 7000
-✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+✔ Step 1/3 : EXPOSE 7000
+✔ Step 2/3 : WORKDIR /opt
+✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```
 
 #### Multi-file Example
@@ -255,7 +264,8 @@ octahe deploy ~/Containerfile ~/Targetfile
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-✔ Step 1/2 : EXPOSE 7000
-✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+✔ Step 1/3 : EXPOSE 7000
+✔ Step 2/3 : WORKDIR /opt
+✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```

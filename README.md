@@ -9,7 +9,7 @@
 
 Octahe allows you to simplify operations, create concise applications, and focus on what you do best.
 
-## Evolve your application by devolving the stack. 
+## Evolve your application by devolving the stack.
 
 Whether you're deploying software to the cloud, building high-performance computing
 environments, or IOT applications, Octahe has it covered. The Zero footprint design,
@@ -52,23 +52,30 @@ swift build
 ```
 
 Once complete, the application will be built, and available in the default build location,
-`.build/debug/octahe`. 
+`.build/debug/octahe`.
 
 ## Usage
 
 The CLI interactions are familiar and simple.
 
 ``` shell
-octahe deploy ~/Targetfile
+~/bin/octahe -k ~/.ssh/id_rsa ~/Targetfile
 ```
 
-This is what you can expect from the process output.
+The console output is simple, and easy to follow.
 
 ``` console
 Beginning deployment execution
-✔ Step 0/2 : COPY index.html /tmp/TEST
-✔ Step 1/2 : EXPOSE 7000
-✔ Step 2/2 : ENTRYPOINT python3 -m http.server 7000
+✔ Step 0/3 : COPY index.html /opt/index.html
+✔ Step 1/3 : EXPOSE 7000
+✔ Step 2/3 : WORKDIR /opt
+✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```
 
-More documentation can be found [here](DOCUMENTATION.md)
+Here's the application being deployed to 5 remote [T](DOCUMENTATION.md#to)argets in realtime.
+
+![octahe-run](assets/octahe-run.gif)
+
+----
+
+More documentation and examples can be found [here](DOCUMENTATION.md).
