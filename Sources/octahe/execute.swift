@@ -121,9 +121,13 @@ class Execution {
             print("\n***** Service file *****\n\(serviceRendered)\n*************************\n")
         }
         let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
-        let tempService = tempUrl.appendingPathComponent("\(serviceFile)")
+        let marker = String(describing: self.target)
+        let tempService = tempUrl.appendingPathComponent(String(describing:"\(marker)-\(serviceFile)"))
         if !FileManager.default.fileExists(atPath: tempService.path) {
             try serviceRendered.write(to: tempService, atomically: true, encoding: String.Encoding.utf8)
+            defer {
+                try? FileManager.default.removeItem(at: tempService)
+            }
             try self.copy(
                 base: tempUrl,
                 copyTo: "/etc/systemd/system/\(serviceFile)",
