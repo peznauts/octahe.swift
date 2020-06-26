@@ -145,7 +145,8 @@ class TargetOperation: Operation {
             try self.targetRecord.conn.copy(
                 base: args.configDirURL,
                 copyTo: self.task.taskItem.destination!,
-                fromFiles: self.task.taskItem.location!
+                fromFiles: self.task.taskItem.location!,
+                chown: self.task.taskItem.chown
             )
         case "USER":
             self.targetRecord.conn.execUser = self.task.taskItem.user!

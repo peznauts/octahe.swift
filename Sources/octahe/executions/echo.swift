@@ -27,7 +27,7 @@ class ExecuteEcho: Execution {
         print(execTask)
     }
 
-    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         notice()
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)

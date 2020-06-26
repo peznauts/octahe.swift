@@ -34,7 +34,7 @@ class ExecuteSerial: Execution {
         logger.info("Environment options are irrelevant with serial ports.")
     }
 
-    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String?) throws {
         guard fromFiles.count > 1 else {
             throw RouterError.notImplemented(message: "Only one file can be written to a serial port")
         }

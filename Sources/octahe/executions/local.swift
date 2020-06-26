@@ -20,7 +20,18 @@ class ExecuteLocal: Execution {
         self.environment["PATH"] = ProcessInfo.processInfo.environment["PATH"]
     }
 
-    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+    override func chown(perms: String?, path: String) throws {
+        if let chownSettings = perms {
+            let ownerGroup = chownSettings.components(separatedBy: ":")
+            var attributes = [FileAttributeKey.ownerAccountName: ownerGroup.first]
+            if ownerGroup.first != ownerGroup.last {
+                attributes[FileAttributeKey.ownerAccountName] = ownerGroup.last
+            }
+            try FileManager.default.setAttributes(attributes, ofItemAtPath: path)
+        }
+    }
+
+    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         let toUrl = URL(fileURLWithPath: copyTo)
         var isDir: ObjCBool = false
         for file in fromFiles {
@@ -36,9 +47,12 @@ class ExecuteLocal: Execution {
             }
             do {
                 try FileManager.default.copyItem(at: fromUrl, to: toUrl)
+                try self.chown(perms: chown, path: toUrl.path)
             } catch {
                 try FileManager.default.copyItem(at: fromUrl, to: toFile)
+                try self.chown(perms: chown, path: toFile.path)
             }
+
         }
     }
 

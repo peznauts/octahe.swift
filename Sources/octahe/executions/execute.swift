@@ -54,7 +54,11 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-    func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+    func chown(perms: String?, path: String) throws {
+        preconditionFailure("This method is not supported")
+    }
+
+    func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         preconditionFailure("This method is not supported")
     }
 
@@ -135,7 +139,7 @@ class Execution {
         var execTask: String
 
         if let user = self.execUser {
-            execTask = "su \(self.user) -c \"\(command)\""
+            execTask = "su \(user) -c \"\(command)\""
         } else {
             execTask = command
         }

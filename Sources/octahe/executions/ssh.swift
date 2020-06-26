@@ -64,7 +64,13 @@ class ExecuteSSH: Execution {
         }
     }
 
-    override func copy(base: URL, copyTo: String, fromFiles: [String]) throws {
+    override func chown(perms: String?, path: String) throws {
+        if let chownSettings = perms {
+            try run(execute: "chown \(chownSettings) \(path)")
+        }
+    }
+
+    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String?) throws {
         let toUrl: URL = URL(fileURLWithPath: copyTo)
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
@@ -75,6 +81,7 @@ class ExecuteSSH: Execution {
                 let tempFileUrl = tempUrl.appendingPathComponent(fileUrl.lastPathComponent)
                 try runCopy(fromUrl: fromUrl, toUrl: tempFileUrl, toFile: tempFileUrl)
                 try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+                try self.chown(perms: chown, path: toUrl.path)
             } else {
                 try runCopy(fromUrl: fromUrl, toUrl: toUrl, toFile: toFile)
             }
