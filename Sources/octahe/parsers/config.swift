@@ -208,6 +208,16 @@ struct ConfigParse {
                     )
                 )
             )
+        case "RUN":
+            self.octaheDeploy.append(
+                (
+                    key: deployOption.key,
+                    value: TypeDeploy(
+                        execute: String(describing: deployOption.value),
+                        original: deployOption.value
+                    )
+                )
+            )
         default:
             self.octaheDeploy.append(
                 (

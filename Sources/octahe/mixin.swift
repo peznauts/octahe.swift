@@ -88,6 +88,10 @@ extension String {
         return Int(self) != nil
     }
 
+    var isBool: Bool {
+        return Bool(self) != nil
+    }
+
     var sha1: String {
         let data = Data(self.utf8)
         let hash = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> [UInt8] in

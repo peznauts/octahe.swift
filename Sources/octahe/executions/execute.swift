@@ -54,6 +54,10 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
+    func runReturn(execute: String) throws -> String {
+        preconditionFailure("This method is not supported")
+    }
+
     func mkdir(workdirURL: URL) throws {
         preconditionFailure("This method is not supported")
     }
@@ -97,6 +101,16 @@ class Execution {
         return items
     }
 
+    func writeTemp(content: String) throws -> URL {
+        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+        let marker = String(describing: self.target)
+        let tempServiceFile = tempUrl.appendingPathComponent(String(describing: "\(marker)-\(content.sha1)").sha1)
+        if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
+            try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
+        }
+        return tempServiceFile
+    }
+
     func serviceTemplate(entrypoint: String) throws {
         // Generate a local template, and transfer it to the remote host
         let serviceFile = "octahe-" + entrypoint.sha1 + ".service"
@@ -121,31 +135,26 @@ class Execution {
         if self.cliParams.dryRun {
             print("\n***** Service file *****\n\(serviceRendered)\n*************************\n")
         }
-        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
-        let marker = String(describing: self.target)
-        let tempServiceFile = tempUrl.appendingPathComponent(String(describing: "\(marker)-\(serviceFile)").sha1)
-        if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
-            try serviceRendered.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
-            defer {
-                try? FileManager.default.removeItem(at: tempServiceFile)
-            }
-            try self.copy(
-                base: tempUrl,
-                copyTo: "/etc/systemd/system/\(serviceFile)",
-                fromFiles: [tempServiceFile.lastPathComponent]
-            )
-            try self.run(execute: "systemctl daemon-reload")
-            try self.run(execute: "systemctl restart \(serviceFile)")
+        let tempServiceFile = try self.writeTemp(content: serviceRendered)
+        defer {
+            try? FileManager.default.removeItem(at: tempServiceFile)
         }
+        try self.copy(
+            base: tempServiceFile.deletingLastPathComponent(),
+            copyTo: "/etc/systemd/system/\(serviceFile)",
+            fromFiles: [tempServiceFile.lastPathComponent]
+        )
+        try self.run(execute: "systemctl daemon-reload")
+        try self.run(execute: "systemctl restart \(serviceFile)")
     }
 
     func execString(command: String) -> String {
         var execTask: String
-
+        let quotedCommand = command.replacingOccurrences(of: "\"", with: "\\\"")
         if let user = self.execUser {
-            execTask = "su \(user) -c \"\(command)\""
+            execTask = "su \(user) -c \"\(quotedCommand)\""
         } else {
-            execTask = command
+            execTask = quotedCommand
         }
         if let escalate = self.escalate {
             if let password = self.escalatePassword {

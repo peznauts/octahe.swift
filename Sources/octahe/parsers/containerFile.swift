@@ -49,8 +49,10 @@ class FileParser {
                 if !cleanedLine.isEmpty {
                     let verbArray = cleanedLine.split(separator: " ", maxSplits: 1).map(String.init)
                     if verbArray.count > 1 {
-                        let stringitem = String(verbArray[1])
+                        let stringitem = String(describing: verbArray[1])
                         if stringitem.isInt {
+                            configOptions.append((key: verbArray[0], value: stringitem))
+                        } else if stringitem.isBool {
                             configOptions.append((key: verbArray[0], value: stringitem))
                         } else {
                             do {
@@ -60,6 +62,7 @@ class FileParser {
                                     with: data,
                                     options: .allowFragments
                                 ) as! [String]
+
                                 let joined = json.joined(separator: " ")
                                 configOptions.append((key: verbArray[0], value: String(joined)))
                             } catch {
