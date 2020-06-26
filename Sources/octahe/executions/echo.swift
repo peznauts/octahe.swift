@@ -27,6 +27,10 @@ class ExecuteEcho: Execution {
         print(execTask)
     }
 
+    override func mkdir(workdirURL: URL) throws {
+        print(workdirURL)
+    }
+
     override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         notice()
         for file in fromFiles {

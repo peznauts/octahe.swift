@@ -155,6 +155,7 @@ class TargetOperation: Operation {
         case "WORKDIR":
             self.targetRecord.conn.workdir = self.task.taskItem.workdir!
             self.targetRecord.conn.workdirURL = URL(fileURLWithPath: self.targetRecord.conn.workdir)
+            try self.targetRecord.conn.mkdir(workdirURL: self.targetRecord.conn.workdirURL)
         case "CMD":
             self.targetRecord.conn.command = self.task.taskItem.execute!
         case "HEALTHCHECK":

@@ -27,7 +27,7 @@ class ExecuteLocal: Execution {
             if ownerGroup.first != ownerGroup.last {
                 attributes[FileAttributeKey.ownerAccountName] = ownerGroup.last
             }
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: path)
+            try FileManager.default.setAttributes(attributes as [FileAttributeKey: Any], ofItemAtPath: path)
         }
     }
 
@@ -60,6 +60,14 @@ class ExecuteLocal: Execution {
         try localExec(command: execute)
     }
 
+    override func mkdir(workdirURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: workdirURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+    }
+
     override func serviceTemplate(entrypoint: String) throws {
         guard FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
             throw RouterError.notImplemented(
@@ -78,12 +86,9 @@ class ExecuteLocal: Execution {
         launchArgs.append(execTask)
 
         if !FileManager.default.fileExists(atPath: workdirURL.path) {
-            try FileManager.default.createDirectory(
-                at: workdirURL,
-                withIntermediateDirectories: true,
-                attributes: nil
-            )
+            try self.mkdir(workdirURL: workdirURL)
         }
+
         FileManager.default.changeCurrentDirectoryPath(workdir)
         let task = Process()
         task.environment = self.environment

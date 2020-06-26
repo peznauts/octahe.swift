@@ -54,6 +54,10 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
+    func mkdir(workdirURL: URL) throws {
+        preconditionFailure("This method is not supported")
+    }
+
     func chown(perms: String?, path: String) throws {
         preconditionFailure("This method is not supported")
     }

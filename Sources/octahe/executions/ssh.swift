@@ -96,6 +96,10 @@ class ExecuteSSH: Execution {
 
     }
 
+    override func mkdir(workdirURL: URL) throws {
+        try run(execute: "mkdir -p \(workdirURL.path)")
+    }
+
     override func serviceTemplate(entrypoint: String) throws {
         if self.environment.keys.contains("SYSTEMD_VERSION") {
             try super.serviceTemplate(entrypoint: entrypoint)
