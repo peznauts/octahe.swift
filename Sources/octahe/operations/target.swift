@@ -31,20 +31,21 @@ class TargetRecord {
             case let str where str.contains("/dev"):
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
-                self.conn = ExecuteSSH(cliParameters: options, processParams: args)
+                let connSsh = ExecuteSSH(cliParameters: options, processParams: args)
 
                 let targetComponents = target.to.components(separatedBy: "@")
                 if targetComponents.count > 1 {
-                    self.conn.user = targetComponents.first!
+                    connSsh.user = targetComponents.first!
                 }
                 let serverPort = targetComponents.last!.components(separatedBy: ":")
                 if serverPort.count > 1 {
-                    self.conn.server = serverPort.first!
-                    self.conn.port = serverPort.last!
+                    connSsh.server = serverPort.first!
+                    connSsh.port = serverPort.last!
                 } else {
-                    self.conn.server = serverPort.first!
+                    connSsh.server = serverPort.first!
                 }
-                try? self.conn.connect()
+                try? connSsh.connect()
+                self.conn = connSsh
             }
             self.conn.target = target.name
         }

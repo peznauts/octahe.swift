@@ -88,7 +88,7 @@ extension String {
         return Int(self) != nil
     }
 
-    var md5: String {
+    var sha1: String {
         let data = Data(self.utf8)
         let hash = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> [UInt8] in
             var hash = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
