@@ -85,15 +85,21 @@ class TaskOperation: Operation {
         }
     }
 
-    private func queueTaskOperations(targetQueue: TargetOperations) {
+    private func queueTaskOperations() -> [TargetOperation] {
+        var taskOperationsArray: [TargetOperation] = []
         for target in args.octaheTargets {
             if let targetData = args.octaheTargetHash[target] {
                 let targetOperation = TargetOperation(
                     target: targetData,
                     args: args,
                     options: options,
-                    taskIndex: stepIndex
+                    taskIndex: stepIndex,
+                    taskRecord: self.taskRecord
                 )
+                // If this current operation has dependencies, add them to the target options too.
+                for dependency in self.dependencies {
+                    targetOperation.addDependency(dependency)
+                }
                 if targetRecords[target]?.state == .available {
                     if printStatus {
                         self.mySpinner = Spinner(.dots, self.statusLine ?? "Working")
@@ -102,10 +108,11 @@ class TaskOperation: Operation {
                         }
                         printStatus = false
                     }
-                    targetQueue.nodeQueue.addOperation(targetOperation)
+                    taskOperationsArray.append(targetOperation)
                 }
             }
         }
+        return taskOperationsArray
     }
 
     override func main() {
@@ -113,13 +120,11 @@ class TaskOperation: Operation {
         if availableTargets.count == 0 && targetRecords.keys.count > 0 {
             return
         }
-        let targetQueue = TargetOperations(connectionQuota: options.connectionQuota)
         self.statusLineFull = String(
             format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original)"
         )
         self.statusLine = statusLineFull?.trunc(length: 77)
-        self.queueTaskOperations(targetQueue: targetQueue)
-        targetQueue.nodeQueue.waitUntilAllOperationsAreFinished()
+        targetQueue.nodeQueue.addOperations(self.queueTaskOperations(), waitUntilFinished: true)
         self.finishTask()
     }
 }

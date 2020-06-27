@@ -7,27 +7,34 @@
 
 import Foundation
 
+import Spinner
+
+let taskQueue = TaskOperations()
+
+let targetQueue = TargetOperations()
+
 enum RouterError: Error {
     case notImplemented(message: String)
     case failedExecution(message: String)
+    case failedUnknown
 }
 
 func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
     let failedTargets = targetRecords.values.filter {$0.state == .failed}
+    if failedTargets.count == octaheArgs.octaheTargetsCount {
+        print("\nExecution Failed.\n")
+    } else if failedTargets.count > 0 {
+        print("\nExecution Degraded.\n")
+    } else {
+        print("\nSuccess.")
+    }
     for degradedTarget in failedTargets {
         print(
             """
             [-] \(degradedTarget.target.name) - failed step \(degradedTarget.failedStep!) / \(octaheSteps)
-            \(degradedTarget.failedTask!)
+                \(degradedTarget.failedTask!)
             """
         )
-    }
-    if failedTargets.count > 0 {
-        print("\nExecution Degraded.")
-    } else if failedTargets.count == octaheArgs.octaheTargetsCount {
-        print("\nExecution Failed.")
-    } else {
-        print("\nSuccess.")
     }
 }
 
@@ -63,8 +70,9 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
         }
     }
 
-    let taskQueue = TaskOperations()
-    var lastOperation: Operation?
+    // Modify the default quota set using our CLI args.
+    targetQueue.maxConcurrentOperationCount = parsedOptions.connectionQuota
+    var allTaskOperations: [TaskOperation] = []
     for (index, deployItem) in octaheArgs.octaheDeploy.enumerated() {
         let taskOperation = TaskOperation(
             deployItem: deployItem,
@@ -73,13 +81,9 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
             args: octaheArgs,
             options: parsedOptions
         )
-        taskQueue.taskQueue.addOperation(taskOperation)
-        if let operation = lastOperation {
-            taskOperation.addDependency(operation)
-        }
-        lastOperation = taskOperation
+        allTaskOperations.append(taskOperation)
     }
-    taskQueue.taskQueue.waitUntilAllOperationsAreFinished()
 
+    taskQueue.taskQueue.addOperations(allTaskOperations, waitUntilFinished: true)
     cliFinish(octaheArgs: octaheArgs, octaheSteps: octaheSteps)
 }

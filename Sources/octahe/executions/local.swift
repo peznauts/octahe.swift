@@ -74,17 +74,18 @@ class ExecuteLocal: Execution {
         let task = Process()
         let pipe = Pipe()
         task.environment = self.environment
-        task.launchPath = launchArgs.removeFirst()
+        task.executableURL = URL(fileURLWithPath: launchArgs.removeFirst())
         task.arguments = launchArgs
         task.standardError = FileHandle.nullDevice
         task.standardOutput = pipe
         pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-        task.launch()
+        try task.run()
         task.waitUntilExit()
         if task.terminationStatus != 0 {
-            throw RouterError.failedExecution(message: "FAILED: \(execute)")
+            throw RouterError.failedExecution(message: "FAILED: \(execute) \(task.terminationStatus) \(task.terminationStatus)")
         }
         let output = pipe.fileHandleForReading.availableData
+        print(String(data: output, encoding: String.Encoding.utf8)!)
         return String(data: output, encoding: String.Encoding.utf8)!
     }
 

@@ -35,7 +35,13 @@ options that span SSH, `localhost`, and Serial.
 
 ## Installation
 
-### Building Octahe From Source.
+Building Octahe is simple, however, if you already have swift-lang installed on your
+system, you can simply skip this part and download one of the prebuild binaries from
+the [releases](https://github.com/peznauts/octahe.swift/releases).
+
+### Building Octahe
+
+#### Octahe dependencies on OSX 10.15
 
 Octahe requires libssh2 be installed on the system prior to building. `libssh2` can be installed
 using `brew` using the following commands.
@@ -44,22 +50,68 @@ using `brew` using the following commands.
 brew install libssh2
 ```
 
-With swift 5.2+ installed, simply clone this repository, change directory to the checkout, and run
-the following command.
+#### Octahe dependencies on CentOS 8
+
+Install `EPEL`.
 
 ``` shell
-swift build --configuration release
+dnf -y install epel-release libssh2-devel openssl-devel
 ```
 
-Once complete, the application will be built, and available in the default build location,
-`.build/release/octahe`.
+Install `swift-lang`.
+
+``` shell
+dnf -y install swift-lang libssh2-devel openssl-devel
+```
+
+#### Building the Octahe binary
+
+With swift 5.2+ installed, simply clone this repository, change directory to the checkout,
+and run the following command.
+
+``` shell
+swift build \
+      --configuration release \
+      --jobs 4 \
+      -Xswiftc \
+      -g
+```
+
+Once complete, the application will be built, and available in the release build location,
+`.build/release/octahe`. To make Octahe available system wide, copy it into a `${PATH}`
+directory, useually something like `/usr/local/bin`.
+
+### Deploying Octahe in Containers
+
+Octahe can also be deployed using container native tooling, such as `podman` or `docker`.
+
+``` shell
+podman build -t octahe.master -f Containerfile
+```
+
+Once the container image has been created, you can build applications around Octahe or run
+commands through the default container image runtime.
+
+``` shell
+podman run -it localhost/octahe.master octahe
+```
+
+### Octahe deploying Octahe
+
+Because Octahe can read Containerfiles and deploy applications to targets, Octahe can be used
+to deploy itself using the provided in tree `Containerfile`. Assuming Octahe is installed on
+the local machine the following command can be used to deploy the application to remote hosts.
+
+``` shell
+octahe -k ~/.ssh/id_rsa Containerfile -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa
+```
 
 ## Usage
 
 The CLI interactions are familiar and simple.
 
 ``` shell
-~/bin/octahe -k ~/.ssh/id_rsa ~/Targetfile
+octahe -k ~/.ssh/id_rsa ~/Targetfile
 ```
 
 The console output is simple, and easy to follow.

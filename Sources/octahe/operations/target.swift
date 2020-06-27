@@ -62,9 +62,9 @@ class TargetRecord {
 }
 
 class TargetOperations {
-    let maxConcurrentOperationCount: Int
+    var maxConcurrentOperationCount: Int
 
-    init(connectionQuota: Int) {
+    init(connectionQuota: Int = 1) {
         maxConcurrentOperationCount = connectionQuota
     }
 
@@ -85,12 +85,12 @@ class TargetOperation: Operation {
     let task: TaskRecord
     let taskIndex: Int
 
-    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options, taskIndex: Int) {
+    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options, taskIndex: Int, taskRecord: TaskRecord) {
         self.target = target
         self.args = args
         self.options = options
         self.taskIndex = taskIndex
-        self.task = taskRecords[taskIndex]!
+        self.task = taskRecord
 
         if let targetRecordsLookup = targetRecords[target.name] {
             self.targetRecord = targetRecordsLookup
