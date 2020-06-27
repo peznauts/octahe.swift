@@ -32,8 +32,8 @@ let package = Package(
             linkerSettings: [
                 .unsafeFlags(
                     [
-                        "-L /usr/local/opt/openssl@1.1/lib",
-                        "-I /usr/local/opt/openssl@1.1/include"
+                        "-L/usr/local/opt/openssl@1.1/lib",
+                        "-I/usr/local/opt/openssl@1.1/include"
                     ],
                     .when(platforms: [.macOS], configuration: .release)
                 ),
