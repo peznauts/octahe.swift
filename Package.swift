@@ -15,6 +15,8 @@ let package = Package(
         .package(name: "Shout", url: "https://github.com/jakeheis/Shout", from: "0.5.6"),
         .package(name: "SwiftSerial", url: "https://github.com/yeokm1/SwiftSerial.git", from: "0.1.2"),
         .package(name: "Spinner", url: "https://github.com/dominicegginton/Spinner", from: "1.1.4"),
+        .package(name: "Stencil", url: "https://github.com/stencilproject/Stencil", from: "0.13.0"),
+
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -27,7 +29,8 @@ let package = Package(
                 .product(name: "Crypto", package: "Crypto"),
                 .product(name: "Shout", package: "Shout"),
                 .product(name: "SwiftSerial", package: "SwiftSerial"),
-                .product(name: "Spinner", package: "Spinner")
+                .product(name: "Spinner", package: "Spinner"),
+                .product(name: "Stencil", package: "Stencil")
             ],
             linkerSettings: [
                 .unsafeFlags(

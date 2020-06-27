@@ -7,19 +7,29 @@
 
 import Foundation
 
+import Stencil
+
 let systemdService: String = """
 [Unit]
 Description={{ service_name }} service
-Documentation={{# documentation }}{{ item }} {{/ documentation }}
+Documentation={% for doc in documentation %}"{{ doc['item'] }}" {% endfor %}
 After=network-online.target systemd-udev-settle.service
 
 [Service]
 Type=simple
-{{# user }}User={{ user }}{{/ user }}
-{{# group }}Group={{ group }}{{/ group }}
-{{# kill_signal }}KillSignal={{ kill_signal }}{{/ kill_signal }}
-{{# workdir }}WorkingDirectory={{ workdir }}{{/ workdir }}
-Environment={{# environment }}"{{ item }}" {{/ environment }}
+{% if user %}
+User={{ user }}
+{% endif %}
+{% if group %}
+Group={{ group }}
+{% endif %}
+{% if kill_signal %}
+KillSignal={{ kill_signal }}
+{% endif %}
+{% if workdir %}
+WorkingDirectory={{ workdir }}
+{% endif %}
+Environment={% for env in environment %}"{{ env['item'] }}" {% endfor %}
 RemainAfterExit=yes
 ExecStart={{ shell }} "{{ service_command }}"
 Restart=always
@@ -29,5 +39,9 @@ WantedBy=multi-user.target
 """
 
 func systemdRender(data: [String: Any]) throws -> String {
-    throw RouterError.notImplemented(message: "Mustash is not available on linux")
+    let environment = Environment()
+    let rendered = try environment.renderTemplate(string: systemdService, context: data)
+    let lines = rendered.strip.split { $0.isNewline }
+    let result = lines.joined(separator: "\n")
+    return result
 }
