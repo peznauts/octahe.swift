@@ -38,7 +38,7 @@ func platformArgs() -> [String: String] {
 func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String: String] {
     func trimmer(item: Substring, trimitems: CharacterSet = ["\""]) -> String {
         let cleanedItem = item.replacingOccurrences(of: "\\ ", with: " ")
-        return cleanedItem.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: trimitems)
+        return cleanedItem.strip.trimmingCharacters(in: trimitems)
     }
 
     func matches(text: String) -> [String] {
@@ -88,8 +88,16 @@ extension String {
         return Int(self) != nil
     }
 
+    var toInt: Int32 {
+        return Int32(self)!
+    }
+
     var isBool: Bool {
         return Bool(self) != nil
+    }
+
+    var strip: String {
+        self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var sha1: String {

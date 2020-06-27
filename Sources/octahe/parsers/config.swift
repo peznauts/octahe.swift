@@ -127,9 +127,7 @@ struct ConfigParse {
             if let item = entrypointOptions.filter({$0.key == entrypointOption}).last {
                 if entrypointOption == "HEALTHCHECK" {
                     let healthcheckComponents = item.value.components(separatedBy: "CMD")
-                    let healthcheckArgs = healthcheckComponents.first?.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ).components(separatedBy: " ")
+                    let healthcheckArgs = healthcheckComponents.first?.strip.components(separatedBy: " ")
                     let parsedHealthcheckArgs = try OptionsHealthcheck.parse(healthcheckArgs)
                     print(parsedHealthcheckArgs) // delete me once i figure out what to do with the args.
                     self.octaheDeploy.append(
@@ -156,6 +154,7 @@ struct ConfigParse {
         }
     }
 
+    // swiftlint:disable function_body_length
     mutating func deploymentCases(_ deployOption: (key: String, value: String)) throws {
         switch deployOption.key {
         case "COPY", "ADD":
@@ -175,9 +174,7 @@ struct ConfigParse {
                 )
             )
         case "USER":
-            let trimmedUser = deployOption.value.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            ).components(separatedBy: ":")
+            let trimmedUser = deployOption.value.strip.components(separatedBy: ":")
             self.octaheDeploy.append(
                 (
                     key: deployOption.key,

@@ -57,7 +57,7 @@ class ExecuteLocal: Execution {
     }
 
     override func run(execute: String) throws {
-        let _ = try self.runReturn(execute: execute)
+        _ = try self.runReturn(execute: execute)
     }
 
     override func runReturn(execute: String) throws -> String {

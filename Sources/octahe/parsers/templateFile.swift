@@ -33,7 +33,7 @@ WantedBy=multi-user.target
 func systemdRender(data: [String: Any]) throws -> String {
     let template = try Template(string: systemdService)
     let rendering = try template.render(data)
-    let trimRendering = rendering.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimRendering = rendering.strip
     let lines = trimRendering.split { $0.isNewline }
     let result = lines.joined(separator: "\n")
     return result

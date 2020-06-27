@@ -20,7 +20,7 @@ class FileParser {
 
     class func trimLine(line: Substring) -> String {
         let trimmed = line.replacingOccurrences(of: "#.*", with: "", options: [.regularExpression])
-        var trimmedLine = trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmedLine = trimmed.strip
         if trimmedLine.hasSuffix(" \\") {
             trimmedLine = trimmedLine.replacingOccurrences(of: "\\", with: "")
             if let nextLine = LineData.lines.next() {

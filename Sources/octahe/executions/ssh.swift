@@ -19,9 +19,7 @@ class ExecuteSSH: Execution {
     }
 
     override func connect() throws {
-
-        let cssh = try SSH(host: self.server)
-
+        let cssh = try SSH(host: self.server, port: self.port.toInt)
         cssh.ptyType = .vanilla
         if let privatekey = self.cliParams.connectionKey {
             try cssh.authenticate(username: self.user, privateKey: privatekey)
@@ -33,7 +31,7 @@ class ExecuteSSH: Execution {
     }
 
     private func outputStrip(output: String) -> String {
-        return output.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return output.lowercased().strip
     }
 
     override func probe() throws {
@@ -88,7 +86,7 @@ class ExecuteSSH: Execution {
     }
 
     override func run(execute: String) throws {
-        let _ = try self.runReturn(execute: execute)
+        _ = try self.runReturn(execute: execute)
     }
 
     override func runReturn(execute: String) throws -> String {
