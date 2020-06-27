@@ -65,9 +65,9 @@ struct ConfigParse {
     }
 
     mutating func parseExpose(stringExpose: String) throws -> TypeExposes {
-        func protoSplit(protoPort: String) -> (Int, String) {
-            let protoPortData = protoPort.split(separator: "/", maxSplits: 1)
-            let portInt = (protoPortData.first! as NSString).integerValue
+        func protoSplit(protoPort: String) -> (Int32, String) {
+            let protoPortData = protoPort.components(separatedBy: "/")
+            let portInt = protoPortData.first!.toInt
             let proto: String
             if protoPortData.first! == protoPortData.last! {
                 proto = "tcp"
@@ -80,14 +80,14 @@ struct ConfigParse {
         // Target parse string argyments and return a tuple.
         let arrayExpose = stringExpose.components(separatedBy: " ")
         let parsedExpose = try OptionsExpose.parse(arrayExpose)
-        var portInt: Int
-        var natInt: Int?
+        var portInt: Int32
+        var natInt: Int32?
         var proto: String? = "tcp"
 
         if !parsedExpose.port.isInt {
             (portInt, proto) = protoSplit(protoPort: parsedExpose.port)
         } else {
-            portInt = (parsedExpose.port as NSString).integerValue
+            portInt = parsedExpose.port.toInt
         }
 
         if let natPort = parsedExpose.nat {

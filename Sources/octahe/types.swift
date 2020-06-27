@@ -11,7 +11,7 @@ typealias TypeFrom = (platform: String?, image: String, name: String?)
 
 typealias TypeTarget = (to: String, via: String?, escalate: String?, name: String)
 
-typealias TypeExposes = (port: Int, nat: Int?, proto: String?)
+typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
 
 typealias TypeEntrypointOptions = [(key: String, value: String)]
 

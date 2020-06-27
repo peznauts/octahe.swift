@@ -70,7 +70,7 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-    func expose(nat: Int?, port: Int, proto: String?) throws {
+    func expose(nat: Int32?, port: Int32, proto: String?) throws {
         let port = port
         let proto = proto ?? "tcp"
         let commandCreate: String

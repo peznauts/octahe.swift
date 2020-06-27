@@ -11,8 +11,6 @@ import Crypto
 
 import Logging
 
-import os
-
 let logger = Logger(label: "octahe")
 
 func platformArgs() -> [String: String] {
@@ -86,7 +84,7 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
 extension String {
     // String extension allowing us to evaluate if any string is actually an Int.
     var isInt: Bool {
-        return Int(self) != nil
+        return Int32(self) != nil
     }
 
     var toInt: Int32 {
