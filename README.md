@@ -48,11 +48,11 @@ With swift 5.2+ installed, simply clone this repository, change directory to the
 the following command.
 
 ``` shell
-swift build
+swift build --configuration release
 ```
 
 Once complete, the application will be built, and available in the default build location,
-`.build/debug/octahe`.
+`.build/release/octahe`.
 
 ## Usage
 
