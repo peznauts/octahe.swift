@@ -62,36 +62,12 @@ class ExecuteLocal: Execution {
         }
     }
 
-    override func run(execute: String) throws {
-        _ = try self.runReturn(execute: execute)
+    override func runReturn(execute: String) throws -> String {
+        return try self.runExecReturn(execute: execute)
     }
 
-    override func runReturn(execute: String) throws -> String {
-        let execTask = execString(command: execute)
-
-        var launchArgs = (self.shell).components(separatedBy: " ")
-        launchArgs.append(execTask)
-
-        if !FileManager.default.fileExists(atPath: workdirURL.path) {
-            try self.mkdir(workdirURL: workdirURL)
-        }
-
-        FileManager.default.changeCurrentDirectoryPath(workdir)
-        let task = Process()
-        let pipe = Pipe()
-        task.environment = self.environment
-        task.executableURL = URL(fileURLWithPath: launchArgs.removeFirst())
-        task.arguments = launchArgs
-        task.standardError = FileHandle.nullDevice
-        task.standardOutput = pipe
-        pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-        try task.run()
-        task.waitUntilExit()
-        if task.terminationStatus != 0 {
-            throw RouterError.failedExecution(message: "FAILED: \(execute) \(task.terminationStatus) \(task.terminationStatus)")
-        }
-        let output = pipe.fileHandleForReading.availableData
-        return String(data: output, encoding: String.Encoding.utf8)!
+    override func run(execute: String) throws {
+        _ = try self.runReturn(execute: execute)
     }
 
     override func mkdir(workdirURL: URL) throws {

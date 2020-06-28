@@ -66,9 +66,44 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-//    func matchFiles(match: String = "*", fromFilesURLs: [URL]) -> {
-//        return []
-//    }
+    func localExec(commandArgs: [String]) throws -> String {
+        var launchArgs = commandArgs
+        let task = Process()
+        let pipe = Pipe()
+        task.environment = self.environment
+        task.executableURL = URL(fileURLWithPath: launchArgs.removeFirst())
+        task.arguments = launchArgs
+        task.standardError = FileHandle.nullDevice
+        task.standardOutput = pipe
+        pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        try task.run()
+        task.waitUntilExit()
+        let output = pipe.fileHandleForReading.availableData
+        if task.terminationStatus != 0 {
+            throw RouterError.failedExecution(
+                message: """
+                         FAILED: \(commandArgs.joined(separator: " "))
+                         STATUS: \(task.terminationStatus)
+                         REASON: \(task.terminationReason)
+                         OUTPUT: \(output)
+                         """
+            )
+        }
+        return String(data: output, encoding: String.Encoding.utf8)!
+    }
+
+    func runExecReturn(execute: String) throws -> String {
+        let execTask = self.execString(command: execute)
+        var launchArgs = (self.shell).components(separatedBy: " ")
+        launchArgs.append(execTask)
+
+        if !FileManager.default.fileExists(atPath: workdirURL.path) {
+            try self.mkdir(workdirURL: workdirURL)
+        }
+
+        FileManager.default.changeCurrentDirectoryPath(workdir)
+        return try localExec(commandArgs: launchArgs)
+    }
 
     func indexFiles(basePath: URL, fromFiles: [String]) throws -> [URL] {
         func enumerateFiles(dirPath: URL, match: String = "*") {
@@ -120,13 +155,18 @@ class Execution {
         for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
-                let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)
                 copyFile = try self.copyRun(
                     toUrl: tempFileUrl,
                     fromUrl: fromUrl,
                     toFile: tempFileUrl.appendingPathComponent(fromUrl.lastPathComponent)
                 )
-                try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+                do {
+                    try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+                } catch {
+                    let toPathExpand = toUrl.appendingPathComponent(fromUrl.lastPathComponent).path
+                    try run(execute: "mv \(tempFileUrl.path) \(toPathExpand)")
+                }
             } else {
                 copyFile = try self.copyRun(
                     toUrl: toUrl,
@@ -218,7 +258,7 @@ class Execution {
 
     func execString(command: String) -> String {
         var execTask: String
-        let quotedCommand = command.replacingOccurrences(of: "\"", with: "\\\"")
+        let quotedCommand = command.escape
         if let user = self.execUser {
             execTask = "su \(user) -c \"\(quotedCommand)\""
         } else {

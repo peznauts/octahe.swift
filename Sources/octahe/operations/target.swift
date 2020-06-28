@@ -31,19 +31,44 @@ class TargetRecord {
             case let str where str.contains("/dev"):
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
-                let connSsh = ExecuteSSH(cliParameters: options, processParams: args)
-
-                let targetComponents = target.to.components(separatedBy: "@")
-                if targetComponents.count > 1 {
-                    connSsh.user = targetComponents.first!
-                }
-                let serverPort = targetComponents.last!.components(separatedBy: ":")
-                if serverPort.count > 1 {
-                    connSsh.server = serverPort.first!
-                    connSsh.port = serverPort.last!
+                let connSsh: ExecuteSSH
+                if var via = self.target.viaName {
+                    let connSshVia = ExecuteSSHVia(cliParameters: options, processParams: args)
+                    var viaHosts: [String] = []
+                    if let origViaTo = args.octaheTargetHash[via] {
+                        if let user = origViaTo.user {
+                            viaHosts.append("\(user)@\(origViaTo.to)")
+                        } else {
+                            viaHosts.append(origViaTo.to)
+                        }
+                    }
+                    while !["localhost", nil].contains(via) {
+                        let viaHost = args.octaheTargetHash[via] ?? nil
+                        guard viaHost == nil else {
+                            break
+                        }
+                        if let viaTo = viaHost?.to {
+                            if let user = viaHost!.user {
+                                viaHosts.append("\(user)@\(viaTo)")
+                            } else {
+                                viaHosts.append(viaTo)
+                            }
+                            via = viaTo
+                        } else {
+                            break
+                        }
+                    }
+                    viaHosts.reverse()
+                    connSshVia.connectionArgs.append("-J " + viaHosts.joined(separator: ","))
+                    connSsh = connSshVia
                 } else {
-                    connSsh.server = serverPort.first!
+                    connSsh = ExecuteSSH(cliParameters: options, processParams: args)
                 }
+
+                connSsh.user = self.target.user ?? "root"
+                connSsh.server = self.target.to
+                connSsh.port = self.target.port ?? 22
+
                 try? connSsh.connect()
                 self.conn = connSsh
             }

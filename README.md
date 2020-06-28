@@ -103,7 +103,7 @@ to deploy itself using the provided in tree `Containerfile`. Assuming Octahe is 
 the local machine the following command can be used to deploy the application to remote hosts.
 
 ``` shell
-octahe -k ~/.ssh/id_rsa Containerfile -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa
+octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa Containerfile
 ```
 
 ## Usage

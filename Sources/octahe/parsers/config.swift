@@ -23,14 +23,27 @@ struct ConfigParse {
         // Target parse string argyments and return a tuple.
         let arrayTarget = stringTarget.components(separatedBy: " ")
         let parsedTarget = try OptionsTarget.parse(arrayTarget)
-        let viaHost = parsedTarget.via.last ?? "localhost"
+        let targetNode: TypeTarget
+        let targetComponents = parsedTarget.target.components(separatedBy: "@")
+        let serverPort = targetComponents.last!.components(separatedBy: ":")
+
+        targetNode = TypeTarget(to: serverPort.first!, name: parsedTarget.name ?? parsedTarget.target)
+
+        if targetComponents.count > 1 {
+            targetNode.user = targetComponents.first ?? nil
+        }
+
+        if serverPort.count > 1 {
+            if serverPort.last!.isInt {
+                targetNode.port = serverPort.last!.toInt
+            }
+        }
+
+        targetNode.escalate = parsedTarget.escalate ?? self.parsedOptions.escalate
+        targetNode.viaName = parsedTarget.via.last ?? nil
+
         return (
-            (
-                to: parsedTarget.target,
-                via: viaHost,
-                escalate: parsedTarget.escalate ?? self.parsedOptions.escalate,
-                name: parsedTarget.name ?? parsedTarget.target
-            ),
+            targetNode,
             parsedTarget.via
         )
     }
@@ -108,12 +121,24 @@ struct ConfigParse {
         if viaCount > 0 {
             for (index, element) in viaHostsReversed.enumerated() {
                 nextVia = viaHostsReversed.getNextElement(index: index) ?? "localhost"
-                self.octaheTargetHash[element] = (
-                    to: element,
-                    via: nextVia,
-                    escalate: nil,
-                    name: element
-                )
+
+                let targetNode: TypeTarget
+                let targetComponents = element.components(separatedBy: "@")
+                let serverPort = targetComponents.last!.components(separatedBy: ":")
+
+                targetNode = TypeTarget(to: serverPort.first!, name: element)
+                if targetComponents.count > 1 {
+                    targetNode.user = targetComponents.first ?? nil
+                }
+                if serverPort.count > 1 {
+                    if serverPort.last!.isInt {
+                        targetNode.port = serverPort.last!.toInt
+                    }
+                }
+                
+                targetNode.viaName = nextVia
+
+                self.octaheTargetHash[element] = targetNode
             }
         }
     }

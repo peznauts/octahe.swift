@@ -9,11 +9,28 @@ import Foundation
 
 typealias TypeFrom = (platform: String?, image: String, name: String?)
 
-typealias TypeTarget = (to: String, via: String?, escalate: String?, name: String)
-
 typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
 
 typealias TypeEntrypointOptions = [(key: String, value: String)]
+
+class TypeTarget {
+    var to: String
+    var port: Int32?
+    var user: String?
+    var viaName: String?
+    var escalate: String?
+    var name: String
+
+    init(to: String, port: Int32 = 22, user: String? = nil, viaName: String? = nil,
+         escalate: String? = nil, name: String) {
+        self.to = to
+        self.port = port
+        self.user = user
+        self.viaName = viaName
+        self.escalate = escalate
+        self.name = name
+    }
+}
 
 class TypeDeploy {
     let execute: String?

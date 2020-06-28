@@ -111,6 +111,14 @@ extension String {
         let truncated = self.prefix(length)
         return truncated + trailing
     }
+
+    var escape: String {
+        return self.replacingOccurrences(of: "\"", with: "\\\"")
+    }
+
+    var escapeQuote: String {
+        return "\"\(self.escape)\""
+    }
 }
 
 extension Array {
