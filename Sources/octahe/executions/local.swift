@@ -31,28 +31,34 @@ class ExecuteLocal: Execution {
         }
     }
 
+    override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: toUrl.path, isDirectory: &isDir) {
+            if !isDir.boolValue {
+                try FileManager.default.removeItem(at: toUrl)
+            }
+        }
+        if FileManager.default.fileExists(atPath: toFile.path) {
+            try FileManager.default.removeItem(at: toFile)
+        }
+        do {
+            try FileManager.default.copyItem(at: fromUrl, to: toUrl)
+            return toUrl.path
+        } catch {
+            try FileManager.default.copyItem(at: fromUrl, to: toFile)
+            return toFile.path
+        }
+    }
+
     override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         let toUrl = URL(fileURLWithPath: copyTo)
-        var isDir: ObjCBool = false
-        for file in fromFiles {
-            let fromUrl = base.appendingPathComponent(file)
-            let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
-            if FileManager.default.fileExists(atPath: toUrl.path, isDirectory: &isDir) {
-                if !isDir.boolValue {
-                    try FileManager.default.removeItem(at: toUrl)
-                }
-            }
-            if FileManager.default.fileExists(atPath: toFile.path) {
-                try FileManager.default.removeItem(at: toFile)
-            }
-            do {
-                try FileManager.default.copyItem(at: fromUrl, to: toUrl)
-                try self.chown(perms: chown, path: toUrl.path)
-            } catch {
-                try FileManager.default.copyItem(at: fromUrl, to: toFile)
-                try self.chown(perms: chown, path: toFile.path)
-            }
-
+        for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
+            let copyFile = try self.copyRun(
+                toUrl: toUrl,
+                fromUrl: fromUrl,
+                toFile: toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+            )
+            try self.chown(perms: chown, path: copyFile)
         }
     }
 
@@ -85,7 +91,6 @@ class ExecuteLocal: Execution {
             throw RouterError.failedExecution(message: "FAILED: \(execute) \(task.terminationStatus) \(task.terminationStatus)")
         }
         let output = pipe.fileHandleForReading.availableData
-        print(String(data: output, encoding: String.Encoding.utf8)!)
         return String(data: output, encoding: String.Encoding.utf8)!
     }
 

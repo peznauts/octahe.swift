@@ -32,7 +32,6 @@ class ExecuteEcho: Execution {
     }
 
     override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
-        notice()
         for file in fromFiles {
             let fromUrl = base.appendingPathComponent(file)
             print(fromUrl.path, copyTo)

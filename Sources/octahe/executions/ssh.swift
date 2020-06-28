@@ -53,35 +53,19 @@ class ExecuteSSH: Execution {
         self.environment["PATH"] = outputStrip(output: lowerOutput.last!)
     }
 
-    private func runCopy(fromUrl: URL, toUrl: URL, toFile: URL) throws {
+    override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
         do {
             try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
+            return toUrl.path
         } catch {
             try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
+            return toFile.path
         }
     }
 
     override func chown(perms: String?, path: String) throws {
         if let chownSettings = perms {
             try run(execute: "chown \(chownSettings) \(path)")
-        }
-    }
-
-    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String?) throws {
-        let toUrl: URL = URL(fileURLWithPath: copyTo)
-        for file in fromFiles {
-            let fromUrl = base.appendingPathComponent(file)
-            let toFile = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
-            if self.escalate != nil {
-                let tempUrl = URL(fileURLWithPath: "/tmp")
-                let fileUrl = URL(fileURLWithPath: file)
-                let tempFileUrl = tempUrl.appendingPathComponent(fileUrl.lastPathComponent)
-                try runCopy(fromUrl: fromUrl, toUrl: tempFileUrl, toFile: tempFileUrl)
-                try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
-                try self.chown(perms: chown, path: toUrl.path)
-            } else {
-                try runCopy(fromUrl: fromUrl, toUrl: toUrl, toFile: toFile)
-            }
         }
     }
 

@@ -66,8 +66,76 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-    func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
+//    func matchFiles(match: String = "*", fromFilesURLs: [URL]) -> {
+//        return []
+//    }
+
+    func indexFiles(basePath: URL, fromFiles: [String]) throws -> [URL] {
+        func enumerateFiles(dirPath: URL, match: String = "*") {
+            let enumerator = FileManager.default.enumerator(atPath: dirPath.path)
+            let allObjects = enumerator?.allObjects ?? []
+            for item in allObjects {
+                let stringItem = String(describing: item)
+                if (stringItem.range(of: match, options: .regularExpression, range: nil, locale: nil) != nil) {
+                    fromFileURLs.append(dirPath.appendingPathComponent(stringItem))
+                }
+            }
+        }
+
+        var fromFileURLs: [URL] = []
+        var isDir: ObjCBool = false
+        for file in fromFiles {
+            let baseFile = basePath.appendingPathComponent(file)
+            if FileManager.default.fileExists(atPath: baseFile.path, isDirectory: &isDir) {
+                if isDir.boolValue {
+                    enumerateFiles(dirPath: baseFile)
+                } else {
+                    fromFileURLs.append(baseFile)
+                }
+            } else {
+                let matchItem = baseFile.lastPathComponent
+                let baseFilePath = baseFile.deletingLastPathComponent()
+                if FileManager.default.fileExists(atPath: baseFilePath.path, isDirectory: &isDir) {
+                    let charset = CharacterSet(charactersIn: "\\^$.|?*+()[]")
+                    if isDir.boolValue && matchItem.rangeOfCharacter(from: charset) != nil {
+                        enumerateFiles(dirPath: baseFilePath, match: matchItem)
+                    } else {
+                        throw RouterError.failedExecution(
+                            message: "The copy file/directory does not exist \(baseFile.path)"
+                        )
+                    }
+                }
+            }
+        }
+        return fromFileURLs
+    }
+
+    func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
         preconditionFailure("This method is not supported")
+    }
+
+    func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
+        let toUrl = URL(fileURLWithPath: copyTo)
+        var copyFile: String? = nil
+        for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
+            if self.escalate != nil {
+                let tempUrl = URL(fileURLWithPath: "/tmp")
+                let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                copyFile = try self.copyRun(
+                    toUrl: tempFileUrl,
+                    fromUrl: fromUrl,
+                    toFile: tempFileUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                )
+                try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+            } else {
+                copyFile = try self.copyRun(
+                    toUrl: toUrl,
+                    fromUrl: fromUrl,
+                    toFile: toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                )
+            }
+            try self.chown(perms: chown, path: copyFile!)
+        }
     }
 
     func expose(nat: Int32?, port: Int32, proto: String?) throws {
