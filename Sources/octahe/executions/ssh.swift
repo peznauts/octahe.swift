@@ -108,22 +108,33 @@ class ExecuteSSHVia: ExecuteSSH {
     var connectionArgs: [String]
     var sshCommand: [String]?
     var scpCommand: [String]?
+    let controlPath: URL
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         self.sshConnectionString = "/usr/bin/ssh"
         self.scpConnectionString = "/usr/bin/scp"
+        self.controlPath = URL(fileURLWithPath: NSTemporaryDirectory())
         self.connectionArgs = [
             "-o GlobalKnownHostsFile=/dev/null",
             "-o UserKnownHostsFile=/dev/null",
-            "-o StrictHostKeyChecking=no"
+            "-o StrictHostKeyChecking=no",
+            "-o Compression=no",
+            "-o TCPKeepAlive=yes",
+            "-o VerifyHostKeyDNS=no",
+            "-o ForwardX11=no",
+            "-o ControlMaster=auto",
+            "-o ControlPath=\"\(controlPath.path)/.ssh/sockets/%r@%h-%p\"",
+            "-o ControlPersist=600"
         ]
         super.init(cliParameters: cliParameters, processParams: processParams)
         if let privatekey = self.cliParams.connectionKey {
             self.connectionArgs.append("-i " + privatekey)
         }
+
     }
 
     override func connect() throws {
+        try self.localMkdir(workdirURL: controlPath.appendingPathComponent(".ssh/sockets", isDirectory: true))
         let sshArgs = self.connectionArgs.joined(separator: " ")
         self.sshCommand = [
             self.sshConnectionString,

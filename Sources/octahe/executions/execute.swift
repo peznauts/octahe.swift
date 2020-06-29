@@ -94,16 +94,34 @@ class Execution {
         return String(data: output, encoding: String.Encoding.utf8)!
     }
 
+    func localMkdir(workdirURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: workdirURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+    }
+
+    func localExecReturn(execute: String) throws -> String {
+        let launchArgs = self.setLaunchArgs(execute: execute)
+        return try localExec(commandArgs: launchArgs)
+    }
+
+    func localWriteTemp(content: String) throws -> URL {
+        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+        let marker = String(describing: self.target)
+        let tempServiceFile = tempUrl.appendingPathComponent(String(describing: "\(marker)-\(content.sha1)").sha1)
+        if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
+            try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
+        }
+        return tempServiceFile
+    }
+
     func setLaunchArgs(execute: String) -> [String] {
         let execTask = self.execString(command: execute)
         var launchArgs = (self.shell).components(separatedBy: " ")
         launchArgs.append(execTask)
         return launchArgs
-    }
-
-    func runlocalExecReturn(execute: String) throws -> String {
-        let launchArgs = self.setLaunchArgs(execute: execute)
-        return try localExec(commandArgs: launchArgs)
     }
 
     func indexFiles(basePath: URL, fromFiles: [String]) throws -> [URL] {
@@ -237,7 +255,7 @@ class Execution {
             let create = command + ["-A"] + commandArgs
             commandCreate = create.joined(separator: " ")
         }
-        commandExec = "if ! \(commandCheck); then \(commandCreate); fi"
+        commandExec = "\(commandCheck) || \(commandCreate)"
         try run(execute: commandExec)
     }
 
@@ -254,16 +272,6 @@ class Execution {
             }
         }
         return items
-    }
-
-    func writeTemp(content: String) throws -> URL {
-        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
-        let marker = String(describing: self.target)
-        let tempServiceFile = tempUrl.appendingPathComponent(String(describing: "\(marker)-\(content.sha1)").sha1)
-        if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
-            try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
-        }
-        return tempServiceFile
     }
 
     func serviceTemplate(entrypoint: String) throws {
@@ -294,7 +302,7 @@ class Execution {
         if self.cliParams.dryRun {
             print("\n***** Service file *****\n\(serviceRendered)\n*************************\n")
         }
-        let tempServiceFile = try self.writeTemp(content: serviceRendered)
+        let tempServiceFile = try self.localWriteTemp(content: serviceRendered)
         defer {
             try? FileManager.default.removeItem(at: tempServiceFile)
         }
@@ -319,7 +327,7 @@ class Execution {
             if let password = self.escalatePassword {
                 // Password is add to the environment.
                 self.environment["ESCALATEPASSWORD"] = password
-                execTask = "echo -e \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(self.shell) \"\(execTask)\""
+                execTask = "printf \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(self.shell) \"\(execTask)\""
             } else {
                 execTask = "\(escalate) \(self.shell) \"\(execTask)\""
             }

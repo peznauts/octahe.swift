@@ -64,10 +64,10 @@ class ExecuteLocal: Execution {
 
     override func runReturn(execute: String) throws -> String {
         if !FileManager.default.fileExists(atPath: workdirURL.path) {
-            try self.mkdir(workdirURL: workdirURL)
+            try self.localMkdir(workdirURL: workdirURL)
         }
         FileManager.default.changeCurrentDirectoryPath(workdir)
-        return try self.runlocalExecReturn(execute: execute)
+        return try self.localExecReturn(execute: execute)
     }
 
     override func run(execute: String) throws {
@@ -75,11 +75,7 @@ class ExecuteLocal: Execution {
     }
 
     override func mkdir(workdirURL: URL) throws {
-        try FileManager.default.createDirectory(
-            at: workdirURL,
-            withIntermediateDirectories: true,
-            attributes: nil
-        )
+        try localMkdir(workdirURL: workdirURL)
     }
 
     override func serviceTemplate(entrypoint: String) throws {

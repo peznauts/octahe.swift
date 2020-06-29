@@ -123,12 +123,16 @@ extension String {
         return truncated + trailing
     }
 
+    var quote: String {
+        return "\"\(self)\""
+    }
+
     var escape: String {
         return self.replacingOccurrences(of: "\"", with: "\\\"")
     }
 
     var escapeQuote: String {
-        return "\"\(self.escape)\""
+        return self.escape.quote
     }
 }
 
