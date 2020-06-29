@@ -27,7 +27,7 @@ struct ConfigParse {
         let targetComponents = parsedTarget.target.components(separatedBy: "@")
         let serverPort = targetComponents.last!.components(separatedBy: ":")
 
-        targetNode = TypeTarget(to: serverPort.first!, name: parsedTarget.name ?? parsedTarget.target)
+        targetNode = TypeTarget(domain: serverPort.first!, name: parsedTarget.name ?? parsedTarget.target)
 
         if targetComponents.count > 1 {
             targetNode.user = targetComponents.first ?? nil
@@ -115,30 +115,28 @@ struct ConfigParse {
     }
 
     mutating func viaLoad(viaHosts: [String]) {
-        var nextVia: String
         let viaCount = viaHosts.count
         let viaHostsReversed = Array(viaHosts.reversed())
         if viaCount > 0 {
             for (index, element) in viaHostsReversed.enumerated() {
-                nextVia = viaHostsReversed.getNextElement(index: index) ?? "localhost"
+                if !self.octaheTargetHash.keys.contains(element) {
+                    let targetNode: TypeTarget
+                    let targetComponents = element.components(separatedBy: "@")
+                    let serverPort = targetComponents.last!.components(separatedBy: ":")
 
-                let targetNode: TypeTarget
-                let targetComponents = element.components(separatedBy: "@")
-                let serverPort = targetComponents.last!.components(separatedBy: ":")
-
-                targetNode = TypeTarget(to: serverPort.first!, name: element)
-                if targetComponents.count > 1 {
-                    targetNode.user = targetComponents.first ?? nil
-                }
-                if serverPort.count > 1 {
-                    if serverPort.last!.isInt {
-                        targetNode.port = serverPort.last!.toInt
+                    targetNode = TypeTarget(domain: serverPort.first!, name: element)
+                    if targetComponents.count > 1 {
+                        targetNode.user = targetComponents.first ?? nil
                     }
-                }
-                
-                targetNode.viaName = nextVia
+                    if serverPort.count > 1 {
+                        if serverPort.last!.isInt {
+                            targetNode.port = serverPort.last!.toInt
+                        }
+                    }
 
-                self.octaheTargetHash[element] = targetNode
+                    targetNode.viaName = viaHostsReversed.getNextElement(index: index) ?? nil
+                    self.octaheTargetHash[element] = targetNode
+                }
             }
         }
     }

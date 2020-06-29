@@ -13,6 +13,29 @@ enum TargetStates {
 
 var targetRecords: [String: TargetRecord] = [:]
 
+private func viaArrayCreate(via: String, args: ConfigParse) -> [String] {
+    var viaTarget = via
+    var viaHosts: [String] = []
+    while !["localhost", nil].contains(viaTarget) {
+        let viaHost = args.octaheTargetHash[viaTarget] ?? nil
+        guard viaHost == nil else {
+            break
+        }
+        if let viaTo = viaHost?.domain {
+            if let user = viaHost!.user {
+                viaHosts.append("\(user)@\(viaTo)")
+            } else {
+                viaHosts.append(viaTo)
+            }
+            viaTarget = viaTo
+        } else {
+            break
+        }
+    }
+    viaHosts.reverse()
+    return viaHosts
+}
+
 class TargetRecord {
     let target: TypeTarget
     let conn: Execution
@@ -32,33 +55,9 @@ class TargetRecord {
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
                 let connSsh: ExecuteSSH
-                if var via = self.target.viaName {
+                if let via = self.target.viaName {
                     let connSshVia = ExecuteSSHVia(cliParameters: options, processParams: args)
-                    var viaHosts: [String] = []
-                    if let origViaTo = args.octaheTargetHash[via] {
-                        if let user = origViaTo.user {
-                            viaHosts.append("\(user)@\(origViaTo.to)")
-                        } else {
-                            viaHosts.append(origViaTo.to)
-                        }
-                    }
-                    while !["localhost", nil].contains(via) {
-                        let viaHost = args.octaheTargetHash[via] ?? nil
-                        guard viaHost == nil else {
-                            break
-                        }
-                        if let viaTo = viaHost?.to {
-                            if let user = viaHost!.user {
-                                viaHosts.append("\(user)@\(viaTo)")
-                            } else {
-                                viaHosts.append(viaTo)
-                            }
-                            via = viaTo
-                        } else {
-                            break
-                        }
-                    }
-                    viaHosts.reverse()
+                    let viaHosts = viaArrayCreate(via: via, args: args)
                     connSshVia.connectionArgs.append("-J " + viaHosts.joined(separator: ","))
                     connSsh = connSshVia
                 } else {
@@ -66,7 +65,7 @@ class TargetRecord {
                 }
 
                 connSsh.user = self.target.user ?? "root"
-                connSsh.server = self.target.to
+                connSsh.server = self.target.domain
                 connSsh.port = self.target.port ?? 22
 
                 try? connSsh.connect()

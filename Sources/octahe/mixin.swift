@@ -100,6 +100,7 @@ extension String {
     }
 
     var sha1: String {
+        // swiftlint:disable force_try
         let digest = try! SHA1.hash(self)
         return digest.hexEncodedString()
     }

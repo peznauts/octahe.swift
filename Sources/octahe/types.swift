@@ -14,16 +14,16 @@ typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
 typealias TypeEntrypointOptions = [(key: String, value: String)]
 
 class TypeTarget {
-    var to: String
+    var domain: String
     var port: Int32?
     var user: String?
     var viaName: String?
     var escalate: String?
     var name: String
 
-    init(to: String, port: Int32 = 22, user: String? = nil, viaName: String? = nil,
+    init(domain: String, port: Int32 = 22, user: String? = nil, viaName: String? = nil,
          escalate: String? = nil, name: String) {
-        self.to = to
+        self.domain = domain
         self.port = port
         self.user = user
         self.viaName = viaName

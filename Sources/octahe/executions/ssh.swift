@@ -102,7 +102,6 @@ class ExecuteSSH: Execution {
     }
 }
 
-
 class ExecuteSSHVia: ExecuteSSH {
     var sshConnectionString: String
     var scpConnectionString: String
@@ -111,8 +110,8 @@ class ExecuteSSHVia: ExecuteSSH {
     var scpCommand: [String]?
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
-        self.sshConnectionString = "/usr/bin/ssh -n -t"
-        self.scpConnectionString = "/usr/bin/scp -3 -q"
+        self.sshConnectionString = "/usr/bin/ssh"
+        self.scpConnectionString = "/usr/bin/scp"
         self.connectionArgs = [
             "-o GlobalKnownHostsFile=/dev/null",
             "-o UserKnownHostsFile=/dev/null",
@@ -126,8 +125,15 @@ class ExecuteSSHVia: ExecuteSSH {
 
     override func connect() throws {
         let sshArgs = self.connectionArgs.joined(separator: " ")
-        self.sshCommand = [self.sshConnectionString, sshArgs, "-p \(self.port)", "\(self.user)@\(self.server)"]
-        self.scpCommand = [self.scpConnectionString, sshArgs, "-P \(self.port)"]
+        self.sshCommand = [
+            self.sshConnectionString,
+            sshArgs,
+            "-n",
+            "-t",
+            "-p \(self.port)",
+            "\(self.user)@\(self.server)"
+        ]
+        self.scpCommand = [self.scpConnectionString, sshArgs, "-3", "-q", "-P \(self.port)"]
     }
 
     private func runExec(commandArgs: [String]) throws -> String {
@@ -141,21 +147,24 @@ class ExecuteSSHVia: ExecuteSSH {
         do {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
-            scpExecute?.append("\(self.user)@\(self.server):\(toUrl.path)")
-            _ = try self.runExec(commandArgs: scpExecute!)
-            return toUrl.path
-        } catch {
-            var scpExecute = self.scpCommand
-            scpExecute?.append(fromUrl.path)
             scpExecute?.append("\(self.user)@\(self.server):\(toFile.path)")
             _ = try self.runExec(commandArgs: scpExecute!)
             return toFile.path
+        } catch {
+            var scpExecute = self.scpCommand
+            scpExecute?.append(fromUrl.path)
+            scpExecute?.append("\(self.user)@\(self.server):\(toUrl.path)")
+            _ = try self.runExec(commandArgs: scpExecute!)
+            return toUrl.path
         }
     }
 
     override func runReturn(execute: String) throws -> String {
-        var sshExecute = self.sshCommand
-        sshExecute?.append(execute.escapeQuote)
-        return try self.runExec(commandArgs: sshExecute!)
+
+        let execTask = self.execString(command: execute).escapeQuote
+        var sshExecuteArgs = self.sshCommand!
+        sshExecuteArgs.append(self.shell)
+        sshExecuteArgs.append(execTask)
+        return try self.localExec(commandArgs: sshExecuteArgs)
     }
 }

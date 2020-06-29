@@ -92,16 +92,15 @@ class Execution {
         return String(data: output, encoding: String.Encoding.utf8)!
     }
 
-    func runExecReturn(execute: String) throws -> String {
+    func setLaunchArgs(execute: String) -> [String] {
         let execTask = self.execString(command: execute)
         var launchArgs = (self.shell).components(separatedBy: " ")
         launchArgs.append(execTask)
+        return launchArgs
+    }
 
-        if !FileManager.default.fileExists(atPath: workdirURL.path) {
-            try self.mkdir(workdirURL: workdirURL)
-        }
-
-        FileManager.default.changeCurrentDirectoryPath(workdir)
+    func runlocalExecReturn(execute: String) throws -> String {
+        let launchArgs = self.setLaunchArgs(execute: execute)
         return try localExec(commandArgs: launchArgs)
     }
 
@@ -111,6 +110,7 @@ class Execution {
             let allObjects = enumerator?.allObjects ?? []
             for item in allObjects {
                 let stringItem = String(describing: item)
+                // swiftlint:disable control_statement
                 if (stringItem.range(of: match, options: .regularExpression, range: nil, locale: nil) != nil) {
                     fromFileURLs.append(dirPath.appendingPathComponent(stringItem))
                 }
@@ -151,7 +151,7 @@ class Execution {
 
     func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         let toUrl = URL(fileURLWithPath: copyTo)
-        var copyFile: String? = nil
+        var copyFile: String?
         for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")

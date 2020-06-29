@@ -36,6 +36,11 @@ func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
             """
         )
     }
+    let successTargets = targetRecords.values.filter {$0.state == .available}.count
+    if successTargets > 0 {
+        print("[+] Successfully deployed \(successTargets) targets")
+
+    }
 }
 
 func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
