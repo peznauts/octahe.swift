@@ -8,6 +8,13 @@ let package = Package(
     platforms: [
         .macOS(.v10_14)
     ],
+    products: [
+        // Products define the executables and libraries a package produces, and make them visible to other packages.
+        .library(
+            name: "octahe",
+            targets: ["octahe"]
+        )
+    ],
     dependencies: [
         .package(name: "swift-argument-parser", url: "https://github.com/apple/swift-argument-parser", from: "0.1.0"),
         .package(name: "swift-log", url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
