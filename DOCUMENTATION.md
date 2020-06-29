@@ -35,6 +35,7 @@ ENTRYPOINT python3 -m http.server 7000
 #### Octahe specific verbs
 
 * TO
+* INTERFACE
 
 ##### TO
 
