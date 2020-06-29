@@ -16,6 +16,8 @@ class ExecuteSSH: Execution {
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
+        self.workdir = "~/"
+        self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
     override func connect() throws {
@@ -77,7 +79,7 @@ class ExecuteSSH: Execution {
         for (key, value) in self.environment {
             envVars.append("export \(key)=\(value);")
         }
-        let preparedCommand = "\(envVars.joined(separator: " ")) \(preparedExec)"
+        let preparedCommand = envVars.joined(separator: " ") + " " + preparedExec
         let (status, output) = try self.ssh!.capture(preparedCommand)
         if status != 0 {
             throw RouterError.failedExecution(message: "FAILED execution: \(output)")
@@ -130,7 +132,8 @@ class ExecuteSSHVia: ExecuteSSH {
         if let privatekey = self.cliParams.connectionKey {
             self.connectionArgs.append("-i " + privatekey)
         }
-
+        self.workdir = "~/"
+        self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
     override func connect() throws {

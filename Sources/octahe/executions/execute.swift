@@ -317,19 +317,18 @@ class Execution {
 
     func execString(command: String) -> String {
         var execTask: String
-        let quotedCommand = command.escape
         if let user = self.execUser {
-            execTask = "su \(user) -c \"\(quotedCommand)\""
+            execTask = "cd \(self.workdir); \(self.shell) su \(user) -c " + command.escapeQuote
         } else {
-            execTask = quotedCommand
+            execTask = "cd \(self.workdir); " + self.shell + " " + command.escapeQuote
         }
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
                 // Password is add to the environment.
                 self.environment["ESCALATEPASSWORD"] = password
-                execTask = "printf \"${ESCALATEPASSWORD}\" | \(escalate) --stdin \(self.shell) \"\(execTask)\""
+                execTask = "printf \"${ESCALATEPASSWORD}\" | \(escalate) --stdin " + execTask
             } else {
-                execTask = "\(escalate) \(self.shell) \"\(execTask)\""
+                execTask = "\(escalate) " + execTask
             }
         }
         return execTask
