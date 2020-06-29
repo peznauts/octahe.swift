@@ -33,6 +33,12 @@ Environment={% for env in environment %}"{{ env['item'] }}" {% endfor %}
 RemainAfterExit=yes
 ExecStart={{ shell }} "{{ service_command }}"
 Restart=always
+Slice=Octahe.slice
+CPUAccounting=yes
+BlockIOAccounting=yes
+MemoryAccounting=yes
+TasksAccounting=yes
+PrivateTmp={{ private_tmp }}
 
 [Install]
 WantedBy=multi-user.target

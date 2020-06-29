@@ -13,14 +13,11 @@ enum TargetStates {
 
 var targetRecords: [String: TargetRecord] = [:]
 
-private func viaArrayCreate(via: String, args: ConfigParse) -> [String] {
+private func viaArrayCreate(via: String?, args: ConfigParse) -> [String] {
     var viaTarget = via
     var viaHosts: [String] = []
-    while !["localhost", nil].contains(viaTarget) {
-        let viaHost = args.octaheTargetHash[viaTarget] ?? nil
-        guard viaHost == nil else {
-            break
-        }
+    while viaTarget != "localhost" || viaTarget != nil {
+        let viaHost = args.octaheTargetHash[viaTarget!] ?? nil
         if let viaTo = viaHost?.domain {
             if let user = viaHost!.user {
                 viaHosts.append("\(user)@\(viaTo)")
@@ -174,6 +171,8 @@ class TargetOperation: Operation {
             )
         case "USER":
             self.targetRecord.conn.execUser = self.task.taskItem.user!
+        case "INTERFACE":
+            self.targetRecord.conn.interface = self.task.taskItem.execute!
         case "EXPOSE":
             try self.caseExpose()
         case "WORKDIR":

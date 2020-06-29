@@ -35,7 +35,7 @@ struct ConfigParse {
 
         if serverPort.count > 1 {
             if serverPort.last!.isInt {
-                targetNode.port = serverPort.last!.toInt
+                targetNode.port = try serverPort.last!.toInt()
             }
         }
 
@@ -78,9 +78,9 @@ struct ConfigParse {
     }
 
     mutating func parseExpose(stringExpose: String) throws -> TypeExposes {
-        func protoSplit(protoPort: String) -> (Int32, String) {
+        func protoSplit(protoPort: String) throws -> (Int32, String) {
             let protoPortData = protoPort.components(separatedBy: "/")
-            let portInt = protoPortData.first!.toInt
+            let portInt = try protoPortData.first!.toInt()
             let proto: String
             if protoPortData.first! == protoPortData.last! {
                 proto = "tcp"
@@ -98,13 +98,13 @@ struct ConfigParse {
         var proto: String? = "tcp"
 
         if !parsedExpose.port.isInt {
-            (portInt, proto) = protoSplit(protoPort: parsedExpose.port)
+            (portInt, proto) = try protoSplit(protoPort: parsedExpose.port)
         } else {
-            portInt = parsedExpose.port.toInt
+            portInt = try parsedExpose.port.toInt()
         }
 
         if let natPort = parsedExpose.nat {
-            (natInt, proto) = protoSplit(protoPort: natPort)
+            (natInt, proto) = try protoSplit(protoPort: natPort)
         }
 
         return (
@@ -114,7 +114,7 @@ struct ConfigParse {
         )
     }
 
-    mutating func viaLoad(viaHosts: [String]) {
+    mutating func viaLoad(viaHosts: [String]) throws {
         let viaCount = viaHosts.count
         let viaHostsReversed = Array(viaHosts.reversed())
         if viaCount > 0 {
@@ -130,7 +130,7 @@ struct ConfigParse {
                     }
                     if serverPort.count > 1 {
                         if serverPort.last!.isInt {
-                            targetNode.port = serverPort.last!.toInt
+                            targetNode.port = try serverPort.last!.toInt()
                         }
                     }
 
@@ -261,16 +261,16 @@ struct ConfigParse {
         var targets: [String] = []
         if self.parsedOptions.targets.count >= 1 {
             for target in self.parsedOptions.targets {
-                let (target, viaHosts) = try parseTarget(stringTarget: target)
-                viaLoad(viaHosts: viaHosts)
+                let (target, viaHosts) = try self.parseTarget(stringTarget: target)
+                try self.viaLoad(viaHosts: viaHosts)
                 self.octaheTargetHash[target.name] = target
                 targets.append(target.name)
             }
         } else {
             let filteredTargets = self.configFiles.filter {$0.key == "TO"}
             for target in filteredTargets {
-                let (target, viaHosts) = try parseTarget(stringTarget: target.value)
-                viaLoad(viaHosts: viaHosts)
+                let (target, viaHosts) = try self.parseTarget(stringTarget: target.value)
+                try self.viaLoad(viaHosts: viaHosts)
                 self.octaheTargetHash[target.name] = target
                 targets.append(target.name)
             }
@@ -297,7 +297,8 @@ struct ConfigParse {
 
         // Return only a valid config.
         let deployOptions = self.configFiles.filter {key, _ in
-            return ["RUN", "COPY", "ADD", "SHELL", "ARG", "ENV", "USER", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
+            return ["RUN", "COPY", "ADD", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE",
+                    "WORKDIR", "LABEL"].contains(key)
         }
         try self.deploymentParsing(deployOptions)
         try self.entrypointParsing()

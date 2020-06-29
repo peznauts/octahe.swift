@@ -7,6 +7,7 @@
 
 import Foundation
 
+// swiftlint:disable type_body_length
 class Execution {
     let cliParams: OctaheCLI.Options
     let processParams: ConfigParse
@@ -26,6 +27,7 @@ class Execution {
     var command: String?
     var stopsignal: String?
     var documentation: [[String: String]] = [["item": "https://github.com/peznauts/octahe.swift"]]
+    var interface: String?
 
     init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -156,16 +158,18 @@ class Execution {
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
                 let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)
-                copyFile = try self.copyRun(
+                _ = try self.copyRun(
                     toUrl: tempFileUrl,
                     fromUrl: fromUrl,
                     toFile: tempFileUrl.appendingPathComponent(fromUrl.lastPathComponent)
                 )
                 do {
                     try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
+                    copyFile = toUrl.path
                 } catch {
                     let toPathExpand = toUrl.appendingPathComponent(fromUrl.lastPathComponent).path
                     try run(execute: "mv \(tempFileUrl.path) \(toPathExpand)")
+                    copyFile = toPathExpand
                 }
             } else {
                 copyFile = try self.copyRun(
@@ -178,20 +182,63 @@ class Execution {
         }
     }
 
+    // swiftlint:disable function_body_length
     func expose(nat: Int32?, port: Int32, proto: String?) throws {
         let port = port
         let proto = proto ?? "tcp"
+        let commandExec: String
+        let commandCheck: String
         let commandCreate: String
-        let commandDelete: String
+        let command: [String] = ["iptables"]
         if let natPort = nat {
-            commandCreate = "iptables -t nat -D PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
-            commandDelete = "iptables -t nat -A PREROUTING -p \(proto) --dport \(port) -j REDIRECT --to-port \(natPort)"
+            var commandArgs = [
+                "PREROUTING",
+                "-m",
+                "comment",
+                "--comment",
+                "Octahe rule".escapeQuote,
+                "-p",
+                proto,
+                "--dport",
+                port.toString,
+                "-j",
+                "REDIRECT",
+                "--to-port",
+                natPort.toString
+            ]
+            if let interface = self.interface {
+                commandArgs.insert("-i " + interface, at: 1)
+            }
+            let check = command + ["-t", "nat", "-C"] + commandArgs
+            commandCheck = check.joined(separator: " ")
+            let create = command + ["-t", "nat", "-A"] + commandArgs
+            commandCreate = create.joined(separator: " ")
         } else {
-            commandCreate = "iptables -A INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
-            commandDelete = "iptables -D INPUT -p \(proto) -m \(proto) --dport \(port) -j ACCEPT"
+            var commandArgs = [
+                "INPUT",
+                "-m",
+                "comment",
+                "--comment",
+                "Octahe rule".escapeQuote,
+                "-p",
+                proto,
+                "-m",
+                proto,
+                "--dport",
+                port.toString,
+                "-j",
+                "ACCEPT"
+            ]
+            if let interface = self.interface {
+                commandArgs.insert("-i " + interface, at: 1)
+            }
+            let check = command + ["-C"] + commandArgs
+            commandCheck = check.joined(separator: " ")
+            let create = command + ["-A"] + commandArgs
+            commandCreate = create.joined(separator: " ")
         }
-        try run(execute: "\(commandDelete) &> /dev/null || true")
-        try run(execute: "\(commandCreate)")
+        commandExec = "if ! \(commandCheck); then \(commandCreate); fi"
+        try run(execute: commandExec)
     }
 
     private func optionFormat(options: [String: String]) -> [[String: String]] {
@@ -236,8 +283,12 @@ class Execution {
         if let sigKill = self.stopsignal {
             serviceData["kill_signal"] = sigKill
         }
+        serviceData["private_tmp"] = "yes"
         if self.workdir != FileManager.default.currentDirectoryPath {
             serviceData["workdir"] = self.workdir
+            if self.workdir.contains("tmp") {
+                serviceData["private_tmp"] = "no"
+            }
         }
         let serviceRendered = try systemdRender(data: serviceData)
         if self.cliParams.dryRun {

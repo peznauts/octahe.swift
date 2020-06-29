@@ -81,14 +81,17 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
     return data
 }
 
+extension Int32 {
+    // String extension allowing us to evaluate if any string is actually an Int.
+    var toString: String {
+        return String(describing: self)
+    }
+}
+
 extension String {
     // String extension allowing us to evaluate if any string is actually an Int.
     var isInt: Bool {
         return Int32(self) != nil
-    }
-
-    var toInt: Int32 {
-        return Int32(self)!
     }
 
     var isBool: Bool {
@@ -103,6 +106,13 @@ extension String {
         // swiftlint:disable force_try
         let digest = try! SHA1.hash(self)
         return digest.hexEncodedString()
+    }
+
+    func toInt() throws -> Int32 {
+        guard self.isInt else {
+            throw RouterError.failedExecution(message: "\(self) could not be converted to Int32")
+        }
+        return Int32(self)!
     }
 
     func trunc(length: Int, trailing: String = " ...") -> String {
@@ -123,12 +133,6 @@ extension String {
 }
 
 extension Array {
-    func chunked(into size: Int) -> [[Element]] {
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0 ..< Swift.min($0 + size, count)])
-        }
-    }
-
     func getNextElement(index: Int) -> Element? {
         let nextIndex = index + 1
         let isValidIndex = nextIndex >= 0 && nextIndex < count

@@ -34,7 +34,7 @@ class ExecuteSSH: Execution {
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
-        let output = try self.runReturn(execute: "uname -ms; systemctl --version; echo ${PATH}")
+        let output = try self.runReturn(execute: "uname -ms; systemctl --version")
         let outputComponents = output.components(separatedBy: "\n")
         let targetVars = outputComponents.first!.components(separatedBy: " ")
         let kernel = targetVars.first!.strip
@@ -44,8 +44,8 @@ class ExecuteSSH: Execution {
         self.environment["TARGETOS"] = kernel
         self.environment["TARGETARCH"] = arch
         self.environment["TARGETPLATFORM"] = "\(kernel)/\(arch)"
-        self.environment["SYSTEMD_VERSION"] = systemd.last!.strip
-        self.environment["PATH"] = outputComponents.last!.strip
+        self.environment["SYSTEMD_VERSION"] = String(describing: systemd.last!.strip)
+
     }
 
     override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
@@ -136,34 +136,25 @@ class ExecuteSSHVia: ExecuteSSH {
         self.scpCommand = [self.scpConnectionString, sshArgs, "-3", "-q", "-P \(self.port)"]
     }
 
-    private func runExec(commandArgs: [String]) throws -> String {
-        let execTask = commandArgs.joined(separator: " ")
-        var launchArgs = (self.shell).components(separatedBy: " ")
-        launchArgs.append(execTask)
-        return try self.localExec(commandArgs: launchArgs)
-    }
-
     override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
         do {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
             scpExecute?.append("\(self.user)@\(self.server):\(toFile.path)")
-            _ = try self.runExec(commandArgs: scpExecute!)
+            _ = try self.localExec(commandArgs: scpExecute!)
             return toFile.path
         } catch {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
             scpExecute?.append("\(self.user)@\(self.server):\(toUrl.path)")
-            _ = try self.runExec(commandArgs: scpExecute!)
+            _ = try self.localExec(commandArgs: scpExecute!)
             return toUrl.path
         }
     }
 
     override func runReturn(execute: String) throws -> String {
-
-        let execTask = self.execString(command: execute).escapeQuote
+        let execTask = self.execString(command: execute)
         var sshExecuteArgs = self.sshCommand!
-        sshExecuteArgs.append(self.shell)
         sshExecuteArgs.append(execTask)
         return try self.localExec(commandArgs: sshExecuteArgs)
     }

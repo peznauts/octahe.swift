@@ -168,11 +168,39 @@ STOPSIGNAL 99
 ##### EXPOSE
 
 The `EXPOSE` verb will create an IPTables rule for a given port and/or service mapping.
-IP tables rules will be added into the **INPUT** chain.
+IP tables rules will be added into the **INPUT** or **PREROUTING** chains based
+on NAT conditions.
 
 ``` dockerfile
 EXPOSE 80/tcp
 EXPOSE 8080:80/udp
+```
+
+##### INTERFACE
+
+The `INTERFACE` verb will augment IPTables rules expressed in the `EXPOSE` verb.
+
+
+``` dockerfile
+INTERFACE eth0
+EXPOSE 8080:80/udp
+INTERFACE eth1
+EXPOSE 8181:80/udp
+INTERFACE eth2
+EXPOSE 5150
+EXPOSE 9100
+```
+
+These commands would result in the following rules being generated on the given target host.
+
+``` shell
+*filter
+-A INPUT -i eth2 -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
+-A INPUT -i eth2 -p tcp -m comment --comment "Octahe rule" -m tcp --dport 9100 -j ACCEPT
+
+*nat
+-A PREROUTING -i eth0 -p udp -m comment --comment "Octahe rule" -m udp --dport 8080 -j REDIRECT --to-ports 80
+-A PREROUTING -i eth1 -p udp -m comment --comment "Octahe rule" -m udp --dport 8181 -j REDIRECT --to-ports 80
 ```
 
 #### Ignored Verbs
