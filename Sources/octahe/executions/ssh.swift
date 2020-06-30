@@ -144,7 +144,7 @@ class ExecuteSSHVia: ExecuteSSH {
         self.sshCommand = [
             self.sshConnectionString,
             sshArgs,
-            "-tt",
+            "-t",
             "-n",
             "-p \(self.port)",
             "\(self.user)@\(self.server)"

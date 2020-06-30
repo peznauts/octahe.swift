@@ -200,7 +200,7 @@ class TargetOperation: Operation {
         logger.debug("Executing: \(task.task)")
         do {
             try self.targetCases()
-        } catch {
+        } catch let error {
             task.state = .degraded
             self.targetRecord.failedStep = self.taskIndex
             self.targetRecord.failedTask = "\(error)"

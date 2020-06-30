@@ -173,7 +173,13 @@ class Execution {
     func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         let toUrl = URL(fileURLWithPath: copyTo)
         var copyFile: String?
-        for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
+        let indexedFiles = try self.indexFiles(basePath: base, fromFiles: fromFiles)
+        guard indexedFiles.count >= fromFiles.count else {
+            throw RouterError.failedExecution(
+                message: "Copy files specified were not all found. Expected: \(fromFiles), Found: \(indexedFiles)"
+            )
+        }
+        for fromUrl in indexedFiles {
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
                 let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)

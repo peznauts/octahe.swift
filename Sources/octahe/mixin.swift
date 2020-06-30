@@ -102,6 +102,10 @@ extension String {
         self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    var stripQuotes: String {
+        self.replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "'", with: "")
+    }
+
     var sha1: String {
         // swiftlint:disable force_try
         let digest = try! SHA1.hash(self)

@@ -7,6 +7,26 @@
 
 import Foundation
 
+func subArgComponentParse(text: String) -> [String] {
+    let regex = "(\\S+\'.*?\'|\\S+\".*?\"|\\S+)"
+    do {
+        let regex = try NSRegularExpression(pattern: regex)
+        let results = regex.matches(
+            in: text,
+            range: NSRange(
+                text.startIndex...,
+                in: text
+            )
+        )
+        return results.map {
+            String(text[Range($0.range, in: text)!]).stripQuotes
+        }
+    } catch let error {
+        logger.warning("\(error.localizedDescription)")
+        return []
+    }
+}
+
 struct ConfigParse {
     let configFiles: [(key: String, value: String)]
     var octaheArgs: [String: String]
@@ -21,7 +41,7 @@ struct ConfigParse {
 
     func parseTarget(stringTarget: String) throws -> (TypeTarget, [String]) {
         // Target parse string argyments and return a tuple.
-        let arrayTarget = stringTarget.components(separatedBy: " ")
+        let arrayTarget = subArgComponentParse(text: stringTarget)
         let parsedTarget = try OptionsTarget.parse(arrayTarget)
         let targetNode: TypeTarget
         let targetComponents = parsedTarget.target.components(separatedBy: "@")
@@ -50,7 +70,7 @@ struct ConfigParse {
 
     mutating func parseAddCopy(stringAddCopy: String) throws -> TypeDeploy {
         // Target parse string argyments and return a tuple.
-        let arrayCopyAdd = stringAddCopy.components(separatedBy: " ")
+        let arrayCopyAdd = subArgComponentParse(text: stringAddCopy)
         var parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
         let destination = parsedCopyAdd.transfer.last
         parsedCopyAdd.transfer.removeLast()
@@ -66,7 +86,7 @@ struct ConfigParse {
 
     mutating func parseFrom(stringFrom: String) throws -> TypeFrom {
         // Target parse string argyments and return a tuple.
-        let arrayFrom = stringFrom.components(separatedBy: " ")
+        let arrayFrom = subArgComponentParse(text: stringFrom)
         let parsedFrom = try OptionsFrom.parse(arrayFrom)
         let name = parsedFrom.name ?? parsedFrom.image
         let fromData = (
@@ -91,7 +111,7 @@ struct ConfigParse {
         }
 
         // Target parse string argyments and return a tuple.
-        let arrayExpose = stringExpose.components(separatedBy: " ")
+        let arrayExpose = subArgComponentParse(text: stringExpose)
         let parsedExpose = try OptionsExpose.parse(arrayExpose)
         var portInt: Int32
         var natInt: Int32?
@@ -150,7 +170,7 @@ struct ConfigParse {
             if let item = entrypointOptions.filter({$0.key == entrypointOption}).last {
                 if entrypointOption == "HEALTHCHECK" {
                     let healthcheckComponents = item.value.components(separatedBy: "CMD")
-                    let healthcheckArgs = healthcheckComponents.first?.strip.components(separatedBy: " ")
+                    let healthcheckArgs = subArgComponentParse(text: healthcheckComponents.first!.strip)
                     let parsedHealthcheckArgs = try OptionsHealthcheck.parse(healthcheckArgs)
                     print(parsedHealthcheckArgs) // delete me once i figure out what to do with the args.
                     self.octaheDeploy.append(
