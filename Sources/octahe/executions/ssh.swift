@@ -70,16 +70,20 @@ class ExecuteSSH: Execution {
         _ = try self.runReturn(execute: execute)
     }
 
-    override func runReturn(execute: String) throws -> String {
-        // NOTE This is not ideal, I wishthere was a better way to leverage an
-        // environment setup prior to executing a command which didn't require
-        // server side configuration, however, it does so here we are.
+    func prepareExec(execute: String) -> String {
         let preparedExec = self.execString(command: execute)
         var envVars: [String] = []
         for (key, value) in self.environment {
             envVars.append("export \(key)=\(value);")
         }
-        let preparedCommand = envVars.joined(separator: " ") + " " + preparedExec
+        return envVars.joined(separator: " ") + " " + preparedExec
+    }
+
+    override func runReturn(execute: String) throws -> String {
+        // NOTE This is not ideal, I wishthere was a better way to leverage an
+        // environment setup prior to executing a command which didn't require
+        // server side configuration, however, it does so here we are.
+        let preparedCommand = self.prepareExec(execute: execute)
         let (status, output) = try self.ssh!.capture(preparedCommand)
         if status != 0 {
             throw RouterError.failedExecution(message: "FAILED execution: \(output)")
@@ -140,7 +144,7 @@ class ExecuteSSHVia: ExecuteSSH {
         self.sshCommand = [
             self.sshConnectionString,
             sshArgs,
-            "-t",
+            "-tt",
             "-n",
             "-p \(self.port)",
             "\(self.user)@\(self.server)"
@@ -174,14 +178,15 @@ class ExecuteSSHVia: ExecuteSSH {
     }
 
     override func runReturn(execute: String) throws -> String {
-        let execTask = self.execString(command: execute)
-        let execScript = try self.localWriteTemp(
-            content: "\(self.sshCommand!.joined(separator: " ")) \(execTask.escapeQuote)"
+        let execTask = self.prepareExec(execute: execute).b64encode
+        let execScript: URL
+        execScript = try self.localWriteTemp(
+            content: self.sshCommand!.joined(separator: " ") + " 'printf \(execTask) | base64 --decode | sh'"
         )
+        let execArray = ["/bin/sh", execScript.path]
         defer {
             try? FileManager.default.removeItem(at: execScript)
         }
-        let execArray = ["/bin/sh", execScript.path]
         return try self.localExec(commandArgs: execArray)
     }
 }

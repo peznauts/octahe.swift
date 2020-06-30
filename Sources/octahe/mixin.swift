@@ -128,11 +128,16 @@ extension String {
     }
 
     var escape: String {
-        return self.replacingOccurrences(of: "\"", with: "\\\"")
+        return self.replacingOccurrences(of: "\"", with: #"\""#)
     }
 
     var escapeQuote: String {
         return self.escape.quote
+    }
+
+    var b64encode: String {
+        let utf8str = self.data(using: .utf8)
+        return utf8str!.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0))
     }
 }
 
