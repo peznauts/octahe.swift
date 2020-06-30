@@ -75,23 +75,24 @@ class Execution {
         task.environment = self.environment
         task.executableURL = URL(fileURLWithPath: launchArgs.removeFirst())
         task.arguments = launchArgs
-        task.standardError = FileHandle.nullDevice
+        task.standardError = pipe
         task.standardOutput = pipe
         pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
         try task.run()
         task.waitUntilExit()
         let output = pipe.fileHandleForReading.availableData
+        let outputInfo = String(data: output, encoding: String.Encoding.utf8)!
         if task.terminationStatus != 0 {
             throw RouterError.failedExecution(
                 message: """
                          FAILED: \(commandArgs.joined(separator: " "))
                          STATUS: \(task.terminationStatus)
                          REASON: \(task.terminationReason)
-                         OUTPUT: \(output)
+                         OUTPUT: \(outputInfo)
                          """
             )
         }
-        return String(data: output, encoding: String.Encoding.utf8)!
+        return outputInfo
     }
 
     func localMkdir(workdirURL: URL) throws {
@@ -318,9 +319,9 @@ class Execution {
     func execString(command: String) -> String {
         var execTask: String
         if let user = self.execUser {
-            execTask = "\(self.shell) su \(user) -c " + command.escapeQuote
+            execTask = "\(self.shell) su \(user) -c" + " " + "(cd \(self.workdir); \(command))".escapeQuote
         } else {
-            execTask = self.shell + " " + command.escapeQuote
+            execTask = self.shell + " " + "(cd \(self.workdir); \(command))".escapeQuote
         }
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
@@ -331,6 +332,6 @@ class Execution {
                 execTask = "\(escalate) " + execTask
             }
         }
-        return "cd \(self.workdir); " + execTask
+        return execTask
     }
 }

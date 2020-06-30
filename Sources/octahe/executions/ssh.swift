@@ -37,6 +37,9 @@ class ExecuteSSH: Execution {
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
         let output = try self.runReturn(execute: "uname -ms; systemctl --version")
+        let pwd = try self.runReturn(execute: "pwd")
+        self.workdir = pwd.strip
+        self.workdirURL = URL(fileURLWithPath: self.workdir)
         let outputComponents = output.components(separatedBy: "\n")
         let targetVars = outputComponents.first!.components(separatedBy: " ")
         let kernel = targetVars.first!.strip
@@ -125,15 +128,13 @@ class ExecuteSSHVia: ExecuteSSH {
             "-o VerifyHostKeyDNS=no",
             "-o ForwardX11=no",
             "-o ControlMaster=auto",
-            "-o ControlPath=\"\(controlPath.path)/.ssh/sockets/%r@%h-%p\"",
+            "-o ControlPath=\"\(controlPath.path)/.ssh/%h\"",
             "-o ControlPersist=600"
         ]
         super.init(cliParameters: cliParameters, processParams: processParams)
         if let privatekey = self.cliParams.connectionKey {
             self.connectionArgs.append("-i " + privatekey)
         }
-        self.workdir = "~/"
-        self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
     override func connect() throws {
@@ -142,8 +143,8 @@ class ExecuteSSHVia: ExecuteSSH {
         self.sshCommand = [
             self.sshConnectionString,
             sshArgs,
-            "-n",
             "-t",
+            "-n",
             "-p \(self.port)",
             "\(self.user)@\(self.server)"
         ]
@@ -151,25 +152,39 @@ class ExecuteSSHVia: ExecuteSSH {
     }
 
     override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
+        func scriptExec(execArgs: [String]) throws {
+            let execScript = try self.localWriteTemp(
+                content: execArgs.joined(separator: " ")
+            )
+            defer {
+                try? FileManager.default.removeItem(at: execScript)
+            }
+            _ = try self.localExec(commandArgs: ["/bin/sh", execScript.path])
+        }
         do {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
             scpExecute?.append("\(self.user)@\(self.server):\(toFile.path)")
-            _ = try self.localExec(commandArgs: scpExecute!)
+            try scriptExec(execArgs: scpExecute!)
             return toFile.path
         } catch {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
             scpExecute?.append("\(self.user)@\(self.server):\(toUrl.path)")
-            _ = try self.localExec(commandArgs: scpExecute!)
+            try scriptExec(execArgs: scpExecute!)
             return toUrl.path
         }
     }
 
     override func runReturn(execute: String) throws -> String {
         let execTask = self.execString(command: execute)
-        var sshExecuteArgs = self.sshCommand!
-        sshExecuteArgs.append(execTask)
-        return try self.localExec(commandArgs: sshExecuteArgs)
+        let execScript = try self.localWriteTemp(
+            content: "\(self.sshCommand!.joined(separator: " ")) \(execTask.escapeQuote)"
+        )
+        defer {
+            try? FileManager.default.removeItem(at: execScript)
+        }
+        let execArray = ["/bin/sh", execScript.path]
+        return try self.localExec(commandArgs: execArray)
     }
 }
