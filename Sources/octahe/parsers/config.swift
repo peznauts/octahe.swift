@@ -302,8 +302,23 @@ struct ConfigParse {
         }
         try self.deploymentParsing(deployOptions)
         try self.entrypointParsing()
-
         // filter all TARGETS.
         try self.targetParsing()
+        // Add any extra args into the deployment head
+        for extraArgs in self.parsedOptions.args {
+            let argDictionary = buildDictionary(
+                filteredContent: [(key: "ARG", value: extraArgs)]
+            )
+            self.octaheDeploy.insert(
+                (
+                    key: "ARG",
+                    value: TypeDeploy(
+                        original: extraArgs,
+                        env: argDictionary
+                    )
+                ),
+                at: 0
+            )
+        }
     }
 }

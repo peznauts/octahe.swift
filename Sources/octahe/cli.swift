@@ -179,6 +179,18 @@ struct OctaheCLI: ParsableCommand {
     struct Options: ParsableArguments {
         // Global options used in with all subcommands.
         @Option(
+            name: .shortAndLong,
+            help: """
+                  Extra arguments that will be applied to the system at runtime.
+                  This option can be used multiple times and requires a single
+                  string per entry, using the following format:
+                  <name>[=<default value>]
+                  """
+        )
+        var args: [String]
+
+
+        @Option(
             name: [.customLong("connection-key"), .customShort("k")],
             help: """
                   Key used to initiate a connection.
