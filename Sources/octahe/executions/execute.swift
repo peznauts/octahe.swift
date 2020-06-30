@@ -318,9 +318,9 @@ class Execution {
     func execString(command: String) -> String {
         var execTask: String
         if let user = self.execUser {
-            execTask = "cd \(self.workdir); \(self.shell) su \(user) -c " + command.escapeQuote
+            execTask = "\(self.shell) su \(user) -c " + command.escapeQuote
         } else {
-            execTask = "cd \(self.workdir); " + self.shell + " " + command.escapeQuote
+            execTask = self.shell + " " + command.escapeQuote
         }
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
@@ -331,6 +331,6 @@ class Execution {
                 execTask = "\(escalate) " + execTask
             }
         }
-        return execTask
+        return "cd \(self.workdir); " + execTask
     }
 }
