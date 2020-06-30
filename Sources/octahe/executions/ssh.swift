@@ -16,7 +16,7 @@ class ExecuteSSH: Execution {
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
-        self.workdir = "~/"
+        self.workdir = "/"
         self.workdirURL = URL(fileURLWithPath: workdir)
     }
 
@@ -37,9 +37,6 @@ class ExecuteSSH: Execution {
         //    TARGETARCH - architecture component of TARGETPLATFORM
         let unameLookup = ["x86_64": "amd64", "armv7l": "arm/v7", "armv8l": "arm/v8"]
         let output = try self.runReturn(execute: "uname -ms; systemctl --version")
-        let pwd = try self.runReturn(execute: "pwd")
-        self.workdir = pwd.strip
-        self.workdirURL = URL(fileURLWithPath: self.workdir)
         let outputComponents = output.components(separatedBy: "\n")
         let targetVars = outputComponents.first!.components(separatedBy: " ")
         let kernel = targetVars.first!.strip
