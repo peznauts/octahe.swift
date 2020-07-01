@@ -23,7 +23,7 @@ class ExecuteEcho: Execution {
 
     override func run(execute: String) throws {
         notice()
-        let execTask = execString(command: execute)
+        let execTask = self.execPosixString(command: execute)
         print(execTask)
     }
 

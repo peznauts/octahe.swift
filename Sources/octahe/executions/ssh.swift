@@ -71,12 +71,12 @@ class ExecuteSSH: Execution {
     }
 
     func prepareExec(execute: String) -> String {
-        let preparedExec = self.execString(command: execute)
+        let preparedExec = self.execPosixString(command: execute)
         var envVars: [String] = []
         for (key, value) in self.environment {
             envVars.append("export \(key)=\(value);")
         }
-        return envVars.joined(separator: " ") + " " + preparedExec
+        return self.posixEncoder(item: envVars.joined(separator: " ") + " " + preparedExec)
     }
 
     override func runReturn(execute: String) throws -> String {
@@ -178,10 +178,10 @@ class ExecuteSSHVia: ExecuteSSH {
     }
 
     override func runReturn(execute: String) throws -> String {
-        let execTask = self.prepareExec(execute: execute).b64encode
+        let execTask = self.prepareExec(execute: execute)
         let execScript: URL
         execScript = try self.localWriteTemp(
-            content: self.sshCommand!.joined(separator: " ") + " 'printf \(execTask) | base64 --decode | sh'"
+            content: self.sshCommand!.joined(separator: " ") + " " + self.posixEncoder(item: execTask).quote
         )
         let execArray = ["/bin/sh", execScript.path]
         defer {

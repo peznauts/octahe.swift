@@ -119,7 +119,7 @@ class Execution {
     }
 
     func setLaunchArgs(execute: String) -> [String] {
-        let execTask = self.execString(command: execute)
+        let execTask = self.execPosixString(command: execute)
         var launchArgs = (self.shell).components(separatedBy: " ")
         launchArgs.append(execTask)
         return launchArgs
@@ -270,8 +270,8 @@ class Execution {
         var items: [[String: String]]  = []
         for (key, value) in options {
             switch key {
-            case "ESCALATEPASSWORD":
-                logger.debug("filtering ESCALATEPASSWORD from service options")
+            case "ESCALATEPW":
+                logger.debug("filtering ESCALATEPW from service options")
             case _ where key.contains("BUILD"):
                 logger.debug("filtering BUILD* from service options")
             default:
@@ -322,21 +322,29 @@ class Execution {
         try self.run(execute: "systemctl restart \(serviceFile)")
     }
 
-    func execString(command: String) -> String {
-        var execTask: String = "(cd \(self.workdir); \(command))"
+    func posixEncoder(item: String) -> String {
+        let encoderShell = self.shell.components(separatedBy: " ").first ?? "sh"
+        return "printf " + item.b64encode.quote + " | base64 --decode | " + encoderShell
+    }
+
+    func execPosixString(command: String) -> String {
+        var execTask: String = self.posixEncoder(item: "(cd \(self.workdir); \(command))")
+
         if let user = self.execUser {
-            execTask = "printf " + execTask.b64encode + " | base64 --decode | "
-            execTask = execTask + self.shell.components(separatedBy: " ").first!
-            execTask = "su \(user) -c" + " " + execTask.quote
+            execTask = self.posixEncoder(item: "su \(user) -c \(execTask.quote)")
         }
-        execTask = self.shell + " " + execTask.escapeQuote
+
+        execTask = self.posixEncoder(item: self.shell + " \(execTask.quote)")
+
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
                 // Password is add to the environment.
-                self.environment["ESCALATEPASSWORD"] = password
-                execTask = "printf \"${ESCALATEPASSWORD}\" | \(escalate) --stdin" + " " + execTask
+                self.environment["ESCALATEPW"] = password
+                execTask = self.posixEncoder(
+                    item: "printf \"${ESCALATEPW}\" | \(escalate) --stdin -- sh -c \(execTask.quote)"
+                )
             } else {
-                execTask = "\(escalate)" + " " + execTask
+                execTask = self.posixEncoder(item: "\(escalate)" + " -- sh -c \(execTask.quote)")
             }
         }
         return execTask
