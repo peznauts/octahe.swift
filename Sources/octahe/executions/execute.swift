@@ -236,7 +236,7 @@ class Execution {
             }
             let check = command + ["-t", "nat", "-C"] + commandArgs
             commandCheck = check.joined(separator: " ")
-            let create = command + ["-t", "nat", "-A"] + commandArgs
+            let create = command + ["-t", "nat", "-I"] + commandArgs
             commandCreate = create.joined(separator: " ")
         } else {
             var commandArgs = [
@@ -259,7 +259,7 @@ class Execution {
             }
             let check = command + ["-C"] + commandArgs
             commandCheck = check.joined(separator: " ")
-            let create = command + ["-A"] + commandArgs
+            let create = command + ["-I"] + commandArgs
             commandCreate = create.joined(separator: " ")
         }
         commandExec = "\(commandCheck) || \(commandCreate)"
