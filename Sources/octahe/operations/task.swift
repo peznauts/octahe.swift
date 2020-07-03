@@ -13,8 +13,6 @@ enum TaskStates {
     case new, running, success, degraded, failed
 }
 
-var taskRecords: [Int: TaskRecord] = [:]
-
 class TaskRecord {
     let task: String
     let taskItem: TypeDeploy
@@ -27,7 +25,7 @@ class TaskRecord {
 }
 
 class TaskOperations {
-    lazy var tasksInProgress: [IndexPath: Operation] = [:]
+    lazy var taskRecords: [Int: TaskRecord] = [:]
     lazy var taskQueue: OperationQueue = {
     var queue = OperationQueue()
         queue.name = "Task queue"
@@ -55,17 +53,17 @@ class TaskOperation: Operation {
         self.stepIndex = stepIndex
         self.args = args
         self.options = options
-        if let taskRecordsLookup = taskRecords[stepIndex] {
+        if let taskRecordsLookup = taskQueue.taskRecords[stepIndex] {
             self.taskRecord = taskRecordsLookup
         } else {
             let taskRecordsLookup = TaskRecord(task: deployItem.key, taskItem: deployItem.value)
-            taskRecords[stepIndex] = taskRecordsLookup
-            self.taskRecord = taskRecords[stepIndex]!
+            taskQueue.taskRecords[stepIndex] = taskRecordsLookup
+            self.taskRecord = taskQueue.taskRecords[stepIndex]!
         }
     }
 
     private func finishTask() {
-        let degradedTargetStates = targetRecords.values.filter {$0.state == .failed}
+        let degradedTargetStates = targetQueue.targetRecords.values.filter {$0.state == .failed}
         if degradedTargetStates.count == args.octaheTargets.count {
             if let spinner = self.mySpinner {
                 spinner.failure(self.statusLineFull)
@@ -100,7 +98,7 @@ class TaskOperation: Operation {
                 for dependency in self.dependencies {
                     targetOperation.addDependency(dependency)
                 }
-                if targetRecords[target]?.state == .available {
+                if targetQueue.targetRecords[target]?.state == .available {
                     if printStatus {
                         self.mySpinner = Spinner(.dots, self.statusLine ?? "Working")
                         if let spinner = self.mySpinner {
@@ -116,8 +114,8 @@ class TaskOperation: Operation {
     }
 
     override func main() {
-        let availableTargets = targetRecords.values.filter {$0.state == .available}
-        if availableTargets.count == 0 && targetRecords.keys.count > 0 {
+        let availableTargets = targetQueue.targetRecords.values.filter {$0.state == .available}
+        if availableTargets.count == 0 && targetQueue.targetRecords.keys.count > 0 {
             return
         }
         self.statusLineFull = String(

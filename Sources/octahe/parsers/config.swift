@@ -27,7 +27,8 @@ func subArgComponentParse(text: String) -> [String] {
     }
 }
 
-struct ConfigParse {
+// swiftlint:disable type_body_length
+class ConfigParse {
     let configFiles: [(key: String, value: String)]
     var octaheArgs: [String: String]
     var octaheFrom: [String] = []
@@ -68,7 +69,7 @@ struct ConfigParse {
         )
     }
 
-    mutating func parseAddCopy(stringAddCopy: String) throws -> TypeDeploy {
+    func parseAddCopy(stringAddCopy: String) throws -> TypeDeploy {
         // Target parse string argyments and return a tuple.
         let arrayCopyAdd = subArgComponentParse(text: stringAddCopy)
         var parsedCopyAdd = try OptionsAddCopy.parse(arrayCopyAdd)
@@ -84,7 +85,7 @@ struct ConfigParse {
         )
     }
 
-    mutating func parseFrom(stringFrom: String) throws -> TypeFrom {
+    func parseFrom(stringFrom: String) throws -> TypeFrom {
         // Target parse string argyments and return a tuple.
         let arrayFrom = subArgComponentParse(text: stringFrom)
         let parsedFrom = try OptionsFrom.parse(arrayFrom)
@@ -97,7 +98,7 @@ struct ConfigParse {
         return fromData
     }
 
-    mutating func parseExpose(stringExpose: String) throws -> TypeExposes {
+    func parseExpose(stringExpose: String) throws -> TypeExposes {
         func protoSplit(protoPort: String) throws -> (Int32, String) {
             let protoPortData = protoPort.components(separatedBy: "/")
             let portInt = try protoPortData.first!.toInt()
@@ -134,7 +135,7 @@ struct ConfigParse {
         )
     }
 
-    mutating func viaLoad(viaHosts: [String]) throws {
+    func viaLoad(viaHosts: [String]) throws {
         let viaCount = viaHosts.count
         let viaHostsReversed = Array(viaHosts.reversed())
         if viaCount > 0 {
@@ -161,7 +162,7 @@ struct ConfigParse {
         }
     }
 
-    mutating func entrypointParsing() throws {
+    func entrypointParsing() throws {
         let entrypointConfigs = ["HEALTHCHECK", "STOPSIGNAL", "CMD", "ENTRYPOINT"]
         let entrypointOptions = self.configFiles.filter {key, _ in
             return entrypointConfigs.contains(key)
@@ -198,86 +199,77 @@ struct ConfigParse {
     }
 
     // swiftlint:disable function_body_length
-    mutating func deploymentCases(_ deployOption: (key: String, value: String)) throws {
+    func deploymentCases(_ deployOption: (key: String, value: String)) throws -> TypeDeployCase {
         switch deployOption.key {
         case "COPY", "ADD":
             let addCopy = try parseAddCopy(stringAddCopy: deployOption.value)
-            self.octaheDeploy.append((key: deployOption.key, value: addCopy))
+            return (
+                key: deployOption.key,
+                value: addCopy
+            )
         case "ARG", "ENV", "LABEL":
             let argDictionary = buildDictionary(
                 filteredContent: [(key: deployOption.key, value: deployOption.value)]
             )
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        original: deployOption.value,
-                        env: argDictionary
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    original: deployOption.value,
+                    env: argDictionary
                 )
             )
         case "USER":
             let trimmedUser = deployOption.value.strip.components(separatedBy: ":")
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        original: deployOption.value,
-                        user: trimmedUser.first,
-                        group: trimmedUser.last
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    original: deployOption.value,
+                    user: trimmedUser.first,
+                    group: trimmedUser.last
                 )
             )
         case "EXPOSE":
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        original: deployOption.value,
-                        exposeData: try parseExpose(stringExpose: deployOption.value)
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    original: deployOption.value,
+                    exposeData: try parseExpose(stringExpose: deployOption.value)
                 )
             )
         case "WORKDIR":
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        original: deployOption.value,
-                        workdir: deployOption.value
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    original: deployOption.value,
+                    workdir: deployOption.value
                 )
             )
         case "RUN":
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        execute: String(describing: deployOption.value),
-                        original: deployOption.value
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    execute: String(describing: deployOption.value),
+                    original: deployOption.value
                 )
             )
         default:
-            self.octaheDeploy.append(
-                (
-                    key: deployOption.key,
-                    value: TypeDeploy(
-                        execute: deployOption.value,
-                        original: deployOption.value
-                    )
+            return (
+                key: deployOption.key,
+                value: TypeDeploy(
+                    execute: deployOption.value,
+                    original: deployOption.value
                 )
             )
         }
     }
 
-    mutating func deploymentParsing(_ deployOptions: [(key: String, value: String)]) throws {
+    func deploymentParsing(_ deployOptions: [(key: String, value: String)]) throws {
         for deployOption in deployOptions {
-            try self.deploymentCases(deployOption)
+            self.octaheDeploy.append(try self.deploymentCases(deployOption))
         }
     }
 
-    mutating func targetParsing() throws {
+    func targetParsing() throws {
         var targets: [String] = []
         if self.parsedOptions.targets.count >= 1 {
             for target in self.parsedOptions.targets {
@@ -302,7 +294,7 @@ struct ConfigParse {
     init(parsedOptions: OctaheCLI.Options, configDirURL: URL) throws {
         self.configDirURL = configDirURL
         self.parsedOptions = parsedOptions
-        self.configFiles = try FileParser.buildRawConfigs(files: self.parsedOptions.configurationFiles)
+        self.configFiles = try FileParser().buildRawConfigs(files: self.parsedOptions.configurationFiles)
 
         // Args are merged into a single Dictionary. This will allow us to apply args to wherever they're needed.
         self.octaheArgs = platformArgs()

@@ -13,6 +13,8 @@ typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
 
 typealias TypeEntrypointOptions = [(key: String, value: String)]
 
+typealias TypeDeployCase = (key: String, value: TypeDeploy)
+
 class TypeTarget {
     var domain: String
     var port: Int32?

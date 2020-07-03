@@ -11,8 +11,6 @@ enum TargetStates {
     case available, failed
 }
 
-var targetRecords: [String: TargetRecord] = [:]
-
 private func viaArrayCreate(via: String?, args: ConfigParse) -> [String] {
     var viaTarget = via
     var viaHosts: [String] = []
@@ -88,8 +86,7 @@ class TargetOperations {
     init(connectionQuota: Int = 1) {
         maxConcurrentOperationCount = connectionQuota
     }
-
-    lazy var nodesInProgress: [IndexPath: Operation] = [:]
+    lazy var targetRecords: [String: TargetRecord] = [:]
     lazy var nodeQueue: OperationQueue = {
     var queue = OperationQueue()
         queue.name = "Node queue"
@@ -113,12 +110,12 @@ class TargetOperation: Operation {
         self.taskIndex = taskIndex
         self.task = taskRecord
 
-        if let targetRecordsLookup = targetRecords[target.name] {
+        if let targetRecordsLookup = targetQueue.targetRecords[target.name] {
             self.targetRecord = targetRecordsLookup
         } else {
             let targetRecordsLookup = TargetRecord(target: target, args: args, options: options)
-            targetRecords[target.name] = targetRecordsLookup
-            self.targetRecord = targetRecords[target.name]!
+            targetQueue.targetRecords[target.name] = targetRecordsLookup
+            self.targetRecord = targetQueue.targetRecords[target.name]!
         }
     }
 

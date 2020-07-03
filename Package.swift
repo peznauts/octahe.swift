@@ -23,6 +23,7 @@ let package = Package(
         .package(name: "SwiftSerial", url: "https://github.com/yeokm1/SwiftSerial.git", from: "0.1.2"),
         .package(name: "Spinner", url: "https://github.com/dominicegginton/Spinner", from: "1.1.4"),
         .package(name: "Stencil", url: "https://github.com/stencilproject/Stencil", from: "0.13.0"),
+        .package(name: "Alamofire", url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.2.0"))
 
     ],
     targets: [
@@ -37,7 +38,8 @@ let package = Package(
                 .product(name: "Shout", package: "Shout"),
                 .product(name: "SwiftSerial", package: "SwiftSerial"),
                 .product(name: "Spinner", package: "Spinner"),
-                .product(name: "Stencil", package: "Stencil")
+                .product(name: "Stencil", package: "Stencil"),
+                .product(name: "Alamofire", package: "Alamofire")
             ],
             linkerSettings: [
                 .unsafeFlags(
