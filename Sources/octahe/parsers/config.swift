@@ -37,6 +37,7 @@ class ConfigParse {
     var octaheTargetHash: [String: TypeTarget] = [:]
     var octaheTargetsCount: Int = 0
     var octaheDeploy: [(key: String, value: TypeDeploy)] = []
+    var octaheSshConfigFile: URL? = nil
     let configDirURL: URL
     let parsedOptions: OctaheCLI.Options
 

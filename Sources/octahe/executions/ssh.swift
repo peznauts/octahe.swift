@@ -13,6 +13,7 @@ class ExecuteSSH: Execution {
     var ssh: SSH?
     var server: String = "localhost"
     var port: Int32 = 22
+    var name: String = "localhost"
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
@@ -111,7 +112,7 @@ class ExecuteSSH: Execution {
 class ExecuteSSHVia: ExecuteSSH {
     var sshConnectionString: String
     var scpConnectionString: String
-    var connectionArgs: [String]
+    var connectionArgs: [String] = ["-o ControlPersist=600"]
     var sshCommand: [String]?
     var scpCommand: [String]?
     let controlPath: URL
@@ -120,19 +121,10 @@ class ExecuteSSHVia: ExecuteSSH {
         self.sshConnectionString = "/usr/bin/ssh"
         self.scpConnectionString = "/usr/bin/scp"
         self.controlPath = URL(fileURLWithPath: NSTemporaryDirectory())
-        self.connectionArgs = [
-            "-o GlobalKnownHostsFile=/dev/null",
-            "-o UserKnownHostsFile=/dev/null",
-            "-o StrictHostKeyChecking=no",
-            "-o Compression=no",
-            "-o TCPKeepAlive=yes",
-            "-o VerifyHostKeyDNS=no",
-            "-o ForwardX11=no",
-            "-o ControlMaster=auto",
-            "-o ControlPath=\"\(controlPath.path)/.ssh/%h\"",
-            "-o ControlPersist=600"
-        ]
+
         super.init(cliParameters: cliParameters, processParams: processParams)
+        self.connectionArgs.append("-o ControlPath=\"\(controlPath.path)/.ssh/%h\"")
+        self.connectionArgs.append("-F \(self.processParams.octaheSshConfigFile!.path)")
         if let privatekey = self.cliParams.connectionKey {
             self.connectionArgs.append("-i " + privatekey)
         }
@@ -146,10 +138,9 @@ class ExecuteSSHVia: ExecuteSSH {
             sshArgs,
             "-t",
             "-n",
-            "-p \(self.port)",
-            "\(self.user)@\(self.server)"
+            self.name.sha1
         ]
-        self.scpCommand = [self.scpConnectionString, sshArgs, "-3", "-q", "-P \(self.port)"]
+        self.scpCommand = [self.scpConnectionString, sshArgs, "-3"]
     }
 
     override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
@@ -165,13 +156,13 @@ class ExecuteSSHVia: ExecuteSSH {
         do {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
-            scpExecute?.append("\(self.user)@\(self.server):\(toFile.path)")
+            scpExecute?.append("\(self.name.sha1):\(toFile.path)")
             try scriptExec(execArgs: scpExecute!)
             return toFile.path
         } catch {
             var scpExecute = self.scpCommand
             scpExecute?.append(fromUrl.path)
-            scpExecute?.append("\(self.user)@\(self.server):\(toUrl.path)")
+            scpExecute?.append("\(self.name.sha1):\(toUrl.path)")
             try scriptExec(execArgs: scpExecute!)
             return toUrl.path
         }

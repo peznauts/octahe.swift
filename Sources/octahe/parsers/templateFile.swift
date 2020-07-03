@@ -1,6 +1,6 @@
 //
 //  templateFile.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/20/20.
 //
@@ -50,4 +50,31 @@ func systemdRender(data: [String: Any]) throws -> String {
     let lines = rendered.strip.split { $0.isNewline }
     let result = lines.joined(separator: "\n")
     return result
+}
+
+let sshConfig: String = """
+Host *
+    GlobalKnownHostsFile /dev/null
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    Compression no
+    TCPKeepAlive yes
+    VerifyHostKeyDNS no
+    ForwardX11 no
+    ControlMaster auto
+
+{% for item in targets %}
+Host {{ item['name'] }}
+    HostName {{ item['server'] }}
+    Port {{ item['port'] }}
+    User {{ item['user'] }}
+    IdentitiesOnly yes
+    IdentityFile {{ item['key'] }}
+{% if item['via'] %}    ProxyCommand ssh -F {{ item["config"] }} -W %h:%p {{ item['via'] }}{%   endif %}
+{% endfor %}
+"""
+
+func sshRender(data: [String: Any]) throws -> String {
+    let environment = Environment()
+    return try environment.renderTemplate(string: sshConfig, context: data)
 }

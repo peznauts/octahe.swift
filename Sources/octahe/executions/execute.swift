@@ -109,13 +109,10 @@ class Execution {
     }
 
     func localWriteTemp(content: String) throws -> URL {
-        let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
-        let marker = String(describing: self.target)
-        let tempServiceFile = tempUrl.appendingPathComponent(String(describing: "\(marker)-\(content.sha1)").sha1)
-        if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
-            try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
-        }
-        return tempServiceFile
+        return try localTempFile(
+            content: content,
+            marker: String(describing: "\(String(describing: self.target))-\(content.sha1)").sha1
+        )
     }
 
     func setLaunchArgs(execute: String) -> [String] {

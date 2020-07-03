@@ -78,6 +78,34 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
         }
     }
 
+    if octaheArgs.octaheTargetHash.values.filter({$0.viaName != nil}).count > 0 {
+        octaheArgs.octaheSshConfigFile = try localTempFile(content: parsedOptions.configurationFiles.first!)
+        var sshViaData: [[String:Any]] = []
+        for item in octaheArgs.octaheTargetHash.values {
+            var itemData: [String:Any] = [:]
+            itemData["name"] = item.name.sha1
+            itemData["server"] = item.domain
+            itemData["port"] = item.port ?? 22
+            itemData["user"] = item.user ?? "root"
+            itemData["key"] = parsedOptions.connectionKey
+            if let via = item.viaName {
+                itemData["config"] = octaheArgs.octaheSshConfigFile?.path
+                itemData["via"] = via.sha1
+            }
+            sshViaData.append(itemData)
+        }
+        try sshRender(data: ["targets": sshViaData]).write(
+            to: octaheArgs.octaheSshConfigFile!,
+            atomically: true,
+            encoding: String.Encoding.utf8
+        )
+    }
+    defer {
+        if let tempSshConfigFile = octaheArgs.octaheSshConfigFile {
+            print("Running temporary file cleanup")
+            try? FileManager.default.removeItem(at: tempSshConfigFile)
+        }
+    }
     if octaheArgs.octaheDeploy.count < 1 {
         let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
         throw RouterError.failedExecution(

@@ -81,6 +81,21 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
     return data
 }
 
+func localTempFile(content: String, marker: String? = nil) throws -> URL {
+    let tempfile: String
+    if let mark = marker {
+        tempfile = mark
+    } else {
+        tempfile = content.sha1
+    }
+    let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+    let tempServiceFile = tempUrl.appendingPathComponent(tempfile)
+    if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
+        try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
+    }
+    return tempServiceFile
+}
+
 extension Int32 {
     // String extension allowing us to evaluate if any string is actually an Int.
     var toString: String {

@@ -11,26 +11,6 @@ enum TargetStates {
     case available, failed
 }
 
-private func viaArrayCreate(via: String?, args: ConfigParse) -> [String] {
-    var viaTarget = via
-    var viaHosts: [String] = []
-    while viaTarget != "localhost" || viaTarget != nil {
-        let viaHost = args.octaheTargetHash[viaTarget!] ?? nil
-        if let viaTo = viaHost?.domain {
-            if let user = viaHost!.user {
-                viaHosts.append("\(user)@\(viaTo)")
-            } else {
-                viaHosts.append(viaTo)
-            }
-            viaTarget = viaTo
-        } else {
-            break
-        }
-    }
-    viaHosts.reverse()
-    return viaHosts
-}
-
 class TargetRecord {
     let target: TypeTarget
     let conn: Execution
@@ -50,15 +30,13 @@ class TargetRecord {
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
                 let connSsh: ExecuteSSH
-                if let via = self.target.viaName {
-                    let connSshVia = ExecuteSSHVia(cliParameters: options, processParams: args)
-                    let viaHosts = viaArrayCreate(via: via, args: args)
-                    connSshVia.connectionArgs.append("-J " + viaHosts.joined(separator: ","))
-                    connSsh = connSshVia
+                if self.target.viaName != nil {
+                    connSsh = ExecuteSSHVia(cliParameters: options, processParams: args)
                 } else {
                     connSsh = ExecuteSSH(cliParameters: options, processParams: args)
                 }
 
+                connSsh.name = self.target.name
                 connSsh.user = self.target.user ?? "root"
                 connSsh.server = self.target.domain
                 connSsh.port = self.target.port ?? 22
