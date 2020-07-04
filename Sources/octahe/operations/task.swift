@@ -45,9 +45,11 @@ class TaskOperation: Operation {
     var mySpinner: Spinner?
     var statusLineFull: String?
     var statusLine: String?
+    let function: ExecutionStates
 
     init(deployItem: (key: String, value: TypeDeploy), steps: Int, stepIndex: Int,
-         args: ConfigParse, options: OctaheCLI.Options) {
+         args: ConfigParse, options: OctaheCLI.Options, function: ExecutionStates) {
+        self.function = function
         self.deployItem = deployItem
         self.steps = steps
         self.stepIndex = stepIndex
@@ -92,7 +94,8 @@ class TaskOperation: Operation {
                     args: args,
                     options: options,
                     taskIndex: stepIndex,
-                    taskRecord: self.taskRecord
+                    taskRecord: self.taskRecord,
+                    function: self.function
                 )
                 // If this current operation has dependencies, add them to the target options too.
                 for dependency in self.dependencies {

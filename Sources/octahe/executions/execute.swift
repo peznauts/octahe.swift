@@ -68,6 +68,10 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
+    func move(fromPath: String, toPath: String) throws {
+        preconditionFailure("This method is not supported")
+    }
+
     func localExec(commandArgs: [String]) throws -> String {
         var launchArgs = commandArgs
         let task = Process()
@@ -108,10 +112,14 @@ class Execution {
         return try localExec(commandArgs: launchArgs)
     }
 
+    func createMarker(content: String) -> String {
+        return String(describing: "\(String(describing: self.target))-\(content.sha1)").sha1
+    }
+
     func localWriteTemp(content: String) throws -> URL {
         return try localTempFile(
             content: content,
-            marker: String(describing: "\(String(describing: self.target))-\(content.sha1)").sha1
+            marker: self.createMarker(content: content)
         )
     }
 
@@ -163,13 +171,13 @@ class Execution {
         return fromFileURLs
     }
 
-    func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
+    func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
         preconditionFailure("This method is not supported")
     }
 
     func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
-        let toUrl = URL(fileURLWithPath: copyTo)
-        var copyFile: String?
+        var toUrl = URL(fileURLWithPath: copyTo)
+        var copyFile: String
         let indexedFiles = try self.indexFiles(basePath: base, fromFiles: fromFiles)
         guard indexedFiles.count >= fromFiles.count else {
             throw RouterError.failedExecution(
@@ -177,30 +185,25 @@ class Execution {
             )
         }
         for fromUrl in indexedFiles {
+            if toUrl.hasDirectoryPath {
+                toUrl = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+            }
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
                 let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)
                 _ = try self.copyRun(
                     toUrl: tempFileUrl,
-                    fromUrl: fromUrl,
-                    toFile: tempFileUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                    fromUrl: fromUrl
                 )
-                do {
-                    try run(execute: "mv \(tempFileUrl.path) \(toUrl.path)")
-                    copyFile = toUrl.path
-                } catch {
-                    let toPathExpand = toUrl.appendingPathComponent(fromUrl.lastPathComponent).path
-                    try run(execute: "mv \(tempFileUrl.path) \(toPathExpand)")
-                    copyFile = toPathExpand
-                }
+                try self.move(fromPath: tempFileUrl.path, toPath: toUrl.path)
+                copyFile = toUrl.path
             } else {
                 copyFile = try self.copyRun(
                     toUrl: toUrl,
-                    fromUrl: fromUrl,
-                    toFile: toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                    fromUrl: fromUrl
                 )
             }
-            try self.chown(perms: chown, path: copyFile!)
+            try self.chown(perms: chown, path: copyFile)
         }
     }
 
@@ -278,9 +281,12 @@ class Execution {
         return items
     }
 
-    func serviceTemplate(entrypoint: String) throws {
+    func serviceName(entrypoint: String) -> String {
+        return "octahe-" + entrypoint.sha1 + ".service"
+    }
+
+    func serviceTemplate(entrypoint: String) throws -> String {
         // Generate a local template, and transfer it to the remote host
-        let serviceFile = "octahe-" + entrypoint.sha1 + ".service"
         var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint, "shell": self.shell]
 
         if self.documentation.count > 0 {
@@ -302,10 +308,19 @@ class Execution {
                 serviceData["private_tmp"] = "no"
             }
         }
-        let serviceRendered = try systemdRender(data: serviceData)
-        if self.cliParams.dryRun {
-            print("\n***** Service file *****\n\(serviceRendered)\n*************************\n")
-        }
+        return try systemdRender(data: serviceData)
+    }
+
+    func entrypointRemove(entrypoint: String) throws {
+        let serviceFile = self.serviceName(entrypoint: entrypoint)
+        try self.run(execute: "systemctl stop \(serviceFile)")
+        try self.run(execute: "systemctl daemon-reload")
+        try self.run(execute: "rm -f /etc/systemd/system/\(serviceFile)")
+    }
+
+    func entrypointStart(entrypoint: String) throws {
+        let serviceFile = self.serviceName(entrypoint: entrypoint)
+        let serviceRendered = try self.serviceTemplate(entrypoint: entrypoint)
         let tempServiceFile = try self.localWriteTemp(content: serviceRendered)
         defer {
             try? FileManager.default.removeItem(at: tempServiceFile)
@@ -320,7 +335,7 @@ class Execution {
     }
 
     func posixEncoder(item: String) -> String {
-        let encoderShell = self.shell.components(separatedBy: " ").first ?? "sh"
+        let encoderShell = self.shell.components(separatedBy: " ").first ?? ""
         return "printf " + item.b64encode.quote + " | base64 --decode | " + encoderShell
     }
 
@@ -331,17 +346,15 @@ class Execution {
             execTask = self.posixEncoder(item: "su \(user) -c \(execTask.quote)")
         }
 
-        execTask = self.posixEncoder(item: self.shell + " \(execTask.quote)")
-
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
                 // Password is add to the environment.
                 self.environment["ESCALATEPW"] = password
                 execTask = self.posixEncoder(
-                    item: "printf \"${ESCALATEPW}\" | \(escalate) --stdin -- sh -c \(execTask.quote)"
+                    item: "printf \"${ESCALATEPW}\" | \(escalate) --stdin -- " + self.shell + " \(execTask.quote)"
                 )
             } else {
-                execTask = self.posixEncoder(item: "\(escalate)" + " -- sh -c \(execTask.quote)")
+                execTask = self.posixEncoder(item: "\(escalate)" + " -- " + self.shell + " \(execTask.quote)")
             }
         }
         return execTask

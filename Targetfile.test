@@ -1,0 +1,42 @@
+TO --escalate=/usr/bin/sudo localhost
+
+RUN env > /tmp/test-env
+RUN stat /tmp/test-env
+RUN rm /tmp/test-env
+RUN stat /tmp/test-env || echo success
+
+COPY Targetfile.test-ssh-sudo /tmp/test-file
+RUN stat /tmp/test-file
+RUN ["rm", "/tmp/test-file"]
+RUN stat /tmp/test-file || echo success
+
+COPY Target* /tmp/TargetGlob
+RUN stat /tmp/TargetGlob
+RUN rm /tmp/TargetGlob
+RUN stat /tmp/TargetGlob || echo success
+
+COPY --chown=root:centos Targetfile.test-ssh-sudo /tmp/
+RUN ls -al /tmp/Targetfile.to  | grep "root centos"
+RUN rm /tmp/Targetfile.test-ssh-sudo
+RUN stat /tmp/TargetGlob || echo success
+
+EXPOSE 5150
+RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
+EXPOSE 5150/udp
+RUN iptables -D INPUT -p udp -m comment --comment "Octahe rule" -m udp --dport 5150 -j ACCEPT
+EXPOSE 5151/tcp
+RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j ACCEPT
+EXPOSE 5151 5150/tcp
+RUN iptables -t nat -D PREROUTING -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j REDIRECT --to-ports 5150
+
+INTERFACE eth0
+EXPOSE 5150
+RUN iptables -i eth0 -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
+EXPOSE 5150/udp
+RUN iptables -i eth0 -D INPUT -p udp -m comment --comment "Octahe rule" -m udp --dport 5150 -j ACCEPT
+EXPOSE 5151/tcp
+RUN iptables -i eth0 -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j ACCEPT
+EXPOSE 5151 5150/tcp
+RUN iptables -t nat -i eth0 -D PREROUTING -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j REDIRECT --to-ports 5150
+
+ENTRYPOINT [ "true" ]

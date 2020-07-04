@@ -31,23 +31,15 @@ class ExecuteLocal: Execution {
         }
     }
 
-    override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
+    override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: toUrl.path, isDirectory: &isDir) {
             if !isDir.boolValue {
                 try FileManager.default.removeItem(at: toUrl)
             }
         }
-        if FileManager.default.fileExists(atPath: toFile.path) {
-            try FileManager.default.removeItem(at: toFile)
-        }
-        do {
-            try FileManager.default.copyItem(at: fromUrl, to: toUrl)
-            return toUrl.path
-        } catch {
-            try FileManager.default.copyItem(at: fromUrl, to: toFile)
-            return toFile.path
-        }
+        try FileManager.default.copyItem(at: fromUrl, to: toUrl)
+        return toUrl.path
     }
 
     override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
@@ -55,8 +47,7 @@ class ExecuteLocal: Execution {
         for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
             let copyFile = try self.copyRun(
                 toUrl: toUrl,
-                fromUrl: fromUrl,
-                toFile: toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                fromUrl: fromUrl
             )
             try self.chown(perms: chown, path: copyFile)
         }
@@ -70,6 +61,10 @@ class ExecuteLocal: Execution {
         return try self.localExecReturn(execute: execute)
     }
 
+    override func move(fromPath: String, toPath: String) throws {
+        try FileManager.default.moveItem(atPath: fromPath, toPath: toPath)
+    }
+
     override func run(execute: String) throws {
         _ = try self.runReturn(execute: execute)
     }
@@ -78,7 +73,7 @@ class ExecuteLocal: Execution {
         try localMkdir(workdirURL: workdirURL)
     }
 
-    override func serviceTemplate(entrypoint: String) throws {
+    override func entrypointStart(entrypoint: String) throws {
         guard FileManager.default.fileExists(atPath: "/etc/systemd/system") else {
             throw RouterError.notImplemented(
                 message: """
@@ -86,6 +81,6 @@ class ExecuteLocal: Execution {
                          """
             )
         }
-        try super.serviceTemplate(entrypoint: entrypoint)
+        try super.entrypointStart(entrypoint: entrypoint)
     }
 }

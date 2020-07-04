@@ -80,13 +80,16 @@ class TargetOperation: Operation {
     let options: OctaheCLI.Options
     let task: TaskRecord
     let taskIndex: Int
+    let function: ExecutionStates
 
-    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options, taskIndex: Int, taskRecord: TaskRecord) {
+    init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options, taskIndex: Int, taskRecord: TaskRecord,
+         function: ExecutionStates) {
         self.target = target
         self.args = args
         self.options = options
         self.taskIndex = taskIndex
         self.task = taskRecord
+        self.function = function
 
         if let targetRecordsLookup = targetQueue.targetRecords[target.name] {
             self.targetRecord = targetRecordsLookup
@@ -116,11 +119,15 @@ class TargetOperation: Operation {
     }
 
     private func caseEntryPoint() throws {
+        var entrypoint: String = self.task.taskItem.execute!
         if let cmd = args.octaheDeploy.filter({$0.key == "CMD"}).map({$0.value}).last {
-            let entrypoint = "\(cmd.execute!) \(self.task.taskItem.execute!)"
-            try self.targetRecord.conn.serviceTemplate(entrypoint: entrypoint)
-        } else {
-            try self.targetRecord.conn.serviceTemplate(entrypoint: self.task.taskItem.execute!)
+            entrypoint = "\(cmd.execute!) \(entrypoint)"
+        }
+        switch self.function {
+        case .undeploy:
+            try self.targetRecord.conn.entrypointRemove(entrypoint: entrypoint)
+        default:
+            try self.targetRecord.conn.entrypointStart(entrypoint: entrypoint)
         }
     }
 

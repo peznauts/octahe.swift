@@ -47,7 +47,7 @@ class ExecuteSerial: Execution {
         _ = try self.serialPort?.writeString(execute)
     }
 
-    override func serviceTemplate(entrypoint: String) throws {
+    override func entrypointStart(entrypoint: String) throws {
         preconditionFailure("This method is not supported")
     }
 }

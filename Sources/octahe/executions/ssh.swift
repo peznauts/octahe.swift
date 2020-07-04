@@ -48,23 +48,21 @@ class ExecuteSSH: Execution {
         self.environment["TARGETARCH"] = arch
         self.environment["TARGETPLATFORM"] = "\(kernel)/\(arch)"
         self.environment["SYSTEMD_VERSION"] = String(describing: systemd.last!.strip)
-
     }
 
-    override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
-        do {
-            try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
-            return toUrl.path
-        } catch {
-            try self.ssh!.sendFile(localURL: fromUrl, remotePath: toFile.path)
-            return toFile.path
-        }
+    override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
+        try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
+        return toUrl.path
     }
 
     override func chown(perms: String?, path: String) throws {
         if let chownSettings = perms {
             try self.run(execute: "chown \(chownSettings) \(path)")
         }
+    }
+
+    override func move(fromPath: String, toPath: String) throws {
+        try self.run(execute: "mv \(fromPath) \(toPath)")
     }
 
     override func run(execute: String) throws {
@@ -96,9 +94,9 @@ class ExecuteSSH: Execution {
         try self.run(execute: "mkdir -p \(workdirURL.path)")
     }
 
-    override func serviceTemplate(entrypoint: String) throws {
+    override func entrypointStart(entrypoint: String) throws {
         if self.environment.keys.contains("SYSTEMD_VERSION") {
-            try super.serviceTemplate(entrypoint: entrypoint)
+            try super.entrypointStart(entrypoint: entrypoint)
         } else {
             throw RouterError.notImplemented(
                 message: """
@@ -143,7 +141,7 @@ class ExecuteSSHVia: ExecuteSSH {
         self.scpCommand = [self.scpConnectionString, sshArgs, "-3"]
     }
 
-    override func copyRun(toUrl: URL, fromUrl: URL, toFile: URL) throws -> String {
+    override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
         func scriptExec(execArgs: [String]) throws {
             let execScript = try self.localWriteTemp(
                 content: execArgs.joined(separator: " ")
@@ -153,19 +151,11 @@ class ExecuteSSHVia: ExecuteSSH {
             }
             _ = try self.localExec(commandArgs: ["/bin/sh", execScript.path])
         }
-        do {
-            var scpExecute = self.scpCommand
-            scpExecute?.append(fromUrl.path)
-            scpExecute?.append("\(self.name.sha1):\(toFile.path)")
-            try scriptExec(execArgs: scpExecute!)
-            return toFile.path
-        } catch {
-            var scpExecute = self.scpCommand
-            scpExecute?.append(fromUrl.path)
-            scpExecute?.append("\(self.name.sha1):\(toUrl.path)")
-            try scriptExec(execArgs: scpExecute!)
-            return toUrl.path
-        }
+        var scpExecute = self.scpCommand
+        scpExecute?.append(fromUrl.path)
+        scpExecute?.append("\(self.name.sha1):\(toUrl.path)")
+        try scriptExec(execArgs: scpExecute!)
+        return toUrl.path
     }
 
     override func runReturn(execute: String) throws -> String {

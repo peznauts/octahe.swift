@@ -45,7 +45,7 @@ func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
     }
 }
 
-func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
+func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
     logger.debug("Running function: \(function)")
 
     let configFileURL = URL(fileURLWithPath: parsedOptions.configurationFiles.first!)
@@ -61,7 +61,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
                 tag = fromComponents.last!
             }
             inspectionQueue.inspectionQueue.addOperation(
-                InspectionOperation(
+                InspectionOperationQuay(
                     containerImage: image!,
                     tag: tag
                 )
@@ -113,6 +113,17 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
         )
     }
 
+    if function == .undeploy {
+        let deployOptions =  octaheArgs.octaheDeploy.filter {key, _ in
+            return ["ENTRYPOINT"].contains(key)
+        }
+        var undeploy: [(key: String, value: TypeDeploy)] = []
+        for deployItem in deployOptions {
+            undeploy.append(deployItem)
+        }
+        octaheArgs.octaheDeploy = undeploy
+    }
+    
     // The total calculated steps start at 0, so we take the total and subtract 1.
     let octaheSteps = octaheArgs.octaheDeploy.count - 1
 
@@ -125,7 +136,8 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: String) throws {
             steps: octaheSteps,
             stepIndex: index,
             args: octaheArgs,
-            options: parsedOptions
+            options: parsedOptions,
+            function: function
         )
         allTaskOperations.append(taskOperation)
     }

@@ -11,6 +11,10 @@ import Crypto
 
 import Logging
 
+enum ExecutionStates {
+    case deploy, undeploy
+}
+
 let logger = Logger(label: "octahe")
 
 func platformArgs() -> [String: String] {

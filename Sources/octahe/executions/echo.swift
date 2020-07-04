@@ -38,9 +38,9 @@ class ExecuteEcho: Execution {
         }
     }
 
-    override func serviceTemplate(entrypoint: String) throws {
+    override func entrypointStart(entrypoint: String) throws {
         notice()
         print(entrypoint)
-        try super.serviceTemplate(entrypoint: entrypoint)
+        print(try super.serviceTemplate(entrypoint: entrypoint))
     }
 }
