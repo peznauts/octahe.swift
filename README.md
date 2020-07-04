@@ -86,14 +86,14 @@ directory, useually something like `/usr/local/bin`.
 Octahe can also be deployed using container native tooling, such as `podman` or `docker`.
 
 ``` shell
-podman build -t octahe.master -f Containerfile
+podman build -t octahe.HEAD -f .buildcontainer/Containerfile
 ```
 
 Once the container image has been created, you can build applications around Octahe or run
 commands through the default container image runtime.
 
 ``` shell
-podman run -it localhost/octahe.master octahe
+podman run -it localhost/octahe.HEAD octahe
 ```
 
 ### Octahe deploying Octahe
@@ -103,7 +103,19 @@ to deploy itself using the provided in tree `Containerfile`. Assuming Octahe is 
 the local machine the following command can be used to deploy the application to remote hosts.
 
 ``` shell
-octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa Containerfile
+octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa .buildcontainer/Containerfile
+```
+
+### Running functional tests
+
+A Containerfile has been provided which exercises functional tests for Octahe.
+
+``` shell
+# Deploy
+octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa .testcontainer/Containerfile
+
+# Undeploy
+octahe undeploy -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa .testcontainer/Containerfile
 ```
 
 ## Usage
