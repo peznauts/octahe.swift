@@ -1,14 +1,9 @@
 # action.yml
 name: Octahe build
 description: Building Octahe
-inputs:
-  test-build:
-    description: Build system for Octahe
-    required: true
-    default: Octahe
 outputs:
   time:
-    description: Building Octahe
+    description: Running functional Octahe test
 runs:
   using: docker
   image: .buildcontainer/Dockerfile
