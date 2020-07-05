@@ -15,8 +15,6 @@
 
 // import Foundation
 
-// import Alamofire
-
 // class InspectionOperationDocker: InspectionOperation {
 //     override init(containerImage: String, tag: String, debug: Bool) {
 //         super.init(containerImage: containerImage, tag: tag, debug: debug)

@@ -7,8 +7,6 @@
 
 // import Foundation
 
-// import Alamofire
-
 // class InspectionOperationQuay: InspectionOperation {
 //     override init(containerImage: String, tag: String, debug: Bool) {
 //         super.init(containerImage: containerImage, tag: tag, debug: debug)
