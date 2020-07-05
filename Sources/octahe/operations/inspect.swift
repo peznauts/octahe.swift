@@ -1,13 +1,11 @@
 //
 //  inspect.swift
-//  
+//
 //
 //  Created by Kevin Carter on 7/3/20.
 //
 
 import Foundation
-
-import Alamofire
 
 enum InspectionStates {
     case new, running, success, failed
@@ -42,9 +40,9 @@ class InspectionOperation: Operation {
     let containerTag: String
     var inspectionRecords: InspectionRecord
     var imageURL: URL = URL(string: "https://registry.hub.docker.com/v2")!
-    var headers: HTTPHeaders = ["Accept": "application/json"]
+    var headers = ["Accept": "application/json"]
     let debug: Bool
-    
+
     init(containerImage: String, tag: String, debug: Bool = false) {
         self.inspectionRecords = InspectionRecord(name: imageURL.lastPathComponent)
         self.containerImage = containerImage

@@ -68,6 +68,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     let octaheArgs = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
 
     if octaheArgs.octaheFrom.count > 0 {
+        throw RouterError.notImplemented(message: "FROM is not implemented yet.")
         logger.info("Found FROM information, pulling in instructions from external Targetfiles")
         for from in octaheArgs.octaheFrom {
             logger.info("Parsing \(from)")
@@ -77,13 +78,13 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
             if fromComponents.last != image {
                 tag = fromComponents.last!
             }
-            inspectionQueue.inspectionQueue.addOperation(
-                InspectionOperationQuay(
-                    containerImage: image!,
-                    tag: tag,
-                    debug: parsedOptions.debug
-                )
-            )
+            // inspectionQueue.inspectionQueue.addOperation(
+            //     InspectionOperationQuay(
+            //         containerImage: image!,
+            //         tag: tag,
+            //         debug: parsedOptions.debug
+            //     )
+            // )
         }
         inspectionQueue.inspectionQueue.waitUntilAllOperationsAreFinished()
         for (_, value) in inspectionQueue.inspectionInComplete {
