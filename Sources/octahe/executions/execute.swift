@@ -59,16 +59,18 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
-    func chown(perms: String?, path: String) throws {
-        preconditionFailure("This method is not supported")
-    }
-
     func move(fromPath: String, toPath: String) throws {
         preconditionFailure("This method is not supported")
     }
 
     func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
         preconditionFailure("This method is not supported")
+    }
+
+    func chown(perms: String?, path: String) throws {
+        if let chownSettings = perms {
+            try self.run(execute: "chown \(chownSettings) \(path)")
+        }
     }
 
     func localExec(commandArgs: [String]) throws -> String {

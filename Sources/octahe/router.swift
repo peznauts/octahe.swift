@@ -23,14 +23,17 @@ enum RouterError: Error {
 
 func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
     let failedTargets = targetQueue.targetRecords.values.filter {$0.state == .failed}
+    var exitCode: Int32 = 0
     var message: TypeLogString
     switch failedTargets.count {
     case octaheArgs.octaheTargetsCount:
         message = "Execution Failed."
         logger.critical("\(message)")
+        exitCode = 2
     case _ where failedTargets.count > 0:
         message = "Execution Degraded."
         logger.warning("\(message)")
+        exitCode = 1
     default:
         message = "Success."
         logger.info("\(message)")
@@ -52,6 +55,7 @@ func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
         print("[+] Successfully deployed \(successTargets) targets")
 
     }
+    exit(exitCode)
 }
 
 func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
@@ -109,7 +113,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
             itemData["server"] = item.domain
             itemData["port"] = item.port ?? 22
             itemData["user"] = item.user ?? "root"
-            itemData["key"] = parsedOptions.connectionKey
+            itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
             if let via = item.viaName {
                 itemData["config"] = octaheArgs.octaheSshConfigFile?.path
                 itemData["via"] = via.sha1
@@ -146,12 +150,8 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
             undeploy.append(deployItem)
         }
         octaheArgs.octaheDeploy = undeploy
-    case .deploy:
-        logger.info("Deployment mode engaged.")
     default:
-        let message = "Unknown mode enabled: \(function)"
-        logger.critical("\(message)")
-        throw RouterError.failedExecution(message: String(describing: message))
+        logger.info("Deployment mode engaged.")
     }
 
     // The total calculated steps start at 0, so we take the total and subtract 1.

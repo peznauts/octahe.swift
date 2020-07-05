@@ -16,7 +16,3 @@ RUN export LDFLAGS="-L/usr/lib64" && \
     swift build --configuration release -Xswiftc -g && \
     cp /opt/octahe.swift/.build/release/octahe /usr/local/bin/ && \
     rm -rf /opt/octahe.swift
-
- COPY .testcontainer/Containerfile /tmp/Containerfile
-
- RUN /usr/local/bin/octahe deploy --targets=localhost /tmp/Containerfile && rm -f /tmp/Containerfile

@@ -1,6 +1,6 @@
 //
 //  file.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/4/20.
 //
@@ -13,6 +13,10 @@ enum FileParserError: Error {
 
 struct LineIterator {
     var lines: IndexingIterator<[Substring]> = [].makeIterator()
+}
+
+struct DataJson: Decodable {
+    let item: String
 }
 
 class FileParser {
@@ -41,22 +45,22 @@ class FileParser {
                 let verbArray = cleanedLine.split(separator: " ", maxSplits: 1).map(String.init)
                 if verbArray.count > 1 {
                     let stringitem = String(describing: verbArray[1])
+                    logger.debug("\(stringitem)")
                     if stringitem.isInt {
                         self.configOptions.append((key: verbArray[0], value: stringitem))
                     } else if stringitem.isBool {
                         self.configOptions.append((key: verbArray[0], value: stringitem))
                     } else {
                         do {
+                            logger.debug("Parsing JSON data type")
                             let data = stringitem.data(using: .utf8)!
                             // swiftlint:disable force_cast
-                            let json = try JSONSerialization.jsonObject(
-                                with: data,
-                                options: .allowFragments
-                            ) as! [String]
-
-                            let joined = json.joined(separator: " ")
-                            self.configOptions.append((key: verbArray[0], value: String(joined)))
+                            let DataJsons = try JSONDecoder().decode([String].self, from: data)
+                            logger.debug("JSON loaded")
+                            let newStringItem: String = DataJsons.joined(separator: " ")
+                            self.configOptions.append((key: verbArray[0], value: newStringItem))
                         } catch {
+                            logger.debug("Catch all data type used.")
                             self.configOptions.append((key: verbArray[0], value: stringitem))
                         }
                     }
@@ -81,6 +85,7 @@ class FileParser {
             let lines = rawconfig.split(whereSeparator: \.isNewline)
             self.lineParser(lines: lines)
         }
+        logger.info("Targetfile parsing complete")
         return self.configOptions
     }
 }

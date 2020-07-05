@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/25/20.
 //
@@ -14,6 +14,7 @@ class ExecuteSSH: Execution {
     var server: String = "localhost"
     var port: Int32 = 22
     var name: String = "localhost"
+    var key: String? = nil
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
@@ -24,11 +25,11 @@ class ExecuteSSH: Execution {
     override func connect() throws {
         let cssh = try SSH(host: self.server, port: self.port)
         cssh.ptyType = .vanilla
-        if let privatekey = self.cliParams.connectionKey {
-            logger.info("Connecting to \(String(describing: self.target)) using key based authentication")
+        if let privatekey = self.key {
+            logger.info("Connecting to \(String(describing: self.target ?? self.server)) using key based authentication")
             try cssh.authenticate(username: self.user, privateKey: privatekey)
         } else {
-            logger.info("Connecting to \(String(describing: self.target)) using agent based authentication")
+            logger.info("Connecting to \(String(describing: self.target ?? self.server)) using agent based authentication")
             try cssh.authenticateByAgent(username: self.user)
         }
         self.ssh = cssh
@@ -56,12 +57,6 @@ class ExecuteSSH: Execution {
     override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
         try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
         return toUrl.path
-    }
-
-    override func chown(perms: String?, path: String) throws {
-        if let chownSettings = perms {
-            try self.run(execute: "chown \(chownSettings) \(path)")
-        }
     }
 
     override func move(fromPath: String, toPath: String) throws {
@@ -126,7 +121,7 @@ class ExecuteSSHVia: ExecuteSSH {
         super.init(cliParameters: cliParameters, processParams: processParams)
         self.connectionArgs.append("-o ControlPath=\"\(controlPath.path)/.ssh/%h\"")
         self.connectionArgs.append("-F \(self.processParams.octaheSshConfigFile!.path)")
-        if let privatekey = self.cliParams.connectionKey {
+        if let privatekey = self.key {
             self.connectionArgs.append("-i " + privatekey)
         }
     }

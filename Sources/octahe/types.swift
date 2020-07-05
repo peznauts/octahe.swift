@@ -1,6 +1,6 @@
 //
 //  types.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/19/20.
 //
@@ -26,15 +26,19 @@ class TypeTarget {
     var viaName: String?
     var escalate: String?
     var name: String
+    var key: URL?
 
     init(domain: String, port: Int32 = 22, user: String? = nil, viaName: String? = nil,
-         escalate: String? = nil, name: String) {
+         escalate: String? = nil, name: String, key: String? = nil) {
         self.domain = domain
         self.port = port
         self.user = user
         self.viaName = viaName
         self.escalate = escalate
         self.name = name
+        if let keyFile = key {
+            self.key = URL(fileURLWithPath: keyFile)
+        }
     }
 }
 

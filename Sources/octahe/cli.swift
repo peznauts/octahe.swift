@@ -1,6 +1,6 @@
 //
 //  cli.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/18/20.
 //
@@ -38,6 +38,14 @@ struct OptionsTarget: OctaheArguments {
               """
     )
     var name: String?
+
+    @Option(
+        name: [.customLong("connection-key"), .customShort("k")],
+        help: """
+              Key used to initiate a connection.
+              """
+    )
+    var connectionKey: String?
 
     @Argument(
         help: """

@@ -7,16 +7,17 @@ on:
     - Sources/**
     - Package.swift
     - Dockerfile
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: docker/build-push-action@v1
-      with:
-        username: ${{ secrets.DOCKERUSER }}
-        password: ${{ secrets.DOCKERPASS }}
-        repository: peznauts/octahe
-        tag_with_ref: true
-        tag_with_sha: true
-        push: false
+    - name: GitHub Action for Danger-Swift + SwiftLint
+      uses: 417-72KI/danger-swiftlint@v1.1.0
+    - name: Build new octahe container
+      run: docker build -t octahe-local -f Dockerfile .
+    - name: Build test container
+      run: docker build -t octahe-test -f .testcontainer/Containerfile.test .
+    - name: Run tests
+      run: docker run --cap-add=NET_RAW --cap-add NET_ADMIN -t octahe-test /usr/local/bin/octahe deploy --targets=localhost /opt/Containerfile --debug

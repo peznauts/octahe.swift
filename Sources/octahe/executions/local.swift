@@ -23,12 +23,16 @@ class ExecuteLocal: Execution {
 
     override func chown(perms: String?, path: String) throws {
         if let chownSettings = perms {
-            let ownerGroup = chownSettings.components(separatedBy: ":")
-            var attributes = [FileAttributeKey.ownerAccountName: ownerGroup.first]
-            if ownerGroup.first != ownerGroup.last {
-                attributes[FileAttributeKey.ownerAccountName] = ownerGroup.last
+            do {
+                let ownerGroup = chownSettings.components(separatedBy: ":")
+                var attributes: [FileAttributeKey : Any] = [.ownerAccountName: ownerGroup.first as Any]
+                if ownerGroup.first != ownerGroup.last {
+                    attributes[.groupOwnerAccountName] = ownerGroup.last as Any
+                }
+                try FileManager.default.setAttributes(attributes, ofItemAtPath: path)
+            } catch {
+                try super.chown(perms: perms, path: path)
             }
-            try FileManager.default.setAttributes(attributes as [FileAttributeKey: Any], ofItemAtPath: path)
         }
     }
 

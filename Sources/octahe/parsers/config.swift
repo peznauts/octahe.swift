@@ -1,6 +1,6 @@
 //
 //  config.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/19/20.
 //
@@ -63,6 +63,9 @@ class ConfigParse {
 
         targetNode.escalate = parsedTarget.escalate ?? self.parsedOptions.escalate
         targetNode.viaName = parsedTarget.via.last ?? nil
+        if let keyFile = parsedTarget.connectionKey {
+            targetNode.key = URL(fileURLWithPath: keyFile)
+        }
 
         return (
             targetNode,

@@ -1,6 +1,6 @@
 //
 //  target.swift
-//  
+//
 //
 //  Created by Kevin Carter on 6/19/20.
 //
@@ -46,6 +46,7 @@ class TargetRecord {
                 connSsh.user = self.target.user ?? "root"
                 connSsh.server = self.target.domain
                 connSsh.port = self.target.port ?? 22
+                connSsh.key = self.target.key?.path ?? options.connectionKey
 
                 try? connSsh.connect()
                 self.conn = connSsh
