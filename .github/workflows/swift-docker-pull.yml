@@ -1,12 +1,12 @@
-name: Octahe build
+name: Octahe pr
 
 on:
-  push:
-    branches: [ master ]
-
   pull_request:
     branches: [ master ]
-
+    paths:
+    - Sources/**
+    - Package.swift
+    - Dockerfile
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,3 +19,4 @@ jobs:
         repository: peznauts/octahe
         tag_with_ref: true
         tag_with_sha: true
+        push: false
