@@ -15,7 +15,7 @@ enum ExecutionStates {
     case deploy, undeploy
 }
 
-let logger = Logger(label: "octahe")
+var logger = Logger(label: "com.octahe")
 
 func platformArgs() -> [String: String] {
     // Sourced from local machine
@@ -59,7 +59,7 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
                 String(text[Range($0.range, in: text)!])
             }
         } catch let error {
-            logger.warning("\(error.localizedDescription)")
+            logger.warning("Match failed \(error)")
             return []
         }
     }
@@ -97,6 +97,7 @@ func localTempFile(content: String, marker: String? = nil) throws -> URL {
     if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
         try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
     }
+    logger.debug("Created local temp file \(tempServiceFile.path)")
     return tempServiceFile
 }
 

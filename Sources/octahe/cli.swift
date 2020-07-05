@@ -215,10 +215,19 @@ struct OctaheCLI: ParsableCommand {
         )
         var dryRun: Bool
 
+        @Flag(
+            help: """
+                  Enable debug mode, when this is enabled log messages will be
+                  printed to screen instead of the normal, simple, system output.
+                  """
+        )
+        var debug: Bool
+
         @Option(
             name: .shortAndLong,
             help: """
-                  Escalation binary.
+                  Escalation binary and any flags desired.
+                  Example: "/usr/bin/sudo --preserve-env"
                   """
         )
         var escalate: String?
@@ -230,6 +239,15 @@ struct OctaheCLI: ParsableCommand {
                   """
         )
         var escalatePassword: String?
+
+//        @Option(
+//            name: .shortAndLong,
+//            help: """
+//                  Log file. When set the application will save log messages to
+//                  a file using the provided path.
+//                  """
+//        )
+//        var logFile: String?
 
         @Option(
             name: .shortAndLong,

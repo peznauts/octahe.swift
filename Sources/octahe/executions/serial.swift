@@ -50,4 +50,16 @@ class ExecuteSerial: Execution {
     override func entrypointStart(entrypoint: String) throws {
         preconditionFailure("This method is not supported")
     }
+
+    override func entrypointRemove(entrypoint: String) throws {
+        preconditionFailure("This method is not supported")
+    }
+
+    override func exposeIptablesCreate(nat: Int32?, port: Int32, proto: String?, modifyer: String = "-I") throws {
+        preconditionFailure("This method is not supported")
+    }
+
+    override func exposeIptablesRemove(nat: Int32?, port: Int32, proto: String?, modifyer: String = "-D") throws {
+        preconditionFailure("This method is not supported")
+    }
 }

@@ -43,12 +43,13 @@ class InspectionOperation: Operation {
     var inspectionRecords: InspectionRecord
     var imageURL: URL = URL(string: "https://registry.hub.docker.com/v2")!
     var headers: HTTPHeaders = ["Accept": "application/json"]
-    var debug: Bool = false
+    let debug: Bool
     
-    init(containerImage: String, tag: String) {
+    init(containerImage: String, tag: String, debug: Bool = false) {
         self.inspectionRecords = InspectionRecord(name: imageURL.lastPathComponent)
         self.containerImage = containerImage
         self.containerTag = tag
+        self.debug = debug
     }
 
     func waitForResponse() {
@@ -61,6 +62,7 @@ class InspectionOperation: Operation {
     }
 
     override func main() {
+        logger.debug("Processing image API for: \(self.containerImage) tag: \(self.containerTag) url: \(imageURL.path)")
         // we need a timeout here, and better flow control.
         self.runManifestsRequest()
         self.waitForResponse()

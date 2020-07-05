@@ -18,8 +18,8 @@ import Foundation
 import Alamofire
 
 class InspectionOperationDocker: InspectionOperation {
-    override init(containerImage: String, tag: String) {
-        super.init(containerImage: containerImage, tag: tag)
+    override init(containerImage: String, tag: String, debug: Bool) {
+        super.init(containerImage: containerImage, tag: tag, debug: debug)
         let baseURL = URL(string: "https://quay.io/api/v1/repository")!
         self.imageURL = baseURL.appendingPathComponent(containerImage)
         self.inspectionRecords = InspectionRecord(name: imageURL.lastPathComponent)

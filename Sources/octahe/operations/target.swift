@@ -20,19 +20,25 @@ class TargetRecord {
 
     init(target: TypeTarget, args: ConfigParse, options: OctaheCLI.Options) {
         self.target = target
-        if options.dryRun {
+        switch options.dryRun {
+        case true:
+            logger.debug("Using the [echo] driver")
             self.conn = ExecuteEcho(cliParameters: options, processParams: args)
-        } else {
+        default:
             switch target.name {
             case "localhost":
+                logger.debug("Using the [local] driver")
                 self.conn = ExecuteLocal(cliParameters: options, processParams: args)
             case let str where str.contains("/dev"):
+                logger.debug("Using the [serial] driver")
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
                 let connSsh: ExecuteSSH
                 if self.target.viaName != nil {
+                    logger.debug("Using the [sshVia] driver")
                     connSsh = ExecuteSSHVia(cliParameters: options, processParams: args)
                 } else {
+                    logger.debug("Using the [ssh] driver")
                     connSsh = ExecuteSSH(cliParameters: options, processParams: args)
                 }
 
@@ -44,10 +50,11 @@ class TargetRecord {
                 try? connSsh.connect()
                 self.conn = connSsh
             }
-            self.conn.target = target.name
         }
+        self.conn.target = target.name
 
         if let escalate = self.target.escalate {
+            logger.debug("Setting an escallation password object")
             self.conn.escalate = escalate
             if let password = options.escalatePassword {
                 self.conn.escalatePassword = password
@@ -110,11 +117,20 @@ class TargetOperation: Operation {
 
     private func caseExpose() throws {
         if let port = self.task.taskItem.exposeData?.port {
-            try self.targetRecord.conn.expose(
-                nat: self.task.taskItem.exposeData?.nat,
-                port: port,
-                proto: self.task.taskItem.exposeData?.proto
-            )
+            switch self.function {
+            case .undeploy:
+                try self.targetRecord.conn.exposeIptablesCreate(
+                    nat: self.task.taskItem.exposeData?.nat,
+                    port: port,
+                    proto: self.task.taskItem.exposeData?.proto
+                )
+            default:
+                try self.targetRecord.conn.exposeIptablesRemove(
+                    nat: self.task.taskItem.exposeData?.nat,
+                    port: port,
+                    proto: self.task.taskItem.exposeData?.proto
+                )
+            }
         }
     }
 
@@ -179,7 +195,7 @@ class TargetOperation: Operation {
             return
         }
         self.task.state = .running
-        logger.debug("Executing: \(task.task)")
+        logger.debug("Executing: \(task.task) \(task.taskItem.original) on \(self.target.domain)")
         do {
             try self.targetCases()
         } catch let error {

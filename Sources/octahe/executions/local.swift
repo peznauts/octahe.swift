@@ -13,6 +13,7 @@ class ExecuteLocal: Execution {
     }
 
     override func probe() throws {
+        logger.info("Running system probe")
         for (key, value) in processParams.octaheArgs {
             let targetKey = key.replacingOccurrences(of: "BUILD", with: "TARGET")
             self.environment[targetKey] = value
@@ -40,17 +41,6 @@ class ExecuteLocal: Execution {
         }
         try FileManager.default.copyItem(at: fromUrl, to: toUrl)
         return toUrl.path
-    }
-
-    override func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
-        let toUrl = URL(fileURLWithPath: copyTo)
-        for fromUrl in try self.indexFiles(basePath: base, fromFiles: fromFiles) {
-            let copyFile = try self.copyRun(
-                toUrl: toUrl,
-                fromUrl: fromUrl
-            )
-            try self.chown(perms: chown, path: copyFile)
-        }
     }
 
     override func runReturn(execute: String) throws -> String {

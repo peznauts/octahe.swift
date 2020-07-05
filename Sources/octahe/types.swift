@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Logging
+
 typealias TypeFrom = (platform: String?, image: String, name: String?)
 
 typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
@@ -14,6 +16,8 @@ typealias TypeExposes = (port: Int32, nat: Int32?, proto: String?)
 typealias TypeEntrypointOptions = [(key: String, value: String)]
 
 typealias TypeDeployCase = (key: String, value: TypeDeploy)
+
+typealias TypeLogString = Logger.Message
 
 class TypeTarget {
     var domain: String

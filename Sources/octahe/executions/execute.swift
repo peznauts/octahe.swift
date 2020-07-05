@@ -40,11 +40,6 @@ class Execution {
     }
 
     func probe() throws {
-        // Sourced from remote target at runtime:
-        //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
-        //    TARGETOS - OS component of TARGETPLATFORM
-        //    TARGETARCH - architecture component of TARGETPLATFORM
-        //    TARGETVARIANT - variant component of TARGETPLATFORM
         preconditionFailure("This method is not supported")
     }
 
@@ -72,7 +67,12 @@ class Execution {
         preconditionFailure("This method is not supported")
     }
 
+    func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
+        preconditionFailure("This method is not supported")
+    }
+
     func localExec(commandArgs: [String]) throws -> String {
+        logger.debug("Building local execution command")
         var launchArgs = commandArgs
         let task = Process()
         let pipe = Pipe()
@@ -87,19 +87,20 @@ class Execution {
         let output = pipe.fileHandleForReading.availableData
         let outputInfo = String(data: output, encoding: String.Encoding.utf8)!
         if task.terminationStatus != 0 {
-            throw RouterError.failedExecution(
-                message: """
-                         FAILED: \(commandArgs.joined(separator: " "))
-                         STATUS: \(task.terminationStatus)
-                         REASON: \(task.terminationReason)
-                         OUTPUT: \(outputInfo)
-                         """
-            )
+            let message = """
+                          FAILED: \(commandArgs.joined(separator: " "))
+                          STATUS: \(task.terminationStatus)
+                          REASON: \(task.terminationReason)
+                          OUTPUT: \(outputInfo)
+                          """
+            logger.critical("\(message)")
+            throw RouterError.failedExecution(message: message)
         }
         return outputInfo
     }
 
     func localMkdir(workdirURL: URL) throws {
+        logger.debug("Creating local directory: \(workdirURL.path)")
         try FileManager.default.createDirectory(
             at: workdirURL,
             withIntermediateDirectories: true,
@@ -131,13 +132,16 @@ class Execution {
     }
 
     func indexFiles(basePath: URL, fromFiles: [String]) throws -> [URL] {
+        logger.debug("Starting local file indexer")
         func enumerateFiles(dirPath: URL, match: String = "*") {
+            logger.debug("Matching files found in \(dirPath.path) with the following regex \(match)")
             let enumerator = FileManager.default.enumerator(atPath: dirPath.path)
             let allObjects = enumerator?.allObjects ?? []
             for item in allObjects {
                 let stringItem = String(describing: item)
                 // swiftlint:disable control_statement
                 if (stringItem.range(of: match, options: .regularExpression, range: nil, locale: nil) != nil) {
+                    logger.debug("File found: \(stringItem)")
                     fromFileURLs.append(dirPath.appendingPathComponent(stringItem))
                 }
             }
@@ -171,10 +175,6 @@ class Execution {
         return fromFileURLs
     }
 
-    func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
-        preconditionFailure("This method is not supported")
-    }
-
     func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
         var toUrl = URL(fileURLWithPath: copyTo)
         var copyFile: String
@@ -188,6 +188,7 @@ class Execution {
             if toUrl.hasDirectoryPath {
                 toUrl = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
             }
+            logger.info("Copying file from: \(fromUrl.path) to: \(toUrl.path)")
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
                 let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)
@@ -208,14 +209,14 @@ class Execution {
     }
 
     // swiftlint:disable function_body_length
-    func expose(nat: Int32?, port: Int32, proto: String?) throws {
-        let port = port
+    func exposeIptablesCreate(nat: Int32?, port: Int32, proto: String?, modifyer: String = "-I") throws {
         let proto = proto ?? "tcp"
         let commandExec: String
         let commandCheck: String
         let commandCreate: String
         let command: [String] = ["iptables"]
         if let natPort = nat {
+            logger.info("Formatting iptables rules nat: \(natPort) port: \(port) proto: \(proto) modifyer: \(modifyer)")
             var commandArgs = [
                 "PREROUTING",
                 "-m",
@@ -239,6 +240,7 @@ class Execution {
             let create = command + ["-t", "nat", "-I"] + commandArgs
             commandCreate = create.joined(separator: " ")
         } else {
+            logger.info("Formatting iptables rules - port: \(port) proto: \(proto) modifyer: \(modifyer)")
             var commandArgs = [
                 "INPUT",
                 "-m",
@@ -263,10 +265,17 @@ class Execution {
             commandCreate = create.joined(separator: " ")
         }
         commandExec = "\(commandCheck) || \(commandCreate)"
+        logger.debug("Running iptables command: \(commandExec)")
         try run(execute: commandExec)
     }
 
+    func exposeIptablesRemove(nat: Int32?, port: Int32, proto: String?, modifyer: String = "-D") throws {
+        logger.info("Attempting to remove an iptable rule.")
+        try self.exposeIptablesCreate(nat: nat, port: port, proto: proto, modifyer: modifyer)
+    }
+
     private func optionFormat(options: [String: String]) -> [[String: String]] {
+        logger.info("Formatting options for service files.")
         var items: [[String: String]]  = []
         for (key, value) in options {
             switch key {
@@ -286,6 +295,7 @@ class Execution {
     }
 
     func serviceTemplate(entrypoint: String) throws -> String {
+        logger.debug("Rendering a service template.")
         // Generate a local template, and transfer it to the remote host
         var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint, "shell": self.shell]
 
@@ -312,13 +322,17 @@ class Execution {
     }
 
     func entrypointRemove(entrypoint: String) throws {
+        logger.info("Removing entrypoint: \(entrypoint)")
         let serviceFile = self.serviceName(entrypoint: entrypoint)
-        try self.run(execute: "systemctl stop \(serviceFile)")
-        try self.run(execute: "systemctl daemon-reload")
-        try self.run(execute: "rm -f /etc/systemd/system/\(serviceFile)")
+        var execute = "if [ -f /etc/systemd/system/\(serviceFile) ]; then "
+        execute = execute + "systemctl stop \(serviceFile);"
+        execute = execute + "systemctl daemon-reload;"
+        execute = execute + "rm -f /etc/systemd/system/\(serviceFile); fi"
+        try self.run(execute: execute)
     }
 
     func entrypointStart(entrypoint: String) throws {
+        logger.info("Starting entrypoint: \(entrypoint)")
         let serviceFile = self.serviceName(entrypoint: entrypoint)
         let serviceRendered = try self.serviceTemplate(entrypoint: entrypoint)
         let tempServiceFile = try self.localWriteTemp(content: serviceRendered)
@@ -340,6 +354,7 @@ class Execution {
     }
 
     func execPosixString(command: String) -> String {
+        logger.debug("Formatting posix compatible execution string: \(command)")
         var execTask: String = self.posixEncoder(item: "(cd \(self.workdir); \(command))")
 
         if let user = self.execUser {

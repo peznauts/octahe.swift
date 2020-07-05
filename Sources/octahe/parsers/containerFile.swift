@@ -68,10 +68,12 @@ class FileParser {
     func buildRawConfigs(files: [String]) throws -> [(key: String, value: String)] {
         var rawConfigs: [String] = []
         for file in files {
+            logger.info("Parsing Targetfile \(file)")
             do {
                 let configData = try String(contentsOfFile: file)
                 rawConfigs.insert(configData, at: 0)
             } catch {
+                logger.critical("Target file not found: \(file)")
                 throw FileParserError.fileReadFailure(filePath: file)
             }
         }

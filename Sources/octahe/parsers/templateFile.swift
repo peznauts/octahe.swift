@@ -45,6 +45,7 @@ WantedBy=multi-user.target
 """
 
 func systemdRender(data: [String: Any]) throws -> String {
+    logger.info("Rendering service template")
     let environment = Environment()
     let rendered = try environment.renderTemplate(string: systemdService, context: data)
     let lines = rendered.strip.split { $0.isNewline }
@@ -75,6 +76,7 @@ Host {{ item['name'] }}
 """
 
 func sshRender(data: [String: Any]) throws -> String {
+    logger.info("Rendering temporary local ssh config")
     let environment = Environment()
     return try environment.renderTemplate(string: sshConfig, context: data)
 }

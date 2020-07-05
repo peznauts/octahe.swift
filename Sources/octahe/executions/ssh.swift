@@ -25,14 +25,17 @@ class ExecuteSSH: Execution {
         let cssh = try SSH(host: self.server, port: self.port)
         cssh.ptyType = .vanilla
         if let privatekey = self.cliParams.connectionKey {
+            logger.info("Connecting to \(String(describing: self.target)) using key based authentication")
             try cssh.authenticate(username: self.user, privateKey: privatekey)
         } else {
+            logger.info("Connecting to \(String(describing: self.target)) using agent based authentication")
             try cssh.authenticateByAgent(username: self.user)
         }
         self.ssh = cssh
     }
 
     override func probe() throws {
+        logger.info("Running remote system probe")
         //    TARGETPLATFORM - platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64.
         //    TARGETOS - OS component of TARGETPLATFORM
         //    TARGETARCH - architecture component of TARGETPLATFORM
@@ -129,6 +132,7 @@ class ExecuteSSHVia: ExecuteSSH {
     }
 
     override func connect() throws {
+        logger.info("Connecting to \(String(describing: self.target)) using local ssh.")
         try self.localMkdir(workdirURL: controlPath.appendingPathComponent(".ssh/sockets", isDirectory: true))
         let sshArgs = self.connectionArgs.joined(separator: " ")
         self.sshCommand = [

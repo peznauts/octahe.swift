@@ -41,14 +41,15 @@ class TaskOperation: Operation {
     let stepIndex: Int
     let args: ConfigParse
     let options: OctaheCLI.Options
-    var printStatus: Bool = true
+    var printStatus: Bool
     var mySpinner: Spinner?
     var statusLineFull: String?
     var statusLine: String?
     let function: ExecutionStates
 
     init(deployItem: (key: String, value: TypeDeploy), steps: Int, stepIndex: Int,
-         args: ConfigParse, options: OctaheCLI.Options, function: ExecutionStates) {
+         args: ConfigParse, options: OctaheCLI.Options, function: ExecutionStates,
+         printStatus: Bool = true) {
         self.function = function
         self.deployItem = deployItem
         self.steps = steps
@@ -62,23 +63,29 @@ class TaskOperation: Operation {
             taskQueue.taskRecords[stepIndex] = taskRecordsLookup
             self.taskRecord = taskQueue.taskRecords[stepIndex]!
         }
+        self.printStatus = printStatus
     }
 
     private func finishTask() {
+        logger.info("Task processing complete.")
         let degradedTargetStates = targetQueue.targetRecords.values.filter {$0.state == .failed}
-        if degradedTargetStates.count == args.octaheTargets.count {
+        switch degradedTargetStates.count {
+        case args.octaheTargets.count:
             if let spinner = self.mySpinner {
                 spinner.failure(self.statusLineFull)
             }
             self.taskRecord.state = .failed
-        } else if degradedTargetStates.count > 0 {
+            logger.critical("Task failed -- \(String(describing: self.statusLineFull)).")
+        case _ where degradedTargetStates.count > 0:
             if let spinner = self.mySpinner {
                 spinner.warning(self.statusLineFull)
             }
-        } else {
+            logger.warning("Task completed but was degraded -- \(String(describing: self.statusLineFull)).")
+        default:
             if let spinner = self.mySpinner {
                 spinner.succeed(self.statusLine)
             }
+            logger.info("Task succeeded -- Step \(stepIndex)/\(steps).")
         }
         if let spinner = self.mySpinner {
             spinner.clear()
@@ -88,6 +95,7 @@ class TaskOperation: Operation {
     private func queueTaskOperations() -> [TargetOperation] {
         var taskOperationsArray: [TargetOperation] = []
         for target in args.octaheTargets {
+            logger.info("Processing Target \(target)")
             if let targetData = args.octaheTargetHash[target] {
                 let targetOperation = TargetOperation(
                     target: targetData,
@@ -99,6 +107,7 @@ class TaskOperation: Operation {
                 )
                 // If this current operation has dependencies, add them to the target options too.
                 for dependency in self.dependencies {
+                    logger.debug("Adding operatation dependency \(dependency)")
                     targetOperation.addDependency(dependency)
                 }
                 if targetQueue.targetRecords[target]?.state == .available {
