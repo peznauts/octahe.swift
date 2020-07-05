@@ -4,6 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/peznauts/swift-octahe/blob/master/LICENSE)
 [![Twitter](https://img.shields.io/twitter/follow/Peznaut.svg?style=social)](https://twitter.com/intent/follow?screen_name=peznaut)
+![Octahe build](https://github.com/peznauts/octahe.swift/workflows/Octahe%20build/badge.svg)
 
 # (O)ctahe
 
