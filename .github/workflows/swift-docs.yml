@@ -1,4 +1,4 @@
-name: Documentation
+name: Octahe API documentation
 
 on:
   push:

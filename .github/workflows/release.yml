@@ -1,4 +1,4 @@
-name: Octahe push
+name: Octahe release
 
 on:
   release:
