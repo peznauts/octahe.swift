@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: GitHub Action for Danger-Swift + SwiftLint
-      uses: 417-72KI/danger-swiftlint@v1.1.0
+    - name: GitHub Action for SwiftLint (Only files changed in the PR)
+      uses: norio-nomura/action-swiftlint@3.1.0
+      env:
+        DIFF_BASE: ${{ github.base_ref }}
     - name: Build new octahe container
       run: docker build -t octahe-local -f Dockerfile .
     - name: Build test container
-      run: docker build -t octahe-test -f .testcontainer/Containerfile.test .
+      run: docker build -t octahe-test -f .testcontainer/Containerfile.test .testcontainer
     - name: Run tests
       run: docker run --cap-add=NET_RAW --cap-add NET_ADMIN -t octahe-test /usr/local/bin/octahe deploy --targets=localhost /opt/Containerfile --debug
