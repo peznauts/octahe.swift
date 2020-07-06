@@ -1,6 +1,11 @@
 name: Documentation
 
-on: [push]
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - Sources/**
+    - Package.swift
 
 jobs:
   build:
@@ -12,7 +17,7 @@ jobs:
         uses: SwiftDocOrg/swift-doc@master
         with:
           inputs: "Sources"
-          module-name: MyLibrary
+          module-name: octahe
           output: "Documentation"
       - name: Upload Documentation to Wiki
         uses: SwiftDocOrg/github-wiki-publish-action@v1

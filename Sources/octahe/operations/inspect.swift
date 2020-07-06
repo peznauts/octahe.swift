@@ -34,7 +34,6 @@ class InspectionRecord {
     }
 }
 
-
 class InspectionOperation: Operation {
     let containerImage: String
     let containerTag: String

@@ -25,7 +25,7 @@ class ExecuteLocal: Execution {
         if let chownSettings = perms {
             do {
                 let ownerGroup = chownSettings.components(separatedBy: ":")
-                var attributes: [FileAttributeKey : Any] = [.ownerAccountName: ownerGroup.first as Any]
+                var attributes: [FileAttributeKey: Any] = [.ownerAccountName: ownerGroup.first as Any]
                 if ownerGroup.first != ownerGroup.last {
                     attributes[.groupOwnerAccountName] = ownerGroup.last as Any
                 }

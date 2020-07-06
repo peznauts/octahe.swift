@@ -58,6 +58,8 @@ func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
     exit(exitCode)
 }
 
+// swiftlint:disable function_body_length
+// swiftlint:disable cyclomatic_complexity
 func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
     switch parsedOptions.debug {
     case true:
@@ -105,10 +107,10 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     if octaheArgs.octaheTargetHash.values.filter({$0.viaName != nil}).count > 0 {
         logger.info("Found targets using the `--via` instruction.")
         octaheArgs.octaheSshConfigFile = try localTempFile(content: parsedOptions.configurationFiles.first!)
-        var sshViaData: [[String:Any]] = []
+        var sshViaData: [[String: Any]] = []
         for item in octaheArgs.octaheTargetHash.values {
             logger.info("Parsing \(item)")
-            var itemData: [String:Any] = [:]
+            var itemData: [String: Any] = [:]
             itemData["name"] = item.name.sha1
             itemData["server"] = item.domain
             itemData["port"] = item.port ?? 22

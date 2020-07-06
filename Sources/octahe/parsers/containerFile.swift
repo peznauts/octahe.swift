@@ -54,10 +54,9 @@ class FileParser {
                         do {
                             logger.debug("Parsing JSON data type")
                             let data = stringitem.data(using: .utf8)!
-                            // swiftlint:disable force_cast
-                            let DataJsons = try JSONDecoder().decode([String].self, from: data)
+                            let dataJsons = try JSONDecoder().decode([String].self, from: data)
                             logger.debug("JSON loaded")
-                            let newStringItem: String = DataJsons.joined(separator: " ")
+                            let newStringItem: String = dataJsons.joined(separator: " ")
                             self.configOptions.append((key: verbArray[0], value: newStringItem))
                         } catch {
                             logger.debug("Catch all data type used.")

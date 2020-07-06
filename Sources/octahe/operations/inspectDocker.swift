@@ -5,6 +5,7 @@
 // ////  Created by Kevin Carter on 7/3/20.
 // ////
 // ///// DOCKER HUB
+// swiftlint:disable line_length
 // ///// curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:tripleomaster/centos-binary-base:pull"
 // ///// curl -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/tripleomaster/centos-binary-base/manifests/current-tripleo
 // //

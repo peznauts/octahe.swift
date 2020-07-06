@@ -14,7 +14,7 @@ class ExecuteSSH: Execution {
     var server: String = "localhost"
     var port: Int32 = 22
     var name: String = "localhost"
-    var key: String? = nil
+    var key: String?
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
@@ -26,10 +26,14 @@ class ExecuteSSH: Execution {
         let cssh = try SSH(host: self.server, port: self.port)
         cssh.ptyType = .vanilla
         if let privatekey = self.key {
-            logger.info("Connecting to \(String(describing: self.target ?? self.server)) using key based authentication")
+            logger.info(
+                "Connecting to \(String(describing: self.target ?? self.server)) using key based authentication"
+            )
             try cssh.authenticate(username: self.user, privateKey: privatekey)
         } else {
-            logger.info("Connecting to \(String(describing: self.target ?? self.server)) using agent based authentication")
+            logger.info(
+                "Connecting to \(String(describing: self.target ?? self.server)) using agent based authentication"
+            )
             try cssh.authenticateByAgent(username: self.user)
         }
         self.ssh = cssh

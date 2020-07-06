@@ -327,9 +327,9 @@ class Execution {
         logger.info("Removing entrypoint: \(entrypoint)")
         let serviceFile = self.serviceName(entrypoint: entrypoint)
         var execute = "if [ -f /etc/systemd/system/\(serviceFile) ]; then "
-        execute = execute + "systemctl stop \(serviceFile);"
-        execute = execute + "systemctl daemon-reload;"
-        execute = execute + "rm -f /etc/systemd/system/\(serviceFile); fi"
+        execute += "systemctl stop \(serviceFile);"
+        execute += "systemctl daemon-reload;"
+        execute += "rm -f /etc/systemd/system/\(serviceFile); fi"
         try self.run(execute: execute)
     }
 
