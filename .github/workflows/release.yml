@@ -1,0 +1,45 @@
+name: Octahe push
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKERUSER }}
+        password: ${{ secrets.DOCKERPASS }}
+        repository: peznauts/octahe
+        tag_with_ref: true
+        tag_with_sha: true
+        add_git_labels: true
+        push: true
+        tags: stable
+
+  linux_artifact:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: fwal/setup-swift@v1
+    - name: Install dev requirements
+      run: sudo apt install -y libssh2-1-dev libssl-dev
+    - name: Get swift version
+      run: swift build --configuration release -Xswiftc -g
+      env:
+        CPPFLAGS: "-I/usr/include"
+        PKG_CONFIG_PATH: "/usr/lib/x86_64-linux-gnu/pkgconfig"
+    - name: Upload Octahe release
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: .build/release/octahe
+        asset_name: octahe-x86-linux
+        asset_content_type: application/octet-stream
