@@ -53,7 +53,6 @@ class TargetRecord {
             }
         }
         self.conn.target = target.name
-
         if let escalate = self.target.escalate {
             logger.debug("Setting an escallation password object")
             self.conn.escalate = escalate

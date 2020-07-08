@@ -40,6 +40,7 @@ class ConfigParse {
     var octaheSshConfigFile: URL?
     let configDirURL: URL
     let parsedOptions: OctaheCLI.Options
+    var seenArgs: [String] = []
 
     func parseTarget(stringTarget: String) throws -> (TypeTarget, [String]) {
         // Target parse string argyments and return a tuple.
@@ -212,13 +213,21 @@ class ConfigParse {
                 value: addCopy
             )
         case "ARG", "ENV", "LABEL":
-            let argDictionary = buildDictionary(
-                filteredContent: [(key: deployOption.key, value: deployOption.value)]
+            var origin = deployOption.value
+            var argDictionary = buildDictionary(
+                filteredContent: [(key: deployOption.key, value: origin)]
             )
+            for key in argDictionary.keys {
+                if let value = self.octaheArgs[key] {
+                    self.seenArgs.append(key)
+                    argDictionary[key] = value
+                }
+                origin = "\(key)=\(String(describing: argDictionary[key]!))"
+            }
             return (
                 key: deployOption.key,
                 value: TypeDeploy(
-                    original: deployOption.value,
+                    original: origin,
                     env: argDictionary
                 )
             )
@@ -302,7 +311,15 @@ class ConfigParse {
 
         // Args are merged into a single Dictionary. This will allow us to apply args to wherever they're needed.
         self.octaheArgs = platformArgs()
-
+        // Add any extra args into the deployment head
+        var extraArgsArray: [[String: String]] = []
+        for extraArgs in self.parsedOptions.args {
+            let argDictionary = buildDictionary(
+                filteredContent: [(key: "ARG", value: extraArgs)]
+            )
+            extraArgsArray.append(argDictionary)
+            self.octaheArgs.merge(argDictionary) {(_, second) in second}
+        }
         // Filter FROM options to send for introspection to return additional config from a container registry.
         let deployFroms = self.configFiles.filter {$0.key == "FROM"}.map {$0.value}
         for deployFrom in deployFroms.reversed() {
@@ -320,21 +337,21 @@ class ConfigParse {
         try self.entrypointParsing()
         // filter all TARGETS.
         try self.targetParsing()
-        // Add any extra args into the deployment head
-        for extraArgs in self.parsedOptions.args {
-            let argDictionary = buildDictionary(
-                filteredContent: [(key: "ARG", value: extraArgs)]
-            )
-            self.octaheDeploy.insert(
-                (
-                    key: "ARG",
-                    value: TypeDeploy(
-                        original: extraArgs,
-                        env: argDictionary
+        for extraArgs in extraArgsArray {
+            for key in extraArgs.keys {
+                if !self.seenArgs.contains(key) {
+                    self.octaheDeploy.insert(
+                        (
+                            key: "ARG",
+                            value: TypeDeploy(
+                                original: "\(key)=\(String(describing: extraArgs[key]!))",
+                                env: extraArgs
+                            )
+                        ),
+                        at: 0
                     )
-                ),
-                at: 0
-            )
+                }
+            }
         }
     }
 }
