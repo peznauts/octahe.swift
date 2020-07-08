@@ -145,7 +145,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     case .undeploy:
         logger.info("Undeployment mode engaged.")
         let deployOptions =  octaheArgs.octaheDeploy.filter {key, _ in
-            return ["ENTRYPOINT", "EXPOSE"].contains(key)
+            return ["ENTRYPOINT", "EXPOSE", "INTERFACE"].contains(key)
         }
         var undeploy: [(key: String, value: TypeDeploy)] = []
         for deployItem in deployOptions {
