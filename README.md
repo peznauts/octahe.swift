@@ -8,15 +8,48 @@
 
 # (O)ctahe
 
-Octahe allows you to simplify operations, create concise applications, and focus on what you do best.
+Octahe allows you to simplify operations, create concise applications, and focus on what
+you do best.
+
+## What is Octahe?
+
+Octahe is a deployment tool which uses the Containerfile as DSL for deploying software
+via SSH, Local or Serial connections.
+
+## Why should you consider using Octahe?
+
+The Containerfile DSL is simple, only consisting of 16 different verbs. This means
+solutions run through Octahe are inherently easy to understand and test.
+
+> With Octahe, deployers and operators can test solutions in Containers and easily push
+  to Baremetal, Virtual  machines, or even containerized targets; all without having to
+  change configurations formats.
+
+Octahe has the ability to natively proxy through multiple targets using sockets. This
+capability allows deployers to flatten their approach to deployments, all without
+needing to compromise infrastructure or craft obscure deployment schemes.
+
+> Multi-key, multi-bastion, multi-user, multi-server, multi-target deployments all made
+  simple.
+
+Octahe uses simple multi-processing which leverages native swift
+[Operations](https://developer.apple.com/documentation/foundation/operation)
+[queues](https://developer.apple.com/documentation/foundation/operationqueue).
+This built-in abstraction provides Octahe the ability to ensure consistent deployments
+across multiple hosts, using complex dependencies, all without troubling the user.
+From 1 machine to 1000, Octahe will get a solution deployed quickly and consistently,
+without compromise.
+
+> The ability to develop in containers, the power to push high performance solutions
+  down to metal.
 
 ## Evolve your application by devolving the stack.
 
 Whether you're deploying software to the cloud, building high-performance computing
-environments, or IOT applications, Octahe has it covered. The Zero footprint design,
+environments, or IOT applications, Octahe has it covered. The Zero footprint design
 employed by Octahe will get you up and running in as little as one step.
 
-### Test in containers, Deploy `TO` production.
+#### Test in containers, Deploy `TO` production.
 
 While containers are fantastic tools, they can be limiting, they can create application
 complexities, and they do create bottlenecks. Octahe aims to enable teams to deploy
