@@ -130,7 +130,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     }
     defer {
         if let tempSshConfigFile = octaheArgs.octaheSshConfigFile {
-            logger.warning("Running temporary file cleanup")
+            logger.debug("Removing temp file: \(tempSshConfigFile.path)")
             try? FileManager.default.removeItem(at: tempSshConfigFile)
         }
     }
@@ -145,7 +145,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     case .undeploy:
         logger.info("Undeployment mode engaged.")
         let deployOptions =  octaheArgs.octaheDeploy.filter {key, _ in
-            return ["ENTRYPOINT", "EXPOSE"].contains(key)
+            return ["ENTRYPOINT", "EXPOSE", "INTERFACE"].contains(key)
         }
         var undeploy: [(key: String, value: TypeDeploy)] = []
         for deployItem in deployOptions {

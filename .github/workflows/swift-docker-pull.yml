@@ -9,7 +9,7 @@ on:
     - Dockerfile
 
 jobs:
-  build:
+  lint_check:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -17,9 +17,48 @@ jobs:
       uses: norio-nomura/action-swiftlint@3.1.0
       env:
         DIFF_BASE: ${{ github.base_ref }}
+
+  container_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Build new octahe container
       run: docker build -t octahe-local -f Dockerfile .
     - name: Build test container
       run: docker build -t octahe-test -f .testcontainer/Containerfile.test .testcontainer
     - name: Run tests
       run: docker run --cap-add=NET_RAW --cap-add NET_ADMIN -t octahe-test /usr/local/bin/octahe deploy --targets=localhost /opt/Containerfile --debug
+
+  linux_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: fwal/setup-swift@v1
+    - name: Install dev requirements
+      run: sudo apt install -y libssh2-1-dev libssl-dev
+    - name: Build Octahe
+      run: swift build
+      env:
+        CPPFLAGS: "-I/usr/include"
+        PKG_CONFIG_PATH: "/usr/lib/x86_64-linux-gnu/pkgconfig"
+    - name: Run local test
+      run: sudo .build/debug/octahe deploy --targets=localhost .testcontainer/Containerfile.sudo --debug
+
+  # macos_build:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Install dev requirements
+  #     run: brew install libssh2 openssl
+  #   - name: Reinstall openssl
+  #     run: brew reinstall openssl libssh2
+  #   - name: Relink ssh
+  #     run: brew unlink libssh2 && brew link libssh2
+  #   - name: Build Octahe
+  #     run: swift build
+  #     env:
+  #       LDFLAGS: "-L/usr/local/opt/openssl@1.1/lib"
+  #       CPPFLAGS: "-I/usr/local/opt/openssl@1.1/include"
+  #       PKG_CONFIG_PATH: "/usr/local/opt/openssl@1.1/lib/pkgconfig"
+  #   - name: Run local test
+  #     run: .build/debug/octahe deploy --targets=localhost .testcontainer/Containerfile --debug
