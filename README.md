@@ -1,5 +1,5 @@
 <p align="center">
-<img src="assets/octahe_logo.png" alt="Octahe" title="Octahe" />
+<img src="https://github.com/peznauts/octahe.swift/raw/master/assets/octahe_logo.png" alt="Octahe" title="Octahe" />
 </p>
 
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/peznauts/swift-octahe/blob/master/LICENSE)
