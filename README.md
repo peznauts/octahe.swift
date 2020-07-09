@@ -59,12 +59,12 @@ without any of the machinery that comes alone with containers.
 #### Configuration
 
 The Octahe follows the [Dockerfile](https://docs.docker.com/engine/reference/builder)
-reference with one new verb, [TO](DOCUMENTATION.md#to). This new verb can be expressed
+reference with one new verb, [TO](https://github.com/peznauts/octahe.swift/blob/master/DOCUMENTATION.md#to). This new verb can be expressed
 on the CLI or within a provided container file.
 
 #### Target options
 
-When deploying [TO](DOCUMENTATION.md#to) a target Octahe provides options by supporting
+When deploying [TO](https://github.com/peznauts/octahe.swift/blob/master/DOCUMENTATION.md#to) a target Octahe provides options by supporting
 options that span SSH, `localhost`, and Serial.
 
 ## Installation
@@ -170,10 +170,10 @@ Beginning deployment execution
 ✔ Step 3/3 : ENTRYPOINT python3 -m http.server 7000
 ```
 
-Here's the application being deployed to 5 remote [T](DOCUMENTATION.md#to)argets in realtime.
+Here's the application being deployed to 5 remote [T](https://github.com/peznauts/octahe.swift/blob/master/DOCUMENTATION.md#to)argets in realtime.
 
-![octahe-run](assets/octahe-run.gif)
+![octahe-run](https://github.com/peznauts/octahe.swift/raw/master/assets/octahe-run.gif)
 
 ----
 
-More documentation and examples can be found [here](DOCUMENTATION.md).
+More documentation and examples can be found [here](https://github.com/peznauts/octahe.swift/blob/master/DOCUMENTATION.md).
