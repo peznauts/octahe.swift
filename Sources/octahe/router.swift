@@ -130,7 +130,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     }
     defer {
         if let tempSshConfigFile = octaheArgs.octaheSshConfigFile {
-            logger.warning("Running temporary file cleanup")
+            logger.debug("Removing temp file: \(tempSshConfigFile.path)")
             try? FileManager.default.removeItem(at: tempSshConfigFile)
         }
     }

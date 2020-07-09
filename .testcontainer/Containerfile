@@ -20,27 +20,4 @@ RUN ls -al /tmp/Containerfile | grep "root root"
 RUN rm /tmp/Containerfile
 RUN stat /tmp/Containerfile || echo success
 
-WORKDIR  /tmp
-
-EXPOSE 5150
-RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
-EXPOSE 5150/udp
-RUN iptables -D INPUT -p udp -m comment --comment "Octahe rule" -m udp --dport 5150 -j ACCEPT
-EXPOSE 5151/tcp
-RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j ACCEPT
-EXPOSE 5151 5150/tcp
-RUN iptables -t nat -D PREROUTING -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j REDIRECT --to-ports 5150
-
-USER root
-
-INTERFACE eth0
-EXPOSE 5150
-RUN iptables -i eth0 -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
-EXPOSE 5150/udp
-RUN iptables -i eth0 -D INPUT -p udp -m comment --comment "Octahe rule" -m udp --dport 5150 -j ACCEPT
-EXPOSE 5151/tcp
-RUN iptables -i eth0 -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j ACCEPT
-EXPOSE 5151 5150/tcp
-RUN iptables -t nat -i eth0 -D PREROUTING -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5151 -j REDIRECT --to-ports 5150
-
-# ENTRYPOINT [ "true" ]
+WORKDIR /tmp

@@ -178,7 +178,6 @@ class Execution {
     }
 
     func copy(base: URL, copyTo: String, fromFiles: [String], chown: String? = nil) throws {
-        var toUrl = URL(fileURLWithPath: copyTo)
         var copyFile: String
         let indexedFiles = try self.indexFiles(basePath: base, fromFiles: fromFiles)
         guard indexedFiles.count >= fromFiles.count else {
@@ -187,13 +186,16 @@ class Execution {
             )
         }
         for fromUrl in indexedFiles {
+            var toUrl = URL(fileURLWithPath: copyTo)
+            let filename = fromUrl.path.components(separatedBy: "/").last!
             if toUrl.hasDirectoryPath {
-                toUrl = toUrl.appendingPathComponent(fromUrl.lastPathComponent)
+                logger.info("Combined to URL: \(toUrl.path) from filename: \(filename)")
+                toUrl.appendPathComponent(filename, isDirectory: false)
             }
             logger.info("Copying file from: \(fromUrl.path) to: \(toUrl.path)")
             if self.escalate != nil {
                 let tempUrl = URL(fileURLWithPath: "/tmp")
-                let tempFileUrl = tempUrl.appendingPathComponent(fromUrl.lastPathComponent.sha1)
+                let tempFileUrl = tempUrl.appendingPathComponent(filename.sha1)
                 _ = try self.copyRun(
                     toUrl: tempFileUrl,
                     fromUrl: fromUrl
@@ -339,6 +341,7 @@ class Execution {
         let serviceRendered = try self.serviceTemplate(entrypoint: entrypoint)
         let tempServiceFile = try self.localWriteTemp(content: serviceRendered)
         defer {
+            logger.debug("Removing temp file: \(tempServiceFile.path)")
             try? FileManager.default.removeItem(at: tempServiceFile)
         }
         try self.copy(
@@ -346,7 +349,9 @@ class Execution {
             copyTo: "/etc/systemd/system/\(serviceFile)",
             fromFiles: [tempServiceFile.lastPathComponent]
         )
+        logger.debug("Reloading systemd daemon")
         try self.run(execute: "systemctl daemon-reload")
+        logger.debug("Starting systemd service: \(serviceFile)")
         try self.run(execute: "systemctl restart \(serviceFile)")
     }
 

@@ -150,6 +150,7 @@ class ExecuteSSHVia: ExecuteSSH {
                 content: execArgs.joined(separator: " ")
             )
             defer {
+                logger.debug("Removing temp file: \(execScript.path)")
                 try? FileManager.default.removeItem(at: execScript)
             }
             _ = try self.localExec(commandArgs: ["/bin/sh", execScript.path])
@@ -169,6 +170,7 @@ class ExecuteSSHVia: ExecuteSSH {
         )
         let execArray = ["/bin/sh", execScript.path]
         defer {
+            logger.debug("Removing temp file: \(execScript.path)")
             try? FileManager.default.removeItem(at: execScript)
         }
         return try self.localExec(commandArgs: execArray)
