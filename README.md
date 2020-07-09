@@ -32,9 +32,9 @@ needing to compromise infrastructure or craft obscure deployment schemes.
 > Multi-key, multi-bastion, multi-user, multi-server, multi-target deployments all made
   simple.
 
-Octahe uses simple multi-processing which leverages native swift
-[Operations](https://developer.apple.com/documentation/foundation/operation)
-[queues](https://developer.apple.com/documentation/foundation/operationqueue).
+Octahe uses simple multi-processing which leverages native swift 
+[queues](https://developer.apple.com/documentation/foundation/operationqueue) of
+[Operations](https://developer.apple.com/documentation/foundation/operation).
 This built-in abstraction provides Octahe the ability to ensure consistent deployments
 across multiple hosts, using complex dependencies, all without troubling the user.
 From 1 machine to 1000, Octahe will get a solution deployed quickly and consistently,
