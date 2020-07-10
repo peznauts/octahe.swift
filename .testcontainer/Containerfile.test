@@ -1,3 +1,0 @@
-FROM octahe-local
-
-COPY Containerfile /opt/Containerfile

@@ -1,23 +1,3 @@
-TO localhost
+FROM octahe-local
 
-COPY Containerfile /tmp/test-file
-RUN stat /tmp/test-file
-RUN ["rm", "/tmp/test-file"]
-RUN stat /tmp/test-file || echo success
-
-COPY Container* /tmp/TargetGlob
-RUN stat /tmp/TargetGlob
-RUN rm /tmp/TargetGlob
-RUN stat /tmp/TargetGlob || echo success
-
-COPY Containerfile /tmp/
-RUN stat /tmp/Containerfile
-RUN rm /tmp/Containerfile
-RUN stat /tmp/Containerfile || echo success
-
-WORKDIR /tmp
-
-RUN env > test-env
-RUN stat /tmp/test-env
-RUN rm test-env
-RUN stat /tmp/test-env || echo success
+COPY Targetfile.local /opt/Targetfile.local

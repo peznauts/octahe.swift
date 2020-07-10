@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [ master ]
     paths:
+    - .github/workflows/swift-docker-pull.yml
     - Sources/**
     - Package.swift
     - Dockerfile
@@ -25,21 +26,69 @@ jobs:
     - name: Build new octahe container
       run: docker build -t octahe-local -f Dockerfile .
     - name: Build test container
-      run: docker build -t octahe-test -f .testcontainer/Containerfile.test .testcontainer
+      run: docker build -t octahe-test -f .testcontainer/Containerfile .testcontainer
     - name: Run tests
-      run: docker run --cap-add=NET_RAW --cap-add NET_ADMIN -t octahe-test /usr/local/bin/octahe deploy --targets=localhost /opt/Containerfile --debug
+      run: >
+        docker run
+        --cap-add=NET_RAW
+        --cap-add NET_ADMIN
+        -t octahe-test
+        /usr/local/bin/octahe deploy
+        --targets=localhost
+        /opt/Targetfile.local
+        --debug
 
   linux_build:
     runs-on: ubuntu-latest
     steps:
+    - name: Ensure ssh is installed
+      run: sudo apt update; sudo apt -y install openssh-server
+    - name: Check config
+      run: |
+        cat > sshd_config <<EOF
+          SyslogFacility AUTHPRIV
+          PermitRootLogin yes
+          AuthorizedKeysFile	.ssh/authorized_keys
+          PasswordAuthentication yes
+          ChallengeResponseAuthentication no
+          UsePAM yes
+          UseDNS no
+          X11Forwarding no
+          PrintMotd no
+        EOF
+        sudo mv sshd_config /etc/ssh/sshd_config
+        sudo systemctl restart ssh
+    - name: Create ssh key
+      run: >
+        ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+    - name: Add key to auth file
+      run: >
+        cat ~/.ssh/id_rsa.pub | tee -a ~/.ssh/authorized_keys
+    - name: Ensure the owner of the key is correct
+      run: |
+        chmod 600 ~/.ssh/authorized_keys
+        chmod 700 ~/.ssh
+        sudo chmod -c 0755 ~/
+        ls -la ~/.ssh
+    - name: Test SSH connection to localhost
+      run: >
+        ssh -vvv -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no $(whoami)@localhost
     - uses: actions/checkout@v2
     - uses: fwal/setup-swift@v1
     - name: Install dev requirements
       run: sudo apt install -y libssl-dev
     - name: Build Octahe
       run: swift build
+    - name: Run ssh test
+      run: >
+        .build/debug/octahe deploy
+        --targets="--escalate='/usr/bin/sudo --preserve-env' $(whoami)@localhost"
+        --connection-key ~/.ssh/id_rsa
+        .testcontainer/Targetfile.local
+        .testcontainer/Targetfile.sudo
+        --debug
     - name: Run local test
-      run: sudo .build/debug/octahe deploy --targets=localhost .testcontainer/Containerfile.sudo --debug
+      run: sudo .build/debug/octahe deploy --targets=localhost .testcontainer/Targetfile.local .testcontainer/Targetfile.sudo --debug
 
   macos_build:
     runs-on: macos-latest
@@ -54,4 +103,4 @@ jobs:
         CPPFLAGS: "-I/usr/local/opt/openssl@1.1/include"
         PKG_CONFIG_PATH: "/usr/local/opt/openssl@1.1/lib/pkgconfig"
     - name: Run local test
-      run: .build/debug/octahe deploy --targets=localhost .testcontainer/Containerfile --debug
+      run: .build/debug/octahe deploy --targets=localhost .testcontainer/Targetfile.local --debug

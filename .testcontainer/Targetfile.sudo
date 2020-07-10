@@ -1,26 +1,3 @@
-TO --escalate=/usr/bin/sudo localhost
-
-RUN env > /tmp/test-env
-RUN stat /tmp/test-env
-RUN rm /tmp/test-env
-RUN stat /tmp/test-env || echo success
-
-COPY Containerfile /tmp/test-file
-RUN stat /tmp/test-file
-RUN ["rm", "/tmp/test-file"]
-RUN stat /tmp/test-file || echo success
-
-COPY Containerfile /tmp/TargetGlob
-RUN stat /tmp/TargetGlob
-RUN rm /tmp/TargetGlob
-RUN stat /tmp/TargetGlob || echo success
-
-COPY --chown=root:root Containerfile* /tmp/
-RUN ls -al /tmp/Containerfile | grep "root root"
-RUN rm -f /tmp/Containerfile*
-RUN stat /tmp/Containerfile || echo success
-
-WORKDIR  /tmp
 
 EXPOSE 5150
 RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT
