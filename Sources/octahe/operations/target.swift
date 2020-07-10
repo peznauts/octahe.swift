@@ -40,7 +40,9 @@ class TargetRecord {
                 connSsh.server = self.target.domain
                 connSsh.port = self.target.port ?? 22
                 connSsh.key = self.target.key?.path ?? options.connectionKey
-
+                if let keyFile = connSsh.key {
+                    logger.debug("User defined key-file for target record: \(keyFile)")
+                }
                 try? connSsh.connect()
                 self.conn = connSsh
             }

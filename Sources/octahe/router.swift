@@ -134,6 +134,9 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
             itemData["port"] = item.port ?? 22
             itemData["user"] = item.user ?? "root"
             itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
+            if let keyFile = itemData["key"] {
+                logger.debug("User defined key-file: \(keyFile)")
+            }
             itemData["socketPath"] = controlPathSockets.appendingPathComponent(item.name.sha1, isDirectory: false).path
             if let via = item.viaName {
                 itemData["config"] = tempSshConfigFile.path

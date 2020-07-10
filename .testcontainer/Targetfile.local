@@ -1,0 +1,22 @@
+
+COPY Targetfile.local /tmp/test-file
+RUN stat /tmp/test-file
+RUN ["rm", "/tmp/test-file"]
+RUN stat /tmp/test-file || echo success
+
+COPY Targetfile* /tmp/TargetGlob
+RUN stat /tmp/TargetGlob
+RUN rm /tmp/TargetGlob
+RUN stat /tmp/TargetGlob || echo success
+
+COPY Targetfile.local /tmp/
+RUN stat /tmp/Targetfile.local
+RUN rm /tmp/Targetfile.local
+RUN stat /tmp/Targetfile.local || echo success
+
+WORKDIR /tmp
+
+RUN env > test-env
+RUN stat /tmp/test-env
+RUN rm test-env
+RUN stat /tmp/test-env || echo success

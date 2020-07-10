@@ -77,11 +77,19 @@ the [releases](https://github.com/peznauts/octahe.swift/releases).
 
 #### Octahe dependencies on OSX
 
-Octahe requires openssl be installed on the system prior to building. `openssl` can be installed
-using `brew` using the following commands.
+Octahe requires openssl be installed on the system prior to building. `openssl`
+can be installed using `brew` using the following commands.
 
 ``` shell
 brew install openssl
+```
+
+Once `openssl` is installed export the following environment variables before building.
+
+``` shell
+export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
 ```
 
 #### Octahe dependencies on CentOS 8
@@ -104,10 +112,6 @@ With swift 5.2+ installed, simply clone this repository, change directory to the
 and run the following command.
 
 ``` shell
-export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
-export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
-
 swift build \
       --configuration release \
       --jobs 4 \
@@ -141,7 +145,7 @@ to deploy itself using the provided in tree `Containerfile`. Assuming Octahe is 
 the local machine the following command can be used to deploy the application to remote hosts.
 
 ``` shell
-octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa Dockerfile
+octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa Containerfile
 ```
 
 ### Running functional tests
@@ -150,10 +154,10 @@ A Containerfile has been provided which exercises functional tests for Octahe.
 
 ``` shell
 # Deploy
-octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa .testcontainer/Containerfile
+octahe -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 .testcontainer/Targetfile.local
 
 # Undeploy
-octahe undeploy -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 -k ~/.ssh/id_rsa .testcontainer/Containerfile
+octahe undeploy -k ~/.ssh/id_rsa -t ${USER}@${SERVER}:22 .testcontainer/Targetfile.local
 ```
 
 ## Usage
@@ -177,6 +181,11 @@ Beginning deployment execution
 Here's the application being deployed to 5 remote [T](https://github.com/peznauts/octahe.swift/blob/master/DOCUMENTATION.md#to)argets in realtime.
 
 ![octahe-run](https://github.com/peznauts/octahe.swift/raw/master/assets/octahe-run.gif)
+
+### Real World Demo
+
+Checkout the [demo repo](https://github.com/peznauts/octahe.demo), highlighting
+how Octahe can be used in a more real world situation.
 
 ----
 
