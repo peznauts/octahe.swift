@@ -21,7 +21,7 @@ enum RouterError: Error {
     case failedUnknown
 }
 
-func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
+func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) -> Int32 {
     let failedTargets = targetQueue.targetRecords.values.filter {$0.state == .failed}
     var exitCode: Int32 = 0
     var message: TypeLogString
@@ -42,25 +42,31 @@ func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) {
 
     for degradedTarget in failedTargets {
         message = "\(degradedTarget.target.name) - failed step \(degradedTarget.failedStep!)/\(octaheSteps)"
-        print(
-            """
-            [-] \(message)
-                \(degradedTarget.failedTask!)
-            """
-        )
+        defer {
+            print(
+                """
+                [-] \(message)
+                    \(degradedTarget.failedTask!)
+                """
+            )
+        }
         logger.error("\(message) -- \(degradedTarget.failedTask!)")
     }
     let successTargets = targetQueue.targetRecords.values.filter {$0.state == .available}.count
     if successTargets > 0 {
-        print("[+] Successfully deployed \(successTargets) targets")
-
+        print("[+] Successful operation on \(successTargets) targets")
     }
+    return exitCode
+}
+
+func router(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
+    let exitCode = try taskRouter(parsedOptions: parsedOptions, function: function)
     exit(exitCode)
 }
 
 // swiftlint:disable function_body_length
 // swiftlint:disable cyclomatic_complexity
-func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
+func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws -> Int32 {
     switch parsedOptions.debug {
     case true:
         logger.logLevel = .trace
@@ -104,40 +110,45 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
         }
     }
 
-    var sshViaData: [[String: Any]] = []
-    let controlPathSockets: URL = URL(
-        fileURLWithPath: NSHomeDirectory()
-    ).appendingPathComponent(
-            ".ssh/octahe", isDirectory: true
-    )
-    try localMkdir(workdirURL: controlPathSockets)
-    for item in octaheArgs.octaheTargetHash.values {
-        logger.info("Parsing \(item)")
-        var itemData: [String: Any] = [:]
-        itemData["name"] = item.name.sha1
-        itemData["server"] = item.domain
-        itemData["port"] = item.port ?? 22
-        itemData["user"] = item.user ?? "root"
-        itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
-        itemData["socketPath"] = controlPathSockets.appendingPathComponent(item.name.sha1, isDirectory: false).path
-        if let via = item.viaName {
-            itemData["config"] = octaheArgs.octaheSshConfigFile?.path
-            itemData["via"] = via.sha1
-        }
-        sshViaData.append(itemData)
-    }
-    let tempSshConfigFile = try localTempFile(content: parsedOptions.configurationFiles.first!)
-    try sshRender(data: ["targets": sshViaData]).write(
-        to: tempSshConfigFile,
-        atomically: true,
-        encoding: String.Encoding.utf8
-    )
+    var tempSshConfigFile: URL = try localTempFile(content: parsedOptions.configurationFiles.first!)
+    octaheArgs.octaheSshConfigFile = tempSshConfigFile
     defer {
         logger.debug("Removing ssh temp file: \(tempSshConfigFile.path)")
         try? FileManager.default.removeItem(at: tempSshConfigFile)
     }
-    octaheArgs.octaheSshConfigFile = tempSshConfigFile
-    if octaheArgs.octaheDeploy.count < 1 {
+    if octaheArgs.octaheTargetHash.values.filter({$0.name != "localhost"}).count > 0 {
+        var sshViaData: [[String: Any]] = []
+        var controlPathSockets: URL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".ssh/octahe", isDirectory: true)
+        do {
+            try localMkdir(workdirURL: controlPathSockets)
+        } catch {
+            controlPathSockets = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("octahe", isDirectory: true)
+            try localMkdir(workdirURL: controlPathSockets)
+        }
+
+        for item in octaheArgs.octaheTargetHash.values {
+            logger.info("Parsing \(item.name)")
+            var itemData: [String: Any] = [:]
+            itemData["name"] = item.name.sha1
+            itemData["server"] = item.domain
+            itemData["port"] = item.port ?? 22
+            itemData["user"] = item.user ?? "root"
+            itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
+            itemData["socketPath"] = controlPathSockets.appendingPathComponent(item.name.sha1, isDirectory: false).path
+            if let via = item.viaName {
+                itemData["config"] = tempSshConfigFile.path
+                itemData["via"] = via.sha1
+            }
+            sshViaData.append(itemData)
+        }
+        try sshRender(data: ["targets": sshViaData]).write(
+            to: tempSshConfigFile,
+            atomically: true,
+            encoding: String.Encoding.utf8
+        )
+    }
+
+    guard octaheArgs.octaheDeploy.count > 0 else {
         let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
         let message = "No steps found within provided Containerfiles: \(configFiles)"
         logger.error("\(message)")
@@ -158,10 +169,8 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
     default:
         logger.info("Deployment mode engaged.")
     }
-
     // The total calculated steps start at 0, so we take the total and subtract 1.
     let octaheSteps = octaheArgs.octaheDeploy.count - 1
-
     // Modify the default quota set using our CLI args.
     targetQueue.maxConcurrentOperationCount = parsedOptions.connectionQuota
     var allTaskOperations: [TaskOperation] = []
@@ -178,8 +187,7 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
         )
         allTaskOperations.append(taskOperation)
     }
-
     taskQueue.taskQueue.addOperations(allTaskOperations, waitUntilFinished: true)
     logger.info("All queued tasks have been completed.")
-    cliFinish(octaheArgs: octaheArgs, octaheSteps: octaheSteps)
+    return cliFinish(octaheArgs: octaheArgs, octaheSteps: octaheSteps)
 }

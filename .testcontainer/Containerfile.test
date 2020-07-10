@@ -1,5 +1,3 @@
 FROM octahe-local
 
-RUN dnf install -y iptables systemd
-
 COPY Containerfile /opt/Containerfile
