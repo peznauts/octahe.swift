@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "octahe",
     platforms: [
-        .macOS(.v10_14)
+        .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -18,7 +18,7 @@ let package = Package(
     dependencies: [
         .package(name: "swift-argument-parser", url: "https://github.com/apple/swift-argument-parser", from: "0.1.0"),
         .package(name: "swift-log", url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
-        .package(name: "Crypto", url: "https://github.com/vapor/open-crypto", .upToNextMinor(from: "3.4.1")),
+        .package(name: "swift-crypto", url: "https://github.com/apple/swift-crypto", from: "1.0.2"),
         .package(name: "SwiftSerial", url: "https://github.com/yeokm1/SwiftSerial.git", from: "0.1.2"),
         .package(name: "Spinner", url: "https://github.com/dominicegginton/Spinner", from: "1.1.4"),
         .package(name: "Stencil", url: "https://github.com/stencilproject/Stencil", from: "0.13.0"),
@@ -32,7 +32,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "Crypto", package: "Crypto"),
+                .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "SwiftSerial", package: "SwiftSerial"),
                 .product(name: "Spinner", package: "Spinner"),
                 .product(name: "Stencil", package: "Stencil"),
