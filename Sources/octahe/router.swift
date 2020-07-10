@@ -104,36 +104,39 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
         }
     }
 
-    if octaheArgs.octaheTargetHash.values.filter({$0.viaName != nil}).count > 0 {
-        logger.info("Found targets using the `--via` instruction.")
-        octaheArgs.octaheSshConfigFile = try localTempFile(content: parsedOptions.configurationFiles.first!)
-        var sshViaData: [[String: Any]] = []
-        for item in octaheArgs.octaheTargetHash.values {
-            logger.info("Parsing \(item)")
-            var itemData: [String: Any] = [:]
-            itemData["name"] = item.name.sha1
-            itemData["server"] = item.domain
-            itemData["port"] = item.port ?? 22
-            itemData["user"] = item.user ?? "root"
-            itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
-            if let via = item.viaName {
-                itemData["config"] = octaheArgs.octaheSshConfigFile?.path
-                itemData["via"] = via.sha1
-            }
-            sshViaData.append(itemData)
+    var sshViaData: [[String: Any]] = []
+    let controlPathSockets: URL = URL(
+        fileURLWithPath: NSHomeDirectory()
+    ).appendingPathComponent(
+            ".ssh/octahe", isDirectory: true
+    )
+    try localMkdir(workdirURL: controlPathSockets)
+    for item in octaheArgs.octaheTargetHash.values {
+        logger.info("Parsing \(item)")
+        var itemData: [String: Any] = [:]
+        itemData["name"] = item.name.sha1
+        itemData["server"] = item.domain
+        itemData["port"] = item.port ?? 22
+        itemData["user"] = item.user ?? "root"
+        itemData["key"] = item.key?.path ?? parsedOptions.connectionKey
+        itemData["socketPath"] = controlPathSockets.appendingPathComponent(item.name.sha1, isDirectory: false).path
+        if let via = item.viaName {
+            itemData["config"] = octaheArgs.octaheSshConfigFile?.path
+            itemData["via"] = via.sha1
         }
-        try sshRender(data: ["targets": sshViaData]).write(
-            to: octaheArgs.octaheSshConfigFile!,
-            atomically: true,
-            encoding: String.Encoding.utf8
-        )
+        sshViaData.append(itemData)
     }
+    let tempSshConfigFile = try localTempFile(content: parsedOptions.configurationFiles.first!)
+    try sshRender(data: ["targets": sshViaData]).write(
+        to: tempSshConfigFile,
+        atomically: true,
+        encoding: String.Encoding.utf8
+    )
     defer {
-        if let tempSshConfigFile = octaheArgs.octaheSshConfigFile {
-            logger.debug("Removing temp file: \(tempSshConfigFile.path)")
-            try? FileManager.default.removeItem(at: tempSshConfigFile)
-        }
+        logger.debug("Removing ssh temp file: \(tempSshConfigFile.path)")
+        try? FileManager.default.removeItem(at: tempSshConfigFile)
     }
+    octaheArgs.octaheSshConfigFile = tempSshConfigFile
     if octaheArgs.octaheDeploy.count < 1 {
         let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
         let message = "No steps found within provided Containerfiles: \(configFiles)"

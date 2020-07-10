@@ -32,7 +32,7 @@ needing to compromise infrastructure or craft obscure deployment schemes.
 > Multi-key, multi-bastion, multi-user, multi-server, multi-target deployments all made
   simple.
 
-Octahe uses simple multi-processing which leverages native swift 
+Octahe uses simple multi-processing which leverages native swift
 [queues](https://developer.apple.com/documentation/foundation/operationqueue) of
 [Operations](https://developer.apple.com/documentation/foundation/operation).
 This built-in abstraction provides Octahe the ability to ensure consistent deployments
@@ -75,13 +75,13 @@ the [releases](https://github.com/peznauts/octahe.swift/releases).
 
 ### Building Octahe
 
-#### Octahe dependencies on OSX 10.15
+#### Octahe dependencies on OSX
 
-Octahe requires libssh2 be installed on the system prior to building. `libssh2` can be installed
+Octahe requires openssl be installed on the system prior to building. `openssl` can be installed
 using `brew` using the following commands.
 
 ``` shell
-brew install libssh2
+brew install openssl
 ```
 
 #### Octahe dependencies on CentOS 8
@@ -89,13 +89,13 @@ brew install libssh2
 Install `EPEL`.
 
 ``` shell
-dnf -y install epel-release libssh2-devel openssl-devel
+dnf -y install epel-release openssl-devel
 ```
 
 Install `swift-lang`.
 
 ``` shell
-dnf -y install swift-lang libssh2-devel openssl-devel
+dnf -y install swift-lang
 ```
 
 #### Building the Octahe binary
@@ -104,6 +104,10 @@ With swift 5.2+ installed, simply clone this repository, change directory to the
 and run the following command.
 
 ``` shell
+export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
+
 swift build \
       --configuration release \
       --jobs 4 \

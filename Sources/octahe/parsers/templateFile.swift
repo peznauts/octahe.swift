@@ -63,15 +63,26 @@ Host *
     VerifyHostKeyDNS no
     ForwardX11 no
     ControlMaster auto
+    ControlPersist 600
+    KeepAlive yes
+    ConnectTimeout 30
+    ConnectionAttempts 3
+    ServerAliveInterval 300
+    ServerAliveCountMax 2
+    IdentitiesOnly no
+    IdentityAgent SSH_AUTH_SOCK
+    LogLevel ERROR
+    BatchMode yes
+    ForwardAgent yes
 
 {% for item in targets %}
 Host {{ item['name'] }}
+    ControlPath {{ item['socketPath'] }}
     HostName {{ item['server'] }}
     Port {{ item['port'] }}
     User {{ item['user'] }}
-    IdentitiesOnly yes
-    IdentityFile {{ item['key'] }}
-{% if item['via'] %}    ProxyCommand ssh -F {{ item["config"] }} -W %h:%p {{ item['via'] }}{%   endif %}
+{% if item['key'] %}    IdentityFile {{ item['key'] }}{% endif %}
+{% if item['via'] %}    ProxyCommand ssh -F {{ item["config"] }} -W %h:%p {{ item['via'] }}{% endif %}
 {% endfor %}
 """
 

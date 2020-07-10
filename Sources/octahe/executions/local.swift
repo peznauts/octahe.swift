@@ -49,7 +49,7 @@ class ExecuteLocal: Execution {
 
     override func runReturn(execute: String) throws -> String {
         if !FileManager.default.fileExists(atPath: workdirURL.path) {
-            try self.localMkdir(workdirURL: workdirURL)
+            try localMkdir(workdirURL: workdirURL)
         }
         FileManager.default.changeCurrentDirectoryPath(workdir)
         return try self.localExecReturn(execute: execute)

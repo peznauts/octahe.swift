@@ -7,36 +7,28 @@
 
 import Foundation
 
-import Shout
-
 class ExecuteSSH: Execution {
-    var ssh: SSH?
     var server: String = "localhost"
     var port: Int32 = 22
     var name: String = "localhost"
     var key: String?
+    var sshConnectionString: String = "/usr/bin/ssh"
+    var scpConnectionString: String = "/usr/bin/scp"
+    var connectionArgs: [String] = []
+    var sshCommand: [String]?
+    var scpCommand: [String]?
 
     override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         super.init(cliParameters: cliParameters, processParams: processParams)
+
         self.workdir = "/"
         self.workdirURL = URL(fileURLWithPath: workdir)
-    }
-
-    override func connect() throws {
-        let cssh = try SSH(host: self.server, port: self.port)
-        cssh.ptyType = .vanilla
-        if let privatekey = self.key {
-            logger.info(
-                "Connecting to \(String(describing: self.target ?? self.server)) using key based authentication"
-            )
-            try cssh.authenticate(username: self.user, privateKey: privatekey)
-        } else {
-            logger.info(
-                "Connecting to \(String(describing: self.target ?? self.server)) using agent based authentication"
-            )
-            try cssh.authenticateByAgent(username: self.user)
+        if let sshConfig = self.processParams.octaheSshConfigFile {
+            self.connectionArgs.append("-F \(String(describing: sshConfig.path).quote)")
         }
-        self.ssh = cssh
+        if let privatekey = self.key {
+            self.connectionArgs.append("-i " + privatekey)
+        }
     }
 
     override func probe() throws {
@@ -58,11 +50,6 @@ class ExecuteSSH: Execution {
         self.environment["SYSTEMD_VERSION"] = String(describing: systemd.last!.strip)
     }
 
-    override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
-        try self.ssh!.sendFile(localURL: fromUrl, remotePath: toUrl.path)
-        return toUrl.path
-    }
-
     override func move(fromPath: String, toPath: String) throws {
         try self.run(execute: "mv \(fromPath) \(toPath)")
     }
@@ -80,18 +67,6 @@ class ExecuteSSH: Execution {
         return self.posixEncoder(item: envVars.joined(separator: " ") + " " + preparedExec)
     }
 
-    override func runReturn(execute: String) throws -> String {
-        // NOTE This is not ideal, I wishthere was a better way to leverage an
-        // environment setup prior to executing a command which didn't require
-        // server side configuration, however, it does so here we are.
-        let preparedCommand = self.prepareExec(execute: execute)
-        let (status, output) = try self.ssh!.capture(preparedCommand)
-        if status != 0 {
-            throw RouterError.failedExecution(message: "FAILED execution: \(output)")
-        }
-        return output
-    }
-
     override func mkdir(workdirURL: URL) throws {
         try self.run(execute: "mkdir -p \(workdirURL.path)")
     }
@@ -107,37 +82,13 @@ class ExecuteSSH: Execution {
             )
         }
     }
-}
-
-class ExecuteSSHVia: ExecuteSSH {
-    var sshConnectionString: String
-    var scpConnectionString: String
-    var connectionArgs: [String] = ["-o ControlPersist=600"]
-    var sshCommand: [String]?
-    var scpCommand: [String]?
-    let controlPath: URL
-
-    override init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
-        self.sshConnectionString = "/usr/bin/ssh"
-        self.scpConnectionString = "/usr/bin/scp"
-        self.controlPath = URL(fileURLWithPath: NSTemporaryDirectory())
-
-        super.init(cliParameters: cliParameters, processParams: processParams)
-        self.connectionArgs.append("-o ControlPath=\"\(controlPath.path)/.ssh/%h\"")
-        self.connectionArgs.append("-F \(self.processParams.octaheSshConfigFile!.path)")
-        if let privatekey = self.key {
-            self.connectionArgs.append("-i " + privatekey)
-        }
-    }
 
     override func connect() throws {
         logger.info("Connecting to \(String(describing: self.target)) using local ssh.")
-        try self.localMkdir(workdirURL: controlPath.appendingPathComponent(".ssh/sockets", isDirectory: true))
         let sshArgs = self.connectionArgs.joined(separator: " ")
         self.sshCommand = [
             self.sshConnectionString,
             sshArgs,
-            "-t",
             "-n",
             self.name.sha1
         ]
@@ -163,16 +114,13 @@ class ExecuteSSHVia: ExecuteSSH {
     }
 
     override func runReturn(execute: String) throws -> String {
-        let execTask = self.prepareExec(execute: execute)
-        let execScript: URL
-        execScript = try self.localWriteTemp(
-            content: self.sshCommand!.joined(separator: " ") + " " + self.posixEncoder(item: execTask).quote
-        )
-        let execArray = ["/bin/sh", execScript.path]
+        let execCommand = self.sshCommand!.joined(separator: " ") + " " + self.prepareExec(execute: execute).escapeQuote
+        let execScript: URL = try self.localWriteTemp(content: execCommand)
         defer {
             logger.debug("Removing temp file: \(execScript.path)")
             try? FileManager.default.removeItem(at: execScript)
         }
+        let execArray = ["/bin/sh", execScript.path]
         return try self.localExec(commandArgs: execArray)
     }
 }
