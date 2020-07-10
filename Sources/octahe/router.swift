@@ -21,68 +21,68 @@ enum RouterError: Error {
     case failedUnknown
 }
 
-func cliFinish(octaheArgs: ConfigParse, octaheSteps: Int) -> Int32 {
-    let failedTargets = targetQueue.targetRecords.values.filter {$0.state == .failed}
-    var exitCode: Int32 = 0
-    var message: TypeLogString
-    switch failedTargets.count {
-    case octaheArgs.octaheTargetsCount:
-        message = "Execution Failed."
-        logger.critical("\(message)")
-        exitCode = 2
-    case _ where failedTargets.count > 0:
-        message = "Execution Degraded."
-        logger.warning("\(message)")
-        exitCode = 1
-    default:
-        message = "Success."
-        logger.info("\(message)")
-    }
-    print("\n\(message)\n")
+final class Router {
+    let parsedOptions: OctaheCLI.Options
+    let function: ExecutionStates
+    let octaheArgs: ConfigParse
+    let tempSshConfigFile: URL
+    var octaheSteps: Int = 0
 
-    for degradedTarget in failedTargets {
-        message = "\(degradedTarget.target.name) - failed step \(degradedTarget.failedStep!)/\(octaheSteps)"
-        defer {
-            print(
-                """
-                [-] \(message)
-                    \(degradedTarget.failedTask!)
-                """
-            )
+    init(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
+        self.parsedOptions = parsedOptions
+        self.function = function
+
+        let configFileURL = URL(fileURLWithPath: self.parsedOptions.configurationFiles.first!)
+        self.octaheArgs = try ConfigParse(
+            parsedOptions: self.parsedOptions,
+            configDirURL: configFileURL.deletingLastPathComponent()
+        )
+        self.tempSshConfigFile = try localTempFile(content: self.parsedOptions.configurationFiles.first!)
+        self.octaheArgs.octaheSshConfigFile = self.tempSshConfigFile
+    }
+
+    private func cliFinish() -> Int32 {
+        let failedTargets = targetQueue.targetRecords.values.filter {$0.state == .failed}
+        var exitCode: Int32 = 0
+        var message: TypeLogString
+        switch failedTargets.count {
+        case self.octaheArgs.octaheTargetsCount:
+            message = "Execution Failed."
+            logger.critical("\(message)")
+            exitCode = 2
+        case _ where failedTargets.count > 0:
+            message = "Execution Degraded."
+            logger.warning("\(message)")
+            exitCode = 1
+        default:
+            message = "Success."
+            logger.info("\(message)")
         }
-        logger.error("\(message) -- \(degradedTarget.failedTask!)")
+        print("\n\(message)\n")
+
+        for degradedTarget in failedTargets {
+            message = "\(degradedTarget.target.name) - failed step \(degradedTarget.failedStep!)/\(self.octaheSteps)"
+            defer {
+                print(
+                    """
+                    [-] \(message)
+                        \(degradedTarget.failedTask!)
+                    """
+                )
+            }
+            logger.error("\(message) -- \(degradedTarget.failedTask!)")
+        }
+        let successTargets = targetQueue.targetRecords.values.filter {$0.state == .available}.count
+        if successTargets > 0 {
+            print("[+] Successful operation on \(successTargets) targets")
+        }
+        return exitCode
     }
-    let successTargets = targetQueue.targetRecords.values.filter {$0.state == .available}.count
-    if successTargets > 0 {
-        print("[+] Successful operation on \(successTargets) targets")
-    }
-    return exitCode
-}
 
-func router(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
-    let exitCode = try taskRouter(parsedOptions: parsedOptions, function: function)
-    exit(exitCode)
-}
-
-// swiftlint:disable function_body_length
-// swiftlint:disable cyclomatic_complexity
-func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws -> Int32 {
-    switch parsedOptions.debug {
-    case true:
-        logger.logLevel = .trace
-    default:
-        logger.logLevel = .critical
-    }
-    logger.debug("Running function: \(function)")
-
-    let configFileURL = URL(fileURLWithPath: parsedOptions.configurationFiles.first!)
-    let configDirURL = configFileURL.deletingLastPathComponent()
-    let octaheArgs = try ConfigParse(parsedOptions: parsedOptions, configDirURL: configDirURL)
-
-    if octaheArgs.octaheFrom.count > 0 {
+    private func processFrom() throws {
         throw RouterError.notImplemented(message: "FROM is not implemented yet.")
         logger.info("Found FROM information, pulling in instructions from external Targetfiles")
-        for from in octaheArgs.octaheFrom {
+        for from in self.octaheArgs.octaheFrom {
             logger.info("Parsing \(from)")
             let fromComponents = from.components(separatedBy: ":")
             let image = fromComponents.first
@@ -104,29 +104,25 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
                 return ["RUN", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
             }
             for deployOption in deployOptions.reversed() {
-                octaheArgs.octaheDeploy.insert(try octaheArgs.deploymentCases(deployOption), at: 0)
+                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(deployOption), at: 0)
             }
             logger.info("Adding \(deployOptions.count) instructions into the deployment")
         }
     }
 
-    var tempSshConfigFile: URL = try localTempFile(content: parsedOptions.configurationFiles.first!)
-    octaheArgs.octaheSshConfigFile = tempSshConfigFile
-    defer {
-        logger.debug("Removing ssh temp file: \(tempSshConfigFile.path)")
-        try? FileManager.default.removeItem(at: tempSshConfigFile)
-    }
-    if octaheArgs.octaheTargetHash.values.filter({$0.name != "localhost"}).count > 0 {
+    private func nonLocalHosts() throws {
         var sshViaData: [[String: Any]] = []
-        var controlPathSockets: URL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".ssh/octahe", isDirectory: true)
+        var controlPathSockets: URL = URL(fileURLWithPath: NSHomeDirectory())
+        controlPathSockets = controlPathSockets.appendingPathComponent(".ssh/octahe", isDirectory: true)
         do {
             try localMkdir(workdirURL: controlPathSockets)
         } catch {
-            controlPathSockets = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("octahe", isDirectory: true)
+            controlPathSockets = URL(fileURLWithPath: NSTemporaryDirectory())
+            controlPathSockets = controlPathSockets.appendingPathComponent("octahe", isDirectory: true)
             try localMkdir(workdirURL: controlPathSockets)
         }
 
-        for item in octaheArgs.octaheTargetHash.values {
+        for item in self.octaheArgs.octaheTargetHash.values {
             logger.info("Parsing \(item.name)")
             var itemData: [String: Any] = [:]
             itemData["name"] = item.name.sha1
@@ -139,58 +135,91 @@ func taskRouter(parsedOptions: OctaheCLI.Options, function: ExecutionStates) thr
             }
             itemData["socketPath"] = controlPathSockets.appendingPathComponent(item.name.sha1, isDirectory: false).path
             if let via = item.viaName {
-                itemData["config"] = tempSshConfigFile.path
+                itemData["config"] = self.tempSshConfigFile.path
                 itemData["via"] = via.sha1
             }
             sshViaData.append(itemData)
         }
         try sshRender(data: ["targets": sshViaData]).write(
-            to: tempSshConfigFile,
+            to: self.tempSshConfigFile,
             atomically: true,
             encoding: String.Encoding.utf8
         )
     }
 
-    guard octaheArgs.octaheDeploy.count > 0 else {
-        let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
-        let message = "No steps found within provided Containerfiles: \(configFiles)"
-        logger.error("\(message)")
-        throw RouterError.failedExecution(message: String(describing: message))
+    private func queueTasks() {
+        // Modify the default quota set using our CLI args.
+        targetQueue.maxConcurrentOperationCount = parsedOptions.connectionQuota
+        var allTaskOperations: [TaskOperation] = []
+        for (index, deployItem) in self.octaheArgs.octaheDeploy.enumerated() {
+            logger.info("Queuing task: \(index) - \(deployItem.value.original)")
+            let taskOperation = TaskOperation(
+                deployItem: deployItem,
+                steps: self.octaheSteps,
+                stepIndex: index,
+                args: self.octaheArgs,
+                options: parsedOptions,
+                function: function,
+                printStatus: !parsedOptions.debug
+            )
+            allTaskOperations.append(taskOperation)
+        }
+        taskQueue.taskQueue.addOperations(allTaskOperations, waitUntilFinished: true)
+        logger.info("All queued tasks have been completed.")
     }
 
-    switch function {
-    case .undeploy:
-        logger.info("Undeployment mode engaged.")
-        let deployOptions =  octaheArgs.octaheDeploy.filter {key, _ in
-            return ["ENTRYPOINT", "EXPOSE", "INTERFACE"].contains(key)
+    private func taskRouter() throws -> Int32 {
+        defer {
+            logger.debug("Removing ssh temp file: \(self.tempSshConfigFile.path)")
+            try? FileManager.default.removeItem(at: self.tempSshConfigFile)
         }
-        var undeploy: [(key: String, value: TypeDeploy)] = []
-        for deployItem in deployOptions {
-            undeploy.append(deployItem)
+
+        switch parsedOptions.debug {
+        case true:
+            logger.logLevel = .trace
+        default:
+            logger.logLevel = .critical
         }
-        octaheArgs.octaheDeploy = undeploy
-    default:
-        logger.info("Deployment mode engaged.")
+        logger.debug("Running function: \(function)")
+
+        if self.octaheArgs.octaheFrom.count > 0 {
+            try self.processFrom()
+        }
+
+        if self.octaheArgs.octaheTargetHash.values.filter({$0.name != "localhost"}).count > 0 {
+            try self.nonLocalHosts()
+        }
+
+        guard self.octaheArgs.octaheDeploy.count > 0 else {
+            let configFiles = parsedOptions.configurationFiles.joined(separator: " ")
+            let message = "No steps found within provided Containerfiles: \(configFiles)"
+            logger.error("\(message)")
+            throw RouterError.failedExecution(message: String(describing: message))
+        }
+
+        switch function {
+        case .undeploy:
+            logger.info("Undeployment mode engaged.")
+            let deployOptions =  self.octaheArgs.octaheDeploy.filter {key, _ in
+                return ["ENTRYPOINT", "EXPOSE", "INTERFACE"].contains(key)
+            }
+            var undeploy: [(key: String, value: TypeDeploy)] = []
+            for deployItem in deployOptions {
+                undeploy.append(deployItem)
+            }
+            self.octaheArgs.octaheDeploy = undeploy
+        default:
+            logger.info("Deployment mode engaged.")
+        }
+
+        // The total calculated steps start at 0, so we take the total and subtract 1.
+        self.octaheSteps = self.octaheArgs.octaheDeploy.count - 1
+        self.queueTasks()
+        return cliFinish()
     }
-    // The total calculated steps start at 0, so we take the total and subtract 1.
-    let octaheSteps = octaheArgs.octaheDeploy.count - 1
-    // Modify the default quota set using our CLI args.
-    targetQueue.maxConcurrentOperationCount = parsedOptions.connectionQuota
-    var allTaskOperations: [TaskOperation] = []
-    for (index, deployItem) in octaheArgs.octaheDeploy.enumerated() {
-        logger.info("Queuing task: \(index) - \(deployItem.value.original)")
-        let taskOperation = TaskOperation(
-            deployItem: deployItem,
-            steps: octaheSteps,
-            stepIndex: index,
-            args: octaheArgs,
-            options: parsedOptions,
-            function: function,
-            printStatus: !parsedOptions.debug
-        )
-        allTaskOperations.append(taskOperation)
+
+    public func main() throws {
+        let exitCode = try self.taskRouter()
+        exit(exitCode)
     }
-    taskQueue.taskQueue.addOperations(allTaskOperations, waitUntilFinished: true)
-    logger.info("All queued tasks have been completed.")
-    return cliFinish(octaheArgs: octaheArgs, octaheSteps: octaheSteps)
 }

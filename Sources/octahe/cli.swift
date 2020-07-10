@@ -295,7 +295,7 @@ extension OctaheCLI {
 
         func run() throws {
             print("Beginning deployment execution")
-            try router(parsedOptions: options, function: ExecutionStates.deploy)
+            try Router(parsedOptions: options, function: ExecutionStates.deploy).main()
         }
     }
 
@@ -309,7 +309,7 @@ extension OctaheCLI {
         var options: OctaheCLI.Options
 
         func run() throws {
-            try router(parsedOptions: options, function: ExecutionStates.undeploy)
+            try Router(parsedOptions: options, function: ExecutionStates.undeploy).main()
         }
     }
 

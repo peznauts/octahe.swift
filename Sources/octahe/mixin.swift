@@ -103,8 +103,17 @@ func localTempFile(content: String, marker: String? = nil) throws -> URL {
     } else {
         tempfile = content.sha1
     }
-    let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("octahe")
-    try localMkdir(workdirURL: tempUrl)
+
+    var tempUrl: URL = URL(fileURLWithPath: NSHomeDirectory())
+    tempUrl = tempUrl.appendingPathComponent(".tmp/octahe", isDirectory: true)
+    do {
+        try localMkdir(workdirURL: tempUrl)
+    } catch {
+        tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+        tempUrl = tempUrl.appendingPathComponent("octahe", isDirectory: true)
+        try localMkdir(workdirURL: tempUrl)
+    }
+
     let tempServiceFile = tempUrl.appendingPathComponent(tempfile)
     if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
         try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)
