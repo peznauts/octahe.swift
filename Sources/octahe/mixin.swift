@@ -139,9 +139,8 @@ extension String {
     }
 
     var sha1: String {
-        // swiftlint:disable force_try
-        let digest = try! SHA1.hash(self)
-        return digest.hexEncodedString()
+        let digest = Insecure.SHA1.hash(data: Data(self.utf8))
+        return digest.compactMap { String(format: "%02x", $0) }.joined()
     }
 
     func toInt() throws -> Int32 {

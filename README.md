@@ -75,22 +75,10 @@ the [releases](https://github.com/peznauts/octahe.swift/releases).
 
 ### Building Octahe
 
-#### Octahe dependencies on OSX
+#### Octahe dependencies on macOS
 
-Octahe requires openssl be installed on the system prior to building. `openssl`
-can be installed using `brew` using the following commands.
-
-``` shell
-brew install openssl
-```
-
-Once `openssl` is installed export the following environment variables before building.
-
-``` shell
-export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
-export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
-```
+In order to build Octahe on macOS you will need OSX 10.15 or better. You will also need
+XCode installed and updated to the latest stable release.
 
 #### Octahe dependencies on CentOS 8
 
