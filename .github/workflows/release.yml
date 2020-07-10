@@ -27,12 +27,9 @@ jobs:
     - uses: actions/checkout@v2
     - uses: fwal/setup-swift@v1
     - name: Install dev requirements
-      run: sudo apt install -y libssh2-1-dev libssl-dev
+      run: sudo apt install -y libssl-dev
     - name: Build Octahe
       run: swift build --configuration release -Xswiftc -g
-      env:
-        CPPFLAGS: "-I/usr/include"
-        PKG_CONFIG_PATH: "/usr/lib/x86_64-linux-gnu/pkgconfig"
     - name: Upload Octahe release
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
@@ -44,28 +41,25 @@ jobs:
         asset_name: octahe-x86-linux
         asset_content_type: application/octet-stream
 
-  # The macosx jobs have compiler issues at this time.
-  # macos_artifact:
-  #   runs-on: macos-latest
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: Install dev requirements
-  #     run: brew install libssh2 openssl
-  #   - name: Reinstall openssl
-  #     run: brew reinstall openssl libssh2
-  #   - name: Build Octahe
-  #     run: swift build --configuration release -Xswiftc -g
-  #     env:
-  #       LDFLAGS: "-L/usr/local/opt/openssl@1.1/lib"
-  #       CPPFLAGS: "-I/usr/local/opt/openssl@1.1/include"
-  #       PKG_CONFIG_PATH: "/usr/local/opt/openssl@1.1/lib/pkgconfig"
-  #   - name: Upload Octahe release
-  #     id: upload-release-asset
-  #     uses: actions/upload-release-asset@v1
-  #     env:
-  #       GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-  #     with:
-  #       upload_url: ${{ github.event.release.upload_url }}
-  #       asset_path: .build/release/octahe
-  #       asset_name: octahe-x86-macosx
-  #       asset_content_type: application/octet-stream
+  macos_artifact:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dev requirements
+      run: brew install openssl
+    - name: Build Octahe
+      run: swift build --configuration release -Xswiftc -g
+      env:
+        LDFLAGS: "-L/usr/local/opt/openssl@1.1/lib"
+        CPPFLAGS: "-I/usr/local/opt/openssl@1.1/include"
+        PKG_CONFIG_PATH: "/usr/local/opt/openssl@1.1/lib/pkgconfig"
+    - name: Upload Octahe release
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: .build/release/octahe
+        asset_name: octahe-x86-macosx
+        asset_content_type: application/octet-stream

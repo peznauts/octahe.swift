@@ -33,15 +33,8 @@ class TargetRecord {
                 logger.debug("Using the [serial] driver")
                 self.conn = ExecuteSerial(cliParameters: options, processParams: args)
             default:
-                let connSsh: ExecuteSSH
-                if self.target.viaName != nil {
-                    logger.debug("Using the [sshVia] driver")
-                    connSsh = ExecuteSSHVia(cliParameters: options, processParams: args)
-                } else {
-                    logger.debug("Using the [ssh] driver")
-                    connSsh = ExecuteSSH(cliParameters: options, processParams: args)
-                }
-
+                logger.debug("Using the [sshVia] driver")
+                let connSsh = ExecuteSSH(cliParameters: options, processParams: args)
                 connSsh.name = self.target.name
                 connSsh.user = self.target.user ?? "root"
                 connSsh.server = self.target.domain

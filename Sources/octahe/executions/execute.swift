@@ -78,36 +78,33 @@ class Execution {
         var launchArgs = commandArgs
         let task = Process()
         let pipe = Pipe()
-        task.environment = self.environment
+
+        // Duplicate the known environment variables and apply all options to the task environment.
+        var taskEnvironment = self.environment
+        for (key, value) in ProcessInfo.processInfo.environment {
+            taskEnvironment[key] = value
+        }
+        task.environment = taskEnvironment
         task.executableURL = URL(fileURLWithPath: launchArgs.removeFirst())
         task.arguments = launchArgs
-        task.standardError = pipe
         task.standardOutput = pipe
-        pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        task.standardError = pipe
         try task.run()
         task.waitUntilExit()
+        pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
         let output = pipe.fileHandleForReading.availableData
         let outputInfo = String(data: output, encoding: String.Encoding.utf8)!
         if task.terminationStatus != 0 {
-            let message = """
-                          FAILED: \(commandArgs.joined(separator: " "))
-                          STATUS: \(task.terminationStatus)
-                          REASON: \(task.terminationReason)
-                          OUTPUT: \(outputInfo)
-                          """
-            logger.critical("\(message)")
+            var message = "STATUS: \(task.terminationStatus)"
+            message += " REASON: \(task.terminationReason)"
+            message += " OUTPUT: \(outputInfo)"
             throw RouterError.failedExecution(message: message)
         }
+        // STDOUT will now be visable when debug is enabled.
+        if self.cliParams.debug {
+            print(outputInfo)
+        }
         return outputInfo
-    }
-
-    func localMkdir(workdirURL: URL) throws {
-        logger.debug("Creating local directory: \(workdirURL.path)")
-        try FileManager.default.createDirectory(
-            at: workdirURL,
-            withIntermediateDirectories: true,
-            attributes: nil
-        )
     }
 
     func localExecReturn(execute: String) throws -> String {

@@ -85,6 +85,17 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
     return data
 }
 
+func localMkdir(workdirURL: URL) throws {
+    if !FileManager.default.fileExists(atPath: workdirURL.path) {
+        logger.debug("Creating local directory: \(workdirURL.path)")
+        try FileManager.default.createDirectory(
+            at: workdirURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+    }
+}
+
 func localTempFile(content: String, marker: String? = nil) throws -> URL {
     let tempfile: String
     if let mark = marker {
@@ -92,7 +103,8 @@ func localTempFile(content: String, marker: String? = nil) throws -> URL {
     } else {
         tempfile = content.sha1
     }
-    let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+    let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("octahe")
+    try localMkdir(workdirURL: tempUrl)
     let tempServiceFile = tempUrl.appendingPathComponent(tempfile)
     if !FileManager.default.fileExists(atPath: tempServiceFile.path) {
         try content.write(to: tempServiceFile, atomically: true, encoding: String.Encoding.utf8)

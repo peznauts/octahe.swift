@@ -11,15 +11,6 @@
         }
       },
       {
-        "package": "Socket",
-        "repositoryURL": "https://github.com/IBM-Swift/BlueSocket",
-        "state": {
-          "branch": null,
-          "revision": "c46a3d41f5b2401d18bcb46d0101cdc5cd13e307",
-          "version": "1.0.52"
-        }
-      },
-      {
         "package": "Core",
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
@@ -53,15 +44,6 @@
           "branch": null,
           "revision": "9c52c1952e9b2305d4507cf473392ac2d7c9b155",
           "version": "3.1.5"
-        }
-      },
-      {
-        "package": "Shout",
-        "repositoryURL": "https://github.com/jakeheis/Shout",
-        "state": {
-          "branch": null,
-          "revision": "65bf1d1d42e2fb0c47e4d78c0653ebb6d5de5cb5",
-          "version": "0.5.6"
         }
       },
       {
