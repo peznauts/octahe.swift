@@ -7,21 +7,14 @@
 
 import Foundation
 
-enum InspectionStates {
-    case new, running, success, failed
+import HTTP
+
+struct DockerToken: Codable {
+    var token: String
 }
 
-let utilityQueue = DispatchQueue.global(qos: .utility)
-
-class InspectionOperations {
-    lazy var inspectionInComplete: [String: TypeEntrypointOptions] = [:]
-    lazy var inspectionInProgress: [IndexPath: Operation] = [:]
-    lazy var inspectionQueue: OperationQueue = {
-    var queue = OperationQueue()
-        queue.name = "Inspection queue"
-        queue.maxConcurrentOperationCount = 1
-        return queue
-    }()
+enum InspectionStates {
+    case new, running, success, failed
 }
 
 class InspectionRecord {
@@ -34,37 +27,81 @@ class InspectionRecord {
     }
 }
 
-class InspectionOperation: Operation {
-    let containerImage: String
-    let containerTag: String
-    var inspectionRecords: InspectionRecord
-    var imageURL: URL = URL(string: "https://registry.hub.docker.com/v2")!
-    var headers = ["Accept": "application/json"]
-    let debug: Bool
+class Inspection {
+    var containerImage: String?
+    var containerTag: String = "latest"
+    var containerRepo: String = "library"
+    var fullRepository: String?
+    var inspectionRecord: InspectionRecord?
+    let requestQueue: MultiThreadedEventLoopGroup
+    var client: HTTPClient?
+    var token: String?
+    var headers: HTTPHeaders = .init()
 
-    init(containerImage: String, tag: String, debug: Bool = false) {
-        self.inspectionRecords = InspectionRecord(name: imageURL.lastPathComponent)
-        self.containerImage = containerImage
-        self.containerTag = tag
-        self.debug = debug
+    init() {
+        self.requestQueue = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     }
 
-    func waitForResponse() {
-        let group = DispatchGroup()
-        group.wait()
+    private func createClient(hostname: String = "auth.docker.io") throws {
+        self.client = try HTTPClient.connect(scheme: .https, hostname: hostname, on: self.requestQueue).wait()
     }
 
-    func runManifestsRequest() {
-        preconditionFailure("This method is not supported")
+    private func makeRequest(urlString: String) throws -> HTTPBody {
+        var httpReq = HTTPRequest(
+            method: .GET,
+            url: urlString,
+            headers: self.headers
+        )
+        logger.debug("URL: \(httpReq.url)")
+        httpReq.contentType = .json
+        let httpRes = try self.client?.send(httpReq).wait()
+        guard httpRes!.status == .ok else {
+            logger.debug("HTTP HEADERS: \(httpRes!.headers)")
+            logger.debug("HTTP STATUS: \(httpRes!.status)")
+            logger.debug("HTTP BODY: \(httpRes!.body)")
+            throw RouterError.failedExecution(message: "Auth request has failed. Run with debug for more information.")
+        }
+        return httpRes!.body
     }
 
-    override func main() {
-        logger.debug("Processing image API for: \(self.containerImage) tag: \(self.containerTag) url: \(imageURL.path)")
-        // we need a timeout here, and better flow control.
-        self.runManifestsRequest()
-        self.waitForResponse()
-        let fileParser = FileParser()
-        fileParser.lineParser(lines: self.inspectionRecords.items)
-        inspectionQueue.inspectionInComplete[self.containerImage] = fileParser.configOptions
+    private func storeToken() throws {
+        let body = try self.makeRequest(
+            urlString: "/token?service=registry.docker.io&scope=repository:\(self.fullRepository!):pull"
+        )
+        let jsonData = String(describing: body).data(using: .utf8)!
+        let jsonBody = try JSONDecoder().decode(DockerToken.self, from: jsonData)
+        self.token = jsonBody.token
+    }
+
+    private func imageManafest() throws {
+        try self.createClient(hostname: "registry-1.docker.io")
+        self.headers.add(name: "Authorization", value: "Bearer " + self.token!)
+        let body = try self.makeRequest(
+            urlString: "/v2/\(self.fullRepository!)/manifests/\(self.containerTag)"
+        )
+        print(body)
+    }
+
+    public func imageParser(fromImage: String) {
+        self.inspectionRecord = InspectionRecord(name: fromImage)
+
+        logger.info("Parsing \(fromImage)")
+        let fromComponents = fromImage.components(separatedBy: ":")
+        if fromComponents.last != self.containerTag {
+            self.containerTag = fromComponents.last!
+        }
+        self.containerImage = fromComponents.first!
+        let imageComponents = self.containerImage!.components(separatedBy: "/")
+        if imageComponents.first != self.containerImage {
+            self.containerRepo = imageComponents.first!
+            self.containerImage = imageComponents.last!
+        }
+        self.fullRepository = "\(self.containerRepo)/\(self.containerImage!)"
+    }
+
+    public func main() throws {
+        try self.createClient()
+        try self.storeToken()
+        try self.imageManafest()
     }
 }

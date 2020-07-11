@@ -13,8 +13,6 @@ let taskQueue = TaskOperations()
 
 let targetQueue = TargetOperations()
 
-let inspectionQueue = InspectionOperations()
-
 enum RouterError: Error {
     case notImplemented(message: String)
     case failedExecution(message: String)
@@ -80,34 +78,22 @@ final class Router {
     }
 
     private func processFrom() throws {
-        throw RouterError.notImplemented(message: "FROM is not implemented yet.")
         logger.info("Found FROM information, pulling in instructions from external Targetfiles")
+        let inspect = Inspection()
         for from in self.octaheArgs.octaheFrom {
-            logger.info("Parsing \(from)")
-            let fromComponents = from.components(separatedBy: ":")
-            let image = fromComponents.first
-            var tag: String = "latest"
-            if fromComponents.last != image {
-                tag = fromComponents.last!
-            }
-            // inspectionQueue.inspectionQueue.addOperation(
-            //     InspectionOperationQuay(
-            //         containerImage: image!,
-            //         tag: tag,
-            //         debug: parsedOptions.debug
-            //     )
-            // )
+            inspect.imageParser(fromImage: from)
+            try inspect.main()
+            throw RouterError.notImplemented(message: "FROM is not implemented yet.")
         }
-        inspectionQueue.inspectionQueue.waitUntilAllOperationsAreFinished()
-        for (_, value) in inspectionQueue.inspectionInComplete {
-            let deployOptions = value.filter {key, _ in
-                return ["RUN", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
-            }
-            for deployOption in deployOptions.reversed() {
-                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(deployOption), at: 0)
-            }
-            logger.info("Adding \(deployOptions.count) instructions into the deployment")
-        }
+//        for (_, value) in inspectionQueue.inspectionInComplete {
+//            let deployOptions = value.filter {key, _ in
+//                return ["RUN", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
+//            }
+//            for deployOption in deployOptions.reversed() {
+//                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(deployOption), at: 0)
+//            }
+//            logger.info("Adding \(deployOptions.count) instructions into the deployment")
+//        }
     }
 
     private func nonLocalHosts() throws {
