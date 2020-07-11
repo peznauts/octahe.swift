@@ -26,11 +26,11 @@ class FileParser {
     init() {}
 
     func trimLine(line: String) -> String {
-        let trimmed = line.replacingOccurrences(of: "#.*", with: "", options: [.regularExpression])
+        let trimmed = line.replacingOccurrences(of: "#[^!].*", with: "", options: [.regularExpression])
         var trimmedLine = trimmed.strip
         if trimmedLine.hasSuffix(" \\") {
             trimmedLine = trimmedLine.replacingOccurrences(of: "\\", with: "")
-            if let nextLine = lineData.lines.next() {
+            if let nextLine = self.lineData.lines.next() {
                 trimmedLine += trimLine(line: String(describing: nextLine))
             }
         }
@@ -38,8 +38,8 @@ class FileParser {
     }
 
     func lineParser(lines: [Substring]) {
-        lineData.lines = lines.makeIterator()
-        while let line = lineData.lines.next() {
+        self.lineData.lines = lines.makeIterator()
+        while let line = self.lineData.lines.next() {
             let cleanedLine = self.trimLine(line: String(describing: line))
             if !cleanedLine.isEmpty {
                 let verbArray = cleanedLine.split(separator: " ", maxSplits: 1).map(String.init)
