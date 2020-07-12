@@ -1,3 +1,7 @@
+FROM ubuntu:latest
+
+# Test that the base image latest pulled in tasks
+RUN grep docker /run/systemd/container
 
 EXPOSE 5150
 RUN iptables -D INPUT -p tcp -m comment --comment "Octahe rule" -m tcp --dport 5150 -j ACCEPT

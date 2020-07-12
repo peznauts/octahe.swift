@@ -13,8 +13,6 @@ let taskQueue = TaskOperations()
 
 let targetQueue = TargetOperations()
 
-let inspectionQueue = InspectionOperations()
-
 enum RouterError: Error {
     case notImplemented(message: String)
     case failedExecution(message: String)
@@ -31,6 +29,13 @@ final class Router {
     init(parsedOptions: OctaheCLI.Options, function: ExecutionStates) throws {
         self.parsedOptions = parsedOptions
         self.function = function
+
+        switch self.parsedOptions.debug {
+        case true:
+            logger.logLevel = .trace
+        default:
+            logger.logLevel = .critical
+        }
 
         let configFileURL = URL(fileURLWithPath: self.parsedOptions.configurationFiles.first!)
         self.octaheArgs = try ConfigParse(
@@ -79,34 +84,38 @@ final class Router {
         return exitCode
     }
 
-    private func processFrom() throws {
-        throw RouterError.notImplemented(message: "FROM is not implemented yet.")
-        logger.info("Found FROM information, pulling in instructions from external Targetfiles")
-        for from in self.octaheArgs.octaheFrom {
-            logger.info("Parsing \(from)")
-            let fromComponents = from.components(separatedBy: ":")
-            let image = fromComponents.first
-            var tag: String = "latest"
-            if fromComponents.last != image {
-                tag = fromComponents.last!
-            }
-            // inspectionQueue.inspectionQueue.addOperation(
-            //     InspectionOperationQuay(
-            //         containerImage: image!,
-            //         tag: tag,
-            //         debug: parsedOptions.debug
-            //     )
-            // )
+    private func insertFrom(inspect: Inspection) throws {
+        let fileParser = FileParser()
+        if let inspectedItems = inspect.inspectionRecord?.items {
+            fileParser.lineParser(lines: inspectedItems)
         }
-        inspectionQueue.inspectionQueue.waitUntilAllOperationsAreFinished()
-        for (_, value) in inspectionQueue.inspectionInComplete {
-            let deployOptions = value.filter {key, _ in
-                return ["RUN", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE", "WORKDIR", "LABEL"].contains(key)
+        let fromItems = fileParser.configOptions.filter {key, _ in
+            return allOctaheFromVerbs.contains(key)
+        }
+        logger.info(
+            "Adding \(fromItems.count) instructions into the deployment FROM: \(self.octaheArgs.octaheFrom)"
+        )
+        for item in fromItems {
+            switch item.key {
+            case "FROM":
+                inspect.imageParser(fromImage: item.value)
+                try inspect.main()
+                try self.insertFrom(inspect: inspect)
+            default:
+                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(item), at: 0)
             }
-            for deployOption in deployOptions.reversed() {
-                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(deployOption), at: 0)
-            }
-            logger.info("Adding \(deployOptions.count) instructions into the deployment")
+        }
+    }
+
+    private func processFrom() throws {
+        logger.info("Found FROM information, pulling in instructions from external Targetfiles")
+        let inspect = Inspection()
+        inspect.fatalFrom = self.parsedOptions.fatalFrom
+
+        for from in self.octaheArgs.octaheFrom {
+            inspect.imageParser(fromImage: from)
+            try inspect.main()
+            try self.insertFrom(inspect: inspect)
         }
     }
 
@@ -174,12 +183,6 @@ final class Router {
             try? FileManager.default.removeItem(at: self.tempSshConfigFile)
         }
 
-        switch parsedOptions.debug {
-        case true:
-            logger.logLevel = .trace
-        default:
-            logger.logLevel = .critical
-        }
         logger.debug("Running function: \(function)")
 
         if self.octaheArgs.octaheFrom.count > 0 {

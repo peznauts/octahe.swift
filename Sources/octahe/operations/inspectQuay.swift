@@ -4,18 +4,18 @@
 // //
 // //  Created by Kevin Carter on 6/19/20.
 // //
-
+//
 // import Foundation
-
+//
 // class InspectionOperationQuay: InspectionOperation {
 //     override init(containerImage: String, tag: String, debug: Bool) {
 //         super.init(containerImage: containerImage, tag: tag, debug: debug)
 //         let baseURL = URL(string: "https://quay.io/api/v1/repository")!
 //         self.imageURL = baseURL.appendingPathComponent(containerImage)
 //         self.inspectionRecords = InspectionRecord(name: imageURL.lastPathComponent)
-
+//
 //     }
-
+//
 //     private func parseLayers(layers: [Any]) {
 //         let cmdAnchor: String = "/bin/sh -c"
 //         for layer in layers {
@@ -37,7 +37,7 @@
 //             }
 //         }
 //     }
-
+//
 //     override func runManifestsRequest() {
 //         AF.request(self.imageURL, method: .get, headers: self.headers)
 //         .validate(statusCode: 200..<300)
@@ -62,7 +62,7 @@
 //             }
 //         }
 //     }
-
+//
 //     func runLayerRequest() {
 //         let imageManifest = self.imageURL.appendingPathComponent("manifest/\(inspectionRecords.layerId!)")
 //         AF.request(imageManifest, method: .get, headers: self.headers)

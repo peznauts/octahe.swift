@@ -62,7 +62,7 @@ class ExecuteSSH: Execution {
         let preparedExec = self.execPosixString(command: execute)
         var envVars: [String] = []
         for (key, value) in self.environment {
-            envVars.append("export \(key)=\(value);")
+            envVars.append("export \(key)=\"\(value)\";")
         }
         return self.posixEncoder(item: envVars.joined(separator: " ") + " " + preparedExec)
     }

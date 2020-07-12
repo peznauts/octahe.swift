@@ -248,14 +248,16 @@ struct OctaheCLI: ParsableCommand {
         )
         var escalatePassword: String?
 
-//        @Option(
-//            name: .shortAndLong,
-//            help: """
-//                  Log file. When set the application will save log messages to
-//                  a file using the provided path.
-//                  """
-//        )
-//        var logFile: String?
+        @Flag(
+            help: """
+                  Enable fatal FROM instructions. When set, Octahe will treat all
+                  instructions FROM an external target as being required, and will
+                  raise an exception in the event of an error. The default
+                  behaviour will execute FROM instructions, but not tream any of
+                  them as required.
+                  """
+        )
+        var fatalFrom: Bool
 
         @Option(
             name: .shortAndLong,

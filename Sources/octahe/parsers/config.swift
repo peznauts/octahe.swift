@@ -331,8 +331,7 @@ class ConfigParse {
 
         // Return only a valid config.
         let deployOptions = self.configFiles.filter {key, _ in
-            return ["RUN", "COPY", "ADD", "SHELL", "ARG", "ENV", "USER", "INTERFACE", "EXPOSE",
-                    "WORKDIR", "LABEL"].contains(key)
+            return allOctaheDeployVerbs.contains(key)
         }
         try self.deploymentParsing(deployOptions)
         try self.entrypointParsing()

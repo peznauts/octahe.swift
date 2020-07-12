@@ -15,6 +15,18 @@ enum ExecutionStates {
     case deploy, undeploy
 }
 
+let allSupportedVerbs: [String] = ["FROM", "RUN", "CMD", "LABEL", "EXPOSE", "ENV", "ADD", "COPY", "ENTRYPOINT",
+                                   "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK",
+                                   "SHELL", "INTERFACE", "TO"]
+
+let allOctaheDeployVerbs: [String] = allSupportedVerbs.filter {item in
+    return !["FROM", "CMD", "ENTRYPOINT", "VOLUME", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "TO"].contains(item)
+}
+
+let allOctaheFromVerbs: [String] = allSupportedVerbs.filter {item in
+    return !["ADD", "COPY"].contains(item)
+}
+
 var logger = Logger(label: "com.octahe")
 
 func platformArgs() -> [String: String] {
@@ -45,7 +57,7 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
     }
 
     func matches(text: String) -> [String] {
-        let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|(\\w+))"
+        let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|([[:ascii:]].+))"
         do {
             let regex = try NSRegularExpression(pattern: regex)
             let results = regex.matches(
@@ -165,6 +177,27 @@ extension String {
         }
         let truncated = self.prefix(length)
         return truncated + trailing
+    }
+
+    func groups(for regexPattern: String) -> [[String]] {
+        do {
+            let text = self
+            let regex = try NSRegularExpression(pattern: regexPattern)
+            let matches = regex.matches(in: text,
+                                        range: NSRange(text.startIndex..., in: text))
+            return matches.map { match in
+                return (0..<match.numberOfRanges).map {
+                    let rangeBounds = match.range(at: $0)
+                    guard let range = Range(rangeBounds, in: text) else {
+                        return ""
+                    }
+                    return String(text[range])
+                }
+            }
+        } catch let error {
+            print("invalid regex: \(error.localizedDescription)")
+            return []
+        }
     }
 
     var quote: String {
