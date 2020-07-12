@@ -19,11 +19,11 @@ let allSupportedVerbs: [String] = ["FROM", "RUN", "CMD", "LABEL", "EXPOSE", "ENV
                                    "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK",
                                    "SHELL", "INTERFACE", "TO"]
 
-let allOctaheDeployVerbs: [String] = allSupportedVerbs.filter{item in
+let allOctaheDeployVerbs: [String] = allSupportedVerbs.filter {item in
     return !["FROM", "CMD", "ENTRYPOINT", "VOLUME", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "TO"].contains(item)
 }
 
-let allOctaheFromVerbs: [String] = allSupportedVerbs.filter{item in
+let allOctaheFromVerbs: [String] = allSupportedVerbs.filter {item in
     return !["ADD", "COPY"].contains(item)
 }
 
@@ -57,7 +57,7 @@ func buildDictionary(filteredContent: [(key: String, value: String)]) -> [String
     }
 
     func matches(text: String) -> [String] {
-        let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|(\\w+))"
+        let regex = "(?:\"(.*?)\"|(\\w+))=(?:\"(.*?)\"|([[:ascii:]].+))"
         do {
             let regex = try NSRegularExpression(pattern: regex)
             let results = regex.matches(

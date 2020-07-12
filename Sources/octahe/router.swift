@@ -111,7 +111,7 @@ final class Router {
         logger.info("Found FROM information, pulling in instructions from external Targetfiles")
         let inspect = Inspection()
         inspect.fatalFrom = self.parsedOptions.fatalFrom
-        
+
         for from in self.octaheArgs.octaheFrom {
             inspect.imageParser(fromImage: from)
             try inspect.main()
