@@ -24,7 +24,7 @@ let allOctaheDeployVerbs: [String] = allSupportedVerbs.filter {item in
 }
 
 let allOctaheFromVerbs: [String] = allSupportedVerbs.filter {item in
-    return !["ADD", "COPY"].contains(item)
+    return !["ADD", "COPY", "VOLUME", "ONBUILD"].contains(item)
 }
 
 var logger = Logger(label: "com.octahe")
