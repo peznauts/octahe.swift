@@ -20,3 +20,10 @@ RUN env > test-env
 RUN stat /tmp/test-env
 RUN rm test-env
 RUN stat /tmp/test-env || echo success
+
+# This is a comment command that should never run
+# RUN false
+
+RUN echo -e "This is a# in-code test" > /tmp/comment-test
+RUN grep "This is a# in-code test" /tmp/comment-test
+RUN rm /tmp/comment-test # Inline comment test.
