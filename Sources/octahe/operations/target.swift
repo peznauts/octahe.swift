@@ -144,6 +144,7 @@ class TargetOperation: Operation {
 
     // swiftlint:disable cyclomatic_complexity
     private func targetCases() throws {
+        self.targetRecord.conn.fatalExec = self.task.taskItem.fatalExec
         switch self.task.task {
         case "SHELL":
             self.targetRecord.conn.shell = self.task.taskItem.execute!

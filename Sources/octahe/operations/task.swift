@@ -59,7 +59,7 @@ class TaskOperation: Operation {
         if let taskRecordsLookup = taskQueue.taskRecords[stepIndex] {
             self.taskRecord = taskRecordsLookup
         } else {
-            let taskRecordsLookup = TaskRecord(task: deployItem.key, taskItem: deployItem.value)
+            let taskRecordsLookup = TaskRecord(task: self.deployItem.key, taskItem: self.deployItem.value)
             taskQueue.taskRecords[stepIndex] = taskRecordsLookup
             self.taskRecord = taskQueue.taskRecords[stepIndex]!
         }
@@ -131,7 +131,7 @@ class TaskOperation: Operation {
             return
         }
         self.statusLineFull = String(
-            format: "Step \(stepIndex)/\(steps) : \(deployItem.key) \(deployItem.value.original)"
+            format: "Step \(stepIndex)/\(steps) : \(self.deployItem.key) \(self.deployItem.value.original)"
         )
         self.statusLine = statusLineFull?.trunc(length: 77)
         targetQueue.nodeQueue.addOperations(self.queueTaskOperations(), waitUntilFinished: true)
