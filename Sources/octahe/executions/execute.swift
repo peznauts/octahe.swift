@@ -28,6 +28,7 @@ class Execution {
     var stopsignal: String?
     var documentation: [[String: String]] = [["item": "https://github.com/peznauts/octahe.swift"]]
     var interface: String?
+    var fatalExec: Bool = true
 
     init(cliParameters: OctaheCLI.Options, processParams: ConfigParse) {
         self.cliParams = cliParameters
@@ -94,7 +95,7 @@ class Execution {
         pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
         let output = pipe.fileHandleForReading.availableData
         let outputInfo = String(data: output, encoding: String.Encoding.utf8)!
-        if task.terminationStatus != 0 {
+        if task.terminationStatus != 0 && self.fatalExec {
             var message = "STATUS: \(task.terminationStatus)"
             message += " REASON: \(task.terminationReason)"
             message += " OUTPUT: \(outputInfo)"

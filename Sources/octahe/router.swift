@@ -95,6 +95,9 @@ final class Router {
         logger.info(
             "Adding \(fromItems.count) instructions into the deployment FROM: \(self.octaheArgs.octaheFrom)"
         )
+        if self.parsedOptions.fatalFrom {
+            logger.debug("FROM instructions will be fatal")
+        }
         for item in fromItems {
             switch item.key {
             case "FROM":
@@ -102,7 +105,9 @@ final class Router {
                 try inspect.main()
                 try self.insertFrom(inspect: inspect)
             default:
-                self.octaheArgs.octaheDeploy.insert(try self.octaheArgs.deploymentCases(item), at: 0)
+                let deployItem = try self.octaheArgs.deploymentCases(item)
+                deployItem.value.fatalExec = self.parsedOptions.fatalFrom
+                self.octaheArgs.octaheDeploy.insert(deployItem, at: 0)
             }
         }
     }

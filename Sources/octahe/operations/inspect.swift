@@ -123,15 +123,7 @@ class Inspection {
                         self.inspectionRecord?.items.append(Substring(cmdGroup))
                     }
                 } else {
-                    let runCmd: Substring
-                    switch self.fatalFrom {
-                    case true:
-                        logger.debug("Instruction being added as fatal")
-                        runCmd = "RUN \(cmdGroup)"
-                    default:
-                        runCmd = "RUN \(cmdGroup) || true"
-                    }
-                    self.inspectionRecord?.items.append(runCmd)
+                    self.inspectionRecord?.items.append(Substring("RUN \(cmdGroup)"))
                 }
             }
         }

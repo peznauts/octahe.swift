@@ -56,6 +56,7 @@ class TypeDeploy {
     let escalatePassword: String?
     let exposeData: TypeExposes?
     let workdir: String?
+    var fatalExec: Bool = true
 
     init (execute: String? = nil, chown: String? = nil, location: [String]? = [], destination: String? = nil,
           from: String? = nil, original: String, env: [String: String]? = nil, user: String? = nil,
