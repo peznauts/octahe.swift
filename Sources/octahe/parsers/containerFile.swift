@@ -26,7 +26,9 @@ class FileParser {
     init() {}
 
     func trimLine(line: String) -> String {
-        let trimmed = line.replacingOccurrences(of: "(^#[^!*].*|\\s{1}#[^!*].*)", with: "", options: [.regularExpression])
+        let trimmed = line.replacingOccurrences(
+            of: "(^#[^!*].*|\\s{1}#[^!*].*)", with: "", options: [.regularExpression]
+        )
         var trimmedLine = trimmed.strip
         if trimmedLine.hasSuffix(" \\") {
             trimmedLine = trimmedLine.replacingOccurrences(of: "\\", with: "")
