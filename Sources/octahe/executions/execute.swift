@@ -96,14 +96,15 @@ class Execution {
         let output = pipe.fileHandleForReading.availableData
         let outputInfo = String(data: output, encoding: String.Encoding.utf8)!
         if task.terminationStatus != 0 && self.fatalExec {
+            print(outputInfo)
             var message = "STATUS: \(task.terminationStatus)"
             message += " REASON: \(task.terminationReason)"
-            message += " OUTPUT: \(outputInfo)"
             throw RouterError.failedExecution(message: message)
-        }
-        // STDOUT will now be visable when debug is enabled.
-        if self.cliParams.debug {
-            print(outputInfo)
+        } else {
+            // STDOUT will now be visable when debug is enabled.
+            if self.cliParams.debug {
+                print(outputInfo)
+            }
         }
         return outputInfo
     }
@@ -377,6 +378,6 @@ class Execution {
                 execTask = self.posixEncoder(item: "\(escalate)" + " -- " + self.shell + " \(execTask.quote)")
             }
         }
-        return execTask
+        return "set -eu;" + execTask
     }
 }

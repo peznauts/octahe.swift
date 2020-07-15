@@ -111,12 +111,12 @@ class Inspection {
             let cmdString = cmdItem.container_config.Cmd.joined(separator: " ").strip
             if !cmdString.isEmpty {
                 let cmdGroup = cmdString.groups(
-                    for: "(?:(?:.*nop\\))|(?:.*\\/.+-c\\s))(\\w.+|\\W.+)"
+                    for: "(?:.+nop\\)\\s+|.*sh\\s\\-c\\s*)(\\w.+|\\W.+)"
                 ).first!.last!.strip
                 if allSupportedVerbs.contains(where: cmdGroup.hasPrefix) {
-                    if ["ADD", "COPY"].contains(where: cmdGroup.hasPrefix) {
+                    if ["ADD", "COPY", "CMD", "ENTRYPOINT"].contains(where: cmdGroup.hasPrefix) {
                         logger.warning(
-                            "FROM instruction is using COPY/ADD. This will be ommitted in the inserted instructions."
+                            "FROM instruction is using COPY/ADD/CMD/ENTRYPOINT. This will be ommitted."
                         )
                         logger.warning("Omitting: \(cmdGroup)")
                     } else {
