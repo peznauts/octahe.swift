@@ -50,6 +50,7 @@ class TypeDeploy {
     let from: String?
     let original: String
     let env: [String: String]?
+    let arg: [String: String]?
     let user: String?
     let group: String?
     let escalate: String?
@@ -59,8 +60,8 @@ class TypeDeploy {
     var fatalExec: Bool = true
 
     init (execute: String? = nil, chown: String? = nil, location: [String]? = [], destination: String? = nil,
-          from: String? = nil, original: String, env: [String: String]? = nil, user: String? = nil,
-          group: String? = nil, escalate: String? = nil, escalatePassword: String? = nil,
+          from: String? = nil, original: String, env: [String: String]? = nil, arg: [String: String]? = nil,
+          user: String? = nil, group: String? = nil, escalate: String? = nil, escalatePassword: String? = nil,
           exposeData: TypeExposes? = nil, workdir: String? = nil) {
         self.execute = execute ?? nil
         self.chown = chown ?? nil
@@ -69,6 +70,7 @@ class TypeDeploy {
         self.from = from ?? nil
         self.original = original
         self.env = env
+        self.arg = arg
         self.user = user
         self.group = group
         self.escalate = escalate

@@ -102,14 +102,6 @@ class TargetOperation: Operation {
         }
     }
 
-    private func caseLabel() {
-        if let env = self.task.taskItem.env {
-            for (key, value) in env {
-                self.targetRecord.conn.environment[key] = value
-            }
-        }
-    }
-
     private func caseExpose() throws {
         if let port = self.task.taskItem.exposeData?.port {
             switch self.function {
@@ -148,12 +140,14 @@ class TargetOperation: Operation {
         switch self.task.task {
         case "SHELL":
             self.targetRecord.conn.shell = self.task.taskItem.execute!
-        case "ENV", "ARG":
-            if let env = self.task.taskItem.env {
-                self.targetRecord.conn.environment.merge(env) {(_, second) in second}
+        case "ENV", "LABEL":
+            for (key, value) in self.task.taskItem.env! {
+                self.targetRecord.conn.environment[key] = value
             }
-        case "LABEL":
-            self.caseLabel()
+        case "ARG":
+            for (key, value) in self.task.taskItem.arg! {
+                self.targetRecord.conn.args[key] = value
+            }
         case "RUN":
             try self.targetRecord.conn.run(execute: self.task.taskItem.execute!)
         case "COPY", "ADD":

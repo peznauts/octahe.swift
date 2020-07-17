@@ -58,13 +58,8 @@ class ExecuteSSH: Execution {
         _ = try self.runReturn(execute: execute)
     }
 
-    func prepareExec(execute: String) -> String {
-        let preparedExec = self.execPosixString(command: execute)
-        var envVars: [String] = []
-        for (key, value) in self.environment {
-            envVars.append("export \(key)=\"\(value)\";")
-        }
-        return self.posixEncoder(item: envVars.joined(separator: " ") + " " + preparedExec)
+    private func prepareExec(execute: String) -> String {
+        return self.posixEncoder(item: self.execPosixString(command: execute))
     }
 
     override func mkdir(workdirURL: URL) throws {
