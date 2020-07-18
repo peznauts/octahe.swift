@@ -220,17 +220,28 @@ class ConfigParse {
             )
             for key in argDictionary.keys {
                 if let value = self.octaheArgs[key] {
-                    self.seenArgs.append(key)
+                    if deployOption.key == "ARG" {
+                        self.seenArgs.append(key)
+                    }
                     argDictionary[key] = value
                 }
                 origin = "\(key)=\(String(describing: argDictionary[key]!))"
             }
-            return (
-                key: deployOption.key,
-                value: TypeDeploy(
+            var deployType: TypeDeploy
+            if deployOption.key == "ARG" {
+                deployType = TypeDeploy(
+                    original: origin,
+                    arg: argDictionary
+                )
+            } else {
+                deployType = TypeDeploy(
                     original: origin,
                     env: argDictionary
                 )
+            }
+            return (
+                key: deployOption.key,
+                value: deployType
             )
         case "USER":
             let trimmedUser = deployOption.value.strip.components(separatedBy: ":")
@@ -345,7 +356,7 @@ class ConfigParse {
                             key: "ARG",
                             value: TypeDeploy(
                                 original: "\(key)=\(String(describing: extraArgs[key]!))",
-                                env: extraArgs
+                                arg: extraArgs
                             )
                         ),
                         at: 0

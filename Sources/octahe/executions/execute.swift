@@ -15,6 +15,7 @@ class Execution {
     var shell: String = "/bin/sh -c"
     var escallation: String?
     var environment: [String: String] = [:]
+    var args: [String: String] = [:]
     var execUser: String?
     var execGroup: String?
     var user: String = NSUserName()
@@ -280,14 +281,14 @@ class Execution {
     private func optionFormat(options: [String: String]) -> [[String: String]] {
         logger.info("Formatting options for service files.")
         var items: [[String: String]]  = []
-        for (key, value) in options {
+        for key in options.keys {
             switch key {
             case "ESCALATEPW":
                 logger.debug("filtering ESCALATEPW from service options")
             case _ where key.contains("BUILD"):
                 logger.debug("filtering BUILD* from service options")
             default:
-                items.append(["item": "\(key)=\(value)"])
+                items.append(["item": "\(key)=$\(key)"])
             }
         }
         return items
@@ -300,13 +301,17 @@ class Execution {
     func serviceTemplate(entrypoint: String) throws -> String {
         logger.debug("Rendering a service template.")
         // Generate a local template, and transfer it to the remote host
-        var serviceData: [String: Any] = ["user": self.user, "service_command": entrypoint, "shell": self.shell]
+        var serviceData: [String: Any] = [
+            "user": self.execUser ?? self.user,
+            "service_command": entrypoint,
+            "shell": self.shell
+        ]
 
         if self.documentation.count > 0 {
             serviceData["documentation"] = self.documentation
         }
         if self.environment.count > 0 {
-            serviceData["environment"] = optionFormat(options: self.environment)
+            serviceData["environment"] = self.optionFormat(options: self.environment)
         }
         if let group = self.execGroup {
             serviceData["group"] = group
@@ -335,33 +340,62 @@ class Execution {
     }
 
     func entrypointStart(entrypoint: String) throws {
+        func serviceCreate(entrypoint: String) throws {
+            let serviceFile = self.serviceName(entrypoint: entrypoint)
+            try self.copy(
+                base: tempServiceFile.deletingLastPathComponent(),
+                copyTo: "/etc/systemd/system/\(serviceFile)",
+                fromFiles: [tempServiceFile.lastPathComponent]
+            )
+            logger.debug("Ensuring all environment variables are rendered")
+            try self.run(execute: "envsubst < /etc/systemd/system/\(serviceFile) | tee /etc/systemd/system/\(serviceFile)")
+            logger.debug("Reloading systemd daemon")
+            try self.run(execute: "systemctl daemon-reload")
+            logger.debug("Starting systemd service: \(serviceFile)")
+            try self.run(execute: "systemctl restart \(serviceFile)")
+        }
         logger.info("Starting entrypoint: \(entrypoint)")
-        let serviceFile = self.serviceName(entrypoint: entrypoint)
+
         let serviceRendered = try self.serviceTemplate(entrypoint: entrypoint)
         let tempServiceFile = try self.localWriteTemp(content: serviceRendered)
         defer {
             logger.debug("Removing temp file: \(tempServiceFile.path)")
             try? FileManager.default.removeItem(at: tempServiceFile)
         }
-        try self.copy(
-            base: tempServiceFile.deletingLastPathComponent(),
-            copyTo: "/etc/systemd/system/\(serviceFile)",
-            fromFiles: [tempServiceFile.lastPathComponent]
-        )
-        logger.debug("Reloading systemd daemon")
-        try self.run(execute: "systemctl daemon-reload")
-        logger.debug("Starting systemd service: \(serviceFile)")
-        try self.run(execute: "systemctl restart \(serviceFile)")
+        let originalExecUser = self.execUser ?? self.user
+        self.execUser = "root"
+        defer {
+            self.execUser = originalExecUser
+        }
+        do {
+            try serviceCreate(entrypoint: entrypoint)
+        } catch {
+            logger.warning("Running fallback service create")
+            try serviceCreate(entrypoint: entrypoint)
+        }
     }
 
     func posixEncoder(item: String) -> String {
         let encoderShell = self.shell.components(separatedBy: " ").first ?? ""
-        return "printf " + item.b64encode.quote + " | base64 --decode | " + encoderShell
+        let runCmd = "printf " + item.b64encode.quote + " | base64 --decode | " + encoderShell
+        logger.debug("\(runCmd)")
+        return runCmd
     }
 
     func execPosixString(command: String) -> String {
         logger.debug("Formatting posix compatible execution string: \(command)")
-        var execTask: String = self.posixEncoder(item: "(cd \(self.workdir); \(command))")
+        var argVars: [String] = []
+        for (key, value) in self.args {
+            argVars.append("export \(key)=\"\(value)\"")
+        }
+
+        for (key, value) in self.environment {
+            argVars.append("export \(key)=\"\(value)\"")
+        }
+
+        var execTask: String = self.posixEncoder(
+            item: "(cd \(self.workdir); \(command))"
+        )
 
         if let user = self.execUser {
             execTask = self.posixEncoder(item: "su \(user) -c \(execTask.quote)")
@@ -369,15 +403,17 @@ class Execution {
 
         if let escalate = self.escalate {
             if let password = self.escalatePassword {
-                // Password is add to the environment.
-                self.environment["ESCALATEPW"] = password
                 execTask = self.posixEncoder(
-                    item: "printf \"${ESCALATEPW}\" | \(escalate) --stdin -- " + self.shell + " \(execTask.quote)"
+                    item: "printf \"\(password)\" | \(escalate) --stdin -- " + self.shell + " \(execTask.quote)"
                 )
             } else {
                 execTask = self.posixEncoder(item: "\(escalate)" + " -- " + self.shell + " \(execTask.quote)")
             }
         }
-        return "set -eu;" + execTask
+        if argVars.count > 0 {
+            execTask = "\(argVars.joined(separator: "; ")); \(execTask)"
+        }
+        execTask = self.posixEncoder(item: "set -eu; \(execTask)")
+        return execTask
     }
 }
