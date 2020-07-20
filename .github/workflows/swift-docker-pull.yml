@@ -104,3 +104,7 @@ jobs:
         PKG_CONFIG_PATH: "/usr/local/opt/libressl/lib/pkgconfig"
     - name: Run local test
       run: .build/debug/octahe deploy --targets=localhost .testcontainer/Targetfile.local --debug
+    - name: Install build DMG
+      run: ./scripts/dmg-build.sh
+      env:
+        APP_JSON: "scripts/octahe.app.debug.json"

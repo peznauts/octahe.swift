@@ -6,7 +6,3 @@
 //
 
 OctaheCLI.main()
-
-public func runMain() {
-    OctaheCLI.main()
-}
