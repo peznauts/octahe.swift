@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -394,6 +394,9 @@
 		2D69B5D724C5395F00AA991A /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				KnownAssetTags = (
+					New,
+				);
 				LastSwiftUpdateCheck = 1160;
 				LastUpgradeCheck = 1160;
 				ORGANIZATIONNAME = "Kevin Carter";
@@ -405,7 +408,7 @@
 				};
 			};
 			buildConfigurationList = 2D69B5DA24C5395F00AA991A /* Build configuration list for PBXProject "octahe" */;
-			compatibilityVersion = "Xcode 9.3";
+			compatibilityVersion = "Xcode 11.4";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (

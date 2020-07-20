@@ -348,7 +348,8 @@ class Execution {
                 fromFiles: [tempServiceFile.lastPathComponent]
             )
             logger.debug("Ensuring all environment variables are rendered")
-            try self.run(execute: "envsubst < /etc/systemd/system/\(serviceFile) | tee /etc/systemd/system/\(serviceFile)")
+            try self.run(execute: "envsubst < /etc/systemd/system/\(serviceFile) > /tmp/\(serviceFile)")
+            try self.run(execute: "mv /tmp/\(serviceFile) /etc/systemd/system/\(serviceFile)")
             logger.debug("Reloading systemd daemon")
             try self.run(execute: "systemctl daemon-reload")
             logger.debug("Starting systemd service: \(serviceFile)")
@@ -370,7 +371,7 @@ class Execution {
         do {
             try serviceCreate(entrypoint: entrypoint)
         } catch {
-            logger.warning("Running fallback service create")
+            logger.info("Running fallback service create")
             try serviceCreate(entrypoint: entrypoint)
         }
     }

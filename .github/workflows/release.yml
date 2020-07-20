@@ -63,3 +63,15 @@ jobs:
         asset_path: .build/release/octahe
         asset_name: octahe-x86-macosx
         asset_content_type: application/octet-stream
+    - name: Install build DMG
+      run: ./scripts/dmg-build.sh
+    - name: Upload Octahe release
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: .build/octahe-install.dmg
+        asset_name: octahe-x86-macosx-install.dmg
+        asset_content_type: application/octet-stream
