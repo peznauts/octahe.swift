@@ -1,0 +1,864 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		2D34361C24C540540042F28B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = "octahe::SwiftPMPackageDescription";
+			remoteInfo = octahePackageDescription;
+		};
+		2D69B6AD24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-argument-parser::ArgumentParser::Product";
+			remoteInfo = ArgumentParser;
+		};
+		2D69B6AF24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Core::Async::Product";
+			remoteInfo = Async;
+		};
+		2D69B6B124C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Core::Bits::Product";
+			remoteInfo = Bits;
+		};
+		2D69B6B324C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-crypto::CCryptoBoringSSL::Product";
+			remoteInfo = CCryptoBoringSSL;
+		};
+		2D69B6B524C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-crypto::CCryptoBoringSSLShims::Product";
+			remoteInfo = CCryptoBoringSSLShims;
+		};
+		2D69B6B724C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIOAtomics::Product";
+			remoteInfo = CNIOAtomics;
+		};
+		2D69B6B924C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIODarwin::Product";
+			remoteInfo = CNIODarwin;
+		};
+		2D69B6BB24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIOHTTPParser::Product";
+			remoteInfo = CNIOHTTPParser;
+		};
+		2D69B6BD24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIOLinux::Product";
+			remoteInfo = CNIOLinux;
+		};
+		2D69B6BF24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio-ssl::CNIOOpenSSL::Product";
+			remoteInfo = CNIOOpenSSL;
+		};
+		2D69B6C124C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIOSHA1::Product";
+			remoteInfo = CNIOSHA1;
+		};
+		2D69B6C324C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::CNIOZlib::Product";
+			remoteInfo = CNIOZlib;
+		};
+		2D69B6C524C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Core::COperatingSystem::Product";
+			remoteInfo = COperatingSystem;
+		};
+		2D69B6C724C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Core::Core::Product";
+			remoteInfo = Core;
+		};
+		2D69B6C924C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-crypto::Crypto::Product";
+			remoteInfo = Crypto;
+		};
+		2D69B6CB24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Core::Debugging::Product";
+			remoteInfo = Debugging;
+		};
+		2D69B6CD24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "HTTP::HTTP::Product";
+			remoteInfo = HTTP;
+		};
+		2D69B6CF24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-log::Logging::Product";
+			remoteInfo = Logging;
+		};
+		2D69B6D124C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIO::Product";
+			remoteInfo = NIO;
+		};
+		2D69B6D324C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIOConcurrencyHelpers::Product";
+			remoteInfo = NIOConcurrencyHelpers;
+		};
+		2D69B6D524C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIOFoundationCompat::Product";
+			remoteInfo = NIOFoundationCompat;
+		};
+		2D69B6D724C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIOHTTP1::Product";
+			remoteInfo = NIOHTTP1;
+		};
+		2D69B6D924C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio-ssl::NIOOpenSSL::Product";
+			remoteInfo = NIOOpenSSL;
+		};
+		2D69B6DB24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIOPriorityQueue::Product";
+			remoteInfo = NIOPriorityQueue;
+		};
+		2D69B6DD24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "swift-nio::NIOTLS::Product";
+			remoteInfo = NIOTLS;
+		};
+		2D69B6DF24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "PathKit::PathKit::Product";
+			remoteInfo = PathKit;
+		};
+		2D69B6E124C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Rainbow::Rainbow::Product";
+			remoteInfo = Rainbow;
+		};
+		2D69B6E324C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Signals::Signals::Product";
+			remoteInfo = Signals;
+		};
+		2D69B6E524C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Spinner::Spinner::Product";
+			remoteInfo = Spinner;
+		};
+		2D69B6E724C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "Stencil::Stencil::Product";
+			remoteInfo = Stencil;
+		};
+		2D69B6E924C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "SwiftSerial::SwiftSerial::Product";
+			remoteInfo = SwiftSerial;
+		};
+		2D69B6EB24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "octahe::octahe::Product";
+			remoteInfo = octahe;
+		};
+		2D69B6ED24C53DC900AA991A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = "octahe::octaheTests::Product";
+			remoteInfo = octaheTests;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2D69B5DD24C5395F00AA991A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2D34360D24C53F1C0042F28B /* executions */ = {isa = PBXFileReference; lastKnownFileType = folder; name = executions; path = ../../Sources/octahe/executions; sourceTree = "<group>"; };
+		2D34361024C53F1C0042F28B /* router.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = router.swift; path = ../../Sources/octahe/router.swift; sourceTree = "<group>"; };
+		2D34361124C53F1C0042F28B /* types.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = types.swift; path = ../../Sources/octahe/types.swift; sourceTree = "<group>"; };
+		2D34361224C53F1C0042F28B /* cli.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = cli.swift; path = ../../Sources/octahe/cli.swift; sourceTree = "<group>"; };
+		2D34361324C53F1C0042F28B /* mixin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = mixin.swift; path = ../../Sources/octahe/mixin.swift; sourceTree = "<group>"; };
+		2D34361424C53F1C0042F28B /* operations */ = {isa = PBXFileReference; lastKnownFileType = folder; name = operations; path = ../../Sources/octahe/operations; sourceTree = "<group>"; };
+		2D34361524C53F1C0042F28B /* parsers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = parsers; path = ../../Sources/octahe/parsers; sourceTree = "<group>"; };
+		2D69B5DF24C5395F00AA991A /* octahe */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = octahe; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D69B5F524C53CAF00AA991A /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = main.swift; path = ../../Sources/octahe/main.swift; sourceTree = "<group>"; };
+		2D69B5FE24C53D4300AA991A /* Octahe */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Octahe; path = ../../Octahe; sourceTree = "<group>"; };
+		2D69B5FF24C53D6100AA991A /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
+		2D69B60024C53DC800AA991A /* octahe.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = octahe.xcodeproj; path = ../octahe.xcodeproj; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2D69B5DC24C5395F00AA991A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2D69B5D624C5395F00AA991A = {
+			isa = PBXGroup;
+			children = (
+				2D69B5E124C5395F00AA991A /* octahe */,
+				2D69B5E024C5395F00AA991A /* Products */,
+				2D69B5FD24C53D4300AA991A /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		2D69B5E024C5395F00AA991A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2D69B5DF24C5395F00AA991A /* octahe */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2D69B5E124C5395F00AA991A /* octahe */ = {
+			isa = PBXGroup;
+			children = (
+				2D34361224C53F1C0042F28B /* cli.swift */,
+				2D34360D24C53F1C0042F28B /* executions */,
+				2D34361324C53F1C0042F28B /* mixin.swift */,
+				2D34361424C53F1C0042F28B /* operations */,
+				2D34361524C53F1C0042F28B /* parsers */,
+				2D34361024C53F1C0042F28B /* router.swift */,
+				2D34361124C53F1C0042F28B /* types.swift */,
+				2D69B5F524C53CAF00AA991A /* main.swift */,
+			);
+			path = octahe;
+			sourceTree = "<group>";
+		};
+		2D69B5FD24C53D4300AA991A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2D69B60024C53DC800AA991A /* octahe.xcodeproj */,
+				2D69B5FF24C53D6100AA991A /* Package.swift */,
+				2D69B5FE24C53D4300AA991A /* Octahe */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2D69B60124C53DC800AA991A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2D69B6AE24C53DC900AA991A /* ArgumentParser.framework */,
+				2D69B6B024C53DC900AA991A /* Async.framework */,
+				2D69B6B224C53DC900AA991A /* Bits.framework */,
+				2D69B6B424C53DC900AA991A /* CCryptoBoringSSL.framework */,
+				2D69B6B624C53DC900AA991A /* CCryptoBoringSSLShims.framework */,
+				2D69B6B824C53DC900AA991A /* CNIOAtomics.framework */,
+				2D69B6BA24C53DC900AA991A /* CNIODarwin.framework */,
+				2D69B6BC24C53DC900AA991A /* CNIOHTTPParser.framework */,
+				2D69B6BE24C53DC900AA991A /* CNIOLinux.framework */,
+				2D69B6C024C53DC900AA991A /* CNIOOpenSSL.framework */,
+				2D69B6C224C53DC900AA991A /* CNIOSHA1.framework */,
+				2D69B6C424C53DC900AA991A /* CNIOZlib.framework */,
+				2D69B6C624C53DC900AA991A /* COperatingSystem.framework */,
+				2D69B6C824C53DC900AA991A /* Core.framework */,
+				2D69B6CA24C53DC900AA991A /* Crypto.framework */,
+				2D69B6CC24C53DC900AA991A /* Debugging.framework */,
+				2D69B6CE24C53DC900AA991A /* HTTP.framework */,
+				2D69B6D024C53DC900AA991A /* Logging.framework */,
+				2D69B6D224C53DC900AA991A /* NIO.framework */,
+				2D69B6D424C53DC900AA991A /* NIOConcurrencyHelpers.framework */,
+				2D69B6D624C53DC900AA991A /* NIOFoundationCompat.framework */,
+				2D69B6D824C53DC900AA991A /* NIOHTTP1.framework */,
+				2D69B6DA24C53DC900AA991A /* NIOOpenSSL.framework */,
+				2D69B6DC24C53DC900AA991A /* NIOPriorityQueue.framework */,
+				2D69B6DE24C53DC900AA991A /* NIOTLS.framework */,
+				2D69B6E024C53DC900AA991A /* PathKit.framework */,
+				2D69B6E224C53DC900AA991A /* Rainbow.framework */,
+				2D69B6E424C53DC900AA991A /* Signals.framework */,
+				2D69B6E624C53DC900AA991A /* Spinner.framework */,
+				2D69B6E824C53DC900AA991A /* Stencil.framework */,
+				2D69B6EA24C53DC900AA991A /* SwiftSerial.framework */,
+				2D69B6EC24C53DC900AA991A /* octahe */,
+				2D69B6EE24C53DC900AA991A /* octaheTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2D69B5DE24C5395F00AA991A /* octahe */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2D69B5E624C5395F00AA991A /* Build configuration list for PBXNativeTarget "octahe" */;
+			buildPhases = (
+				2D69B5DB24C5395F00AA991A /* Sources */,
+				2D69B5DC24C5395F00AA991A /* Frameworks */,
+				2D69B5DD24C5395F00AA991A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2D34361D24C540540042F28B /* PBXTargetDependency */,
+			);
+			name = octahe;
+			productName = octahe;
+			productReference = 2D69B5DF24C5395F00AA991A /* octahe */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2D69B5D724C5395F00AA991A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1160;
+				LastUpgradeCheck = 1160;
+				ORGANIZATIONNAME = "Kevin Carter";
+				TargetAttributes = {
+					2D69B5DE24C5395F00AA991A = {
+						CreatedOnToolsVersion = 11.6;
+						LastSwiftMigration = 1160;
+					};
+				};
+			};
+			buildConfigurationList = 2D69B5DA24C5395F00AA991A /* Build configuration list for PBXProject "octahe" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2D69B5D624C5395F00AA991A;
+			productRefGroup = 2D69B5E024C5395F00AA991A /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 2D69B60124C53DC800AA991A /* Products */;
+					ProjectRef = 2D69B60024C53DC800AA991A /* octahe.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				2D69B5DE24C5395F00AA991A /* octahe */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		2D69B6AE24C53DC900AA991A /* ArgumentParser.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ArgumentParser.framework;
+			remoteRef = 2D69B6AD24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6B024C53DC900AA991A /* Async.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Async.framework;
+			remoteRef = 2D69B6AF24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6B224C53DC900AA991A /* Bits.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Bits.framework;
+			remoteRef = 2D69B6B124C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6B424C53DC900AA991A /* CCryptoBoringSSL.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CCryptoBoringSSL.framework;
+			remoteRef = 2D69B6B324C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6B624C53DC900AA991A /* CCryptoBoringSSLShims.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CCryptoBoringSSLShims.framework;
+			remoteRef = 2D69B6B524C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6B824C53DC900AA991A /* CNIOAtomics.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOAtomics.framework;
+			remoteRef = 2D69B6B724C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6BA24C53DC900AA991A /* CNIODarwin.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIODarwin.framework;
+			remoteRef = 2D69B6B924C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6BC24C53DC900AA991A /* CNIOHTTPParser.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOHTTPParser.framework;
+			remoteRef = 2D69B6BB24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6BE24C53DC900AA991A /* CNIOLinux.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOLinux.framework;
+			remoteRef = 2D69B6BD24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6C024C53DC900AA991A /* CNIOOpenSSL.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOOpenSSL.framework;
+			remoteRef = 2D69B6BF24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6C224C53DC900AA991A /* CNIOSHA1.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOSHA1.framework;
+			remoteRef = 2D69B6C124C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6C424C53DC900AA991A /* CNIOZlib.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CNIOZlib.framework;
+			remoteRef = 2D69B6C324C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6C624C53DC900AA991A /* COperatingSystem.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = COperatingSystem.framework;
+			remoteRef = 2D69B6C524C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6C824C53DC900AA991A /* Core.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Core.framework;
+			remoteRef = 2D69B6C724C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6CA24C53DC900AA991A /* Crypto.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Crypto.framework;
+			remoteRef = 2D69B6C924C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6CC24C53DC900AA991A /* Debugging.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Debugging.framework;
+			remoteRef = 2D69B6CB24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6CE24C53DC900AA991A /* HTTP.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = HTTP.framework;
+			remoteRef = 2D69B6CD24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6D024C53DC900AA991A /* Logging.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Logging.framework;
+			remoteRef = 2D69B6CF24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6D224C53DC900AA991A /* NIO.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIO.framework;
+			remoteRef = 2D69B6D124C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6D424C53DC900AA991A /* NIOConcurrencyHelpers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOConcurrencyHelpers.framework;
+			remoteRef = 2D69B6D324C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6D624C53DC900AA991A /* NIOFoundationCompat.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOFoundationCompat.framework;
+			remoteRef = 2D69B6D524C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6D824C53DC900AA991A /* NIOHTTP1.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOHTTP1.framework;
+			remoteRef = 2D69B6D724C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6DA24C53DC900AA991A /* NIOOpenSSL.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOOpenSSL.framework;
+			remoteRef = 2D69B6D924C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6DC24C53DC900AA991A /* NIOPriorityQueue.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOPriorityQueue.framework;
+			remoteRef = 2D69B6DB24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6DE24C53DC900AA991A /* NIOTLS.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = NIOTLS.framework;
+			remoteRef = 2D69B6DD24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6E024C53DC900AA991A /* PathKit.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = PathKit.framework;
+			remoteRef = 2D69B6DF24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6E224C53DC900AA991A /* Rainbow.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Rainbow.framework;
+			remoteRef = 2D69B6E124C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6E424C53DC900AA991A /* Signals.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Signals.framework;
+			remoteRef = 2D69B6E324C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6E624C53DC900AA991A /* Spinner.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Spinner.framework;
+			remoteRef = 2D69B6E524C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6E824C53DC900AA991A /* Stencil.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Stencil.framework;
+			remoteRef = 2D69B6E724C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6EA24C53DC900AA991A /* SwiftSerial.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = SwiftSerial.framework;
+			remoteRef = 2D69B6E924C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6EC24C53DC900AA991A /* octahe */ = {
+			isa = PBXReferenceProxy;
+			fileType = text;
+			path = octahe;
+			remoteRef = 2D69B6EB24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2D69B6EE24C53DC900AA991A /* octaheTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = file;
+			path = octaheTests.xctest;
+			remoteRef = 2D69B6ED24C53DC900AA991A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2D69B5DB24C5395F00AA991A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2D34361D24C540540042F28B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = octahePackageDescription;
+			targetProxy = 2D34361C24C540540042F28B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2D69B5E424C5395F00AA991A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2D69B5E524C5395F00AA991A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		2D69B5E724C5395F00AA991A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 8C79W48LQ8;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.peznauts.octahe;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "octahe/octahe-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		2D69B5E824C5395F00AA991A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 8C79W48LQ8;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.peznauts.octahe;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "octahe/octahe-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2D69B5DA24C5395F00AA991A /* Build configuration list for PBXProject "octahe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D69B5E424C5395F00AA991A /* Debug */,
+				2D69B5E524C5395F00AA991A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2D69B5E624C5395F00AA991A /* Build configuration list for PBXNativeTarget "octahe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D69B5E724C5395F00AA991A /* Debug */,
+				2D69B5E824C5395F00AA991A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2D69B5D724C5395F00AA991A /* Project object */;
+}
