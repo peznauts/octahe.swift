@@ -80,20 +80,6 @@ the [releases](https://github.com/peznauts/octahe.swift/releases).
 In order to build Octahe on macOS you will need OSX 10.15 or better. You will also need
 XCode installed and updated to the latest stable release.
 
-Make sure you have `libressl` installed. This can easily be accomplished using brew.
-
-``` shell
-brew install libressl
-```
-
-Once `libressl` has been installed, export the build options required to build Octahe.
-
-``` shell
-export LDFLAGS="-L/usr/local/opt/libressl/lib"
-export CPPFLAGS="-I/usr/local/opt/libressl/include"
-export PKG_CONFIG_PATH="/usr/local/opt/libressl/lib/pkgconfig"
-```
-
 #### Octahe dependencies on CentOS 8
 
 Install `EPEL`.
