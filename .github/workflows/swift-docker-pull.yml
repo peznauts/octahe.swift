@@ -94,14 +94,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install libressl
-      run: brew install libressl
     - name: Build Octahe
       run: swift build
-      env:
-        LDFLAGS: "-L/usr/local/opt/libressl/lib"
-        CPPFLAGS: "-I/usr/local/opt/libressl/include"
-        PKG_CONFIG_PATH: "/usr/local/opt/libressl/lib/pkgconfig"
     - name: Run local test
       run: .build/debug/octahe deploy --targets=localhost .testcontainer/Targetfile.local --debug
     - name: Install build DMG

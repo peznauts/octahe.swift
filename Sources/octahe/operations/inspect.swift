@@ -7,7 +7,7 @@
 
 import Foundation
 
-import HTTP
+import HTTPKit
 
 struct DockerToken: Codable {
     var token: String
@@ -52,19 +52,21 @@ class Inspection {
     var headers: HTTPHeaders = .init()
     let decoder: JSONDecoder = JSONDecoder()
     var fatalFrom: Bool = false
+    var hostname: String = "auth.docker.io"
 
     init() {
         self.requestQueue = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     }
 
     private func createClient(hostname: String = "auth.docker.io") throws {
-        self.client = try HTTPClient.connect(scheme: .https, hostname: hostname, on: self.requestQueue).wait()
+        self.client = HTTPClient(on: self.requestQueue)
+        self.hostname = hostname
     }
 
     private func makeRequest(urlString: String) throws -> HTTPBody {
         var httpReq = HTTPRequest(
             method: .GET,
-            url: urlString,
+            url: "https://\(hostname)" + urlString,
             headers: self.headers
         )
         logger.debug("URL: \(httpReq.url)")
