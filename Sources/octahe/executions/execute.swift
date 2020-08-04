@@ -331,7 +331,8 @@ class Execution {
 
     func entrypointRemove(entrypoint: String) throws {
         logger.info("Removing entrypoint: \(entrypoint)")
-        let serviceFile = self.serviceName(entrypoint: entrypoint)
+        let serviceRendered = try self.serviceTemplate(entrypoint: entrypoint)
+        let serviceFile = self.serviceName(entrypoint: serviceRendered)
         var execute = "if [ -f /etc/systemd/system/\(serviceFile) ]; then "
         execute += "systemctl stop \(serviceFile);"
         execute += "systemctl daemon-reload;"
@@ -369,10 +370,10 @@ class Execution {
             self.execUser = originalExecUser
         }
         do {
-            try serviceCreate(entrypoint: entrypoint)
+            try serviceCreate(entrypoint: serviceRendered)
         } catch {
             logger.info("Running fallback service create")
-            try serviceCreate(entrypoint: entrypoint)
+            try serviceCreate(entrypoint: serviceRendered)
         }
     }
 
@@ -414,7 +415,7 @@ class Execution {
         if argVars.count > 0 {
             execTask = "\(argVars.joined(separator: "; ")); \(execTask)"
         }
-        execTask = self.posixEncoder(item: "set -eu; \(execTask)")
+        execTask = self.posixEncoder(item: execTask)
         return execTask
     }
 }

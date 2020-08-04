@@ -91,31 +91,16 @@ class ExecuteSSH: Execution {
     }
 
     override func copyRun(toUrl: URL, fromUrl: URL) throws -> String {
-        func scriptExec(execArgs: [String]) throws {
-            let execScript = try self.localWriteTemp(
-                content: execArgs.joined(separator: " ")
-            )
-            defer {
-                logger.debug("Removing temp file: \(execScript.path)")
-                try? FileManager.default.removeItem(at: execScript)
-            }
-            _ = try self.localExec(commandArgs: ["/bin/sh", execScript.path])
-        }
         var scpExecute = self.scpCommand
         scpExecute?.append(fromUrl.path)
         scpExecute?.append("\(self.name.sha1):\(toUrl.path)")
-        try scriptExec(execArgs: scpExecute!)
+        _ = try self.localExec(commandArgs: ["/bin/sh", "-c", scpExecute!.joined(separator: " ")])
         return toUrl.path
     }
 
     override func runReturn(execute: String) throws -> String {
-        let execCommand = self.sshCommand!.joined(separator: " ") + " " + self.prepareExec(execute: execute).escapeQuote
-        let execScript: URL = try self.localWriteTemp(content: execCommand)
-        defer {
-            logger.debug("Removing temp file: \(execScript.path)")
-            try? FileManager.default.removeItem(at: execScript)
-        }
-        let execArray = ["/bin/sh", execScript.path]
-        return try self.localExec(commandArgs: execArray)
+        var sshRunner = self.sshCommand!
+        sshRunner.append(self.prepareExec(execute: "\(execute) 1>/dev/null").escapeQuote)
+        return try self.localExec(commandArgs: ["/bin/sh", "-c", sshRunner.joined(separator: " ")])
     }
 }
